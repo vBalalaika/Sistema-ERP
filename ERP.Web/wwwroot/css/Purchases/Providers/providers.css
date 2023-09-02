@@ -1,0 +1,76 @@
+﻿#div-check {
+    padding-top: 40px;
+    padding-left: 10px;
+}
+
+.card-footer {
+    text-align: end;
+}
+
+#card-accordion {
+    background-color: transparent;
+}
+
+#btn-add-div {
+    justify-content: flex-end;
+}
+
+#contactsHeading, #SubsidiariesHeading, #FinancialInfoHeading {
+    display: contents;
+}
+
+#providersTable_filter, #relProviderProductsTable_filter, #relProviderStationsTable_filter {
+    display: none;
+}
+
+#subsidiary-body, #contact-body, #financial-info-body {
+    margin: 5px;
+}
+
+#divCheck {
+    padding-top: 25%;
+}
+
+#DollarExchangeTable {
+    text-align: center;
+    font-size: 13px;
+    border: 1px solid;
+}
+
+@media only screen and (max-width: 767px) {
+    #div-export-buttons {
+        display: contents;
+        text-align: center;
+    }
+
+    #btn-create {
+        width: 100%;
+        flex: 1 1 auto;
+        float: none;
+        text-align: center;
+        margin-bottom: 0.5em;
+    }
+
+    #btn-back {
+        width: 100%;
+        flex: 1 1 auto;
+        float: none;
+        text-align: center;
+        margin-bottom: 0.5em;
+    }
+
+    div.dt-buttons {
+        float: none;
+        width: 100%;
+        text-align: center;
+        margin-bottom: .5em;
+    }
+}
+
+@media only screen and (max-width: 1215px) and (min-width: 768px) {
+    #div-export-buttons {
+        right: 20px;
+        position: inherit;
+        top: -40px;
+    }
+}

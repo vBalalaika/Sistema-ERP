@@ -1,0 +1,329 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{ if (ViewData["structureDescription"].ToString() == "null")
+    {
+        ViewData["Title"] = ViewData["PriceHistoryTitle"].ToString() + ": " + ViewData["codeAndDescription"].ToString();
+    }
+    else
+    {
+        ViewData["Title"] = ViewData["PriceHistoryTitle"].ToString() + ": " + ViewData["codeAndDescription"].ToString() + ", con configuración: " + ViewData["structureDescription"].ToString();
+    }
+
+}
+@using ERP.Web.Areas.Sales.Models
+@model PriceViewModel
+
+<head>
+    <link rel="stylesheet" href="~/css/Sales/prices.css" />
+</head>
+<body>
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+            <div id="div-export-buttons">
+                <div class="btn-group">
+                </div>
+            </div>
+
+            @if (ViewBag.spares)
+            {
+                <table id="priceHistoryTableForSpares" class="table table-striped-blue table-hover w-100 nowrap">
+                    <thead class="bg-thead">
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Date"]</th>
+                            <th>Precio USD COMEX</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>@localizer["User"]</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot>
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Date"]</th>
+                            <th>Precio USD COMEX</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>@localizer["User"]</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            }
+            else
+            {
+                <table id="priceHistoryTable" class="table table-striped-blue table-hover w-100 nowrap">
+                    <thead class="bg-thead">
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Date"]</th>
+                            <th>Precio USD ARG</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>Precio USD COMEX</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>Precio MXN</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>@localizer["User"]</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot>
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Date"]</th>
+                            <th>Precio USD ARG</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>Precio USD COMEX</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>Precio MXN</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>@localizer["User"]</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            }
+        </div>
+    </div>
+</body>
+
+@section Scripts
+{
+    <script type="text/javascript" src="~/js/site.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            let spares = false;
+
+            if ("@ViewBag.spares" == "True") {
+                spares = true;
+            }
+
+            if (spares) {
+                $('#priceHistoryTableForSpares').DataTable().destroy();
+                initTableForSpares(spares);
+            } else {
+                $('#priceHistoryTable').DataTable().destroy();
+                initTable();
+            }
+
+            $('.table tfoot th').each(function (i) {
+                let title = $(this).text();
+                if (title != '@localizer["Actions"]') {
+                    $(this).html('<input type="text" class="search-control text-center" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+        });
+
+        function initTable() {
+            $('#priceHistoryTable').DataTable({
+                "scrollY": '55vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "scroller": true,
+                "oLanguage": @localizer["LanguageDataTable"],
+                "sAjaxSource": "/Sales/Price/LoadPriceHistoryTable",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "productId", "value": @ViewBag.productId },
+                        { "name": "structureId", "value": @ViewBag.structureId }
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "order": [[1, "desc"]],
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false
+                    },
+                    {
+                        "data": "lastModifiedOn",
+                        "render": function (data, type, row) {
+                            if (row.lastModifiedOn === null) {
+                                return moment(row.createdOn).format('DD/MM/YYYY');
+                            } else {
+                                return moment(row.lastModifiedOn).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceArg",
+                        "render": function (priceArg) {
+                            return $.fn.dataTable.render.number('.', ',').display(priceArg);
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceArgObservations",
+                        "render": function (priceArgObservations) {
+                            return priceArgObservations;
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceAll",
+                        "render": function (priceAll) {
+                            return $.fn.dataTable.render.number('.', ',').display(priceAll);
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceAllObservations",
+                        "render": function (priceAllObservations) {
+                            return priceAllObservations;
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceMx",
+                        "render": function (priceMx) {
+                            return $.fn.dataTable.render.number('.', ',').display(priceMx);
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceMxObservations",
+                        "render": function (priceMxObservations) {
+                            return priceMxObservations;
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "lastModifiedBy",
+                        "render": function (data, type, row) {
+                            if (row.lastModifiedBy === null) {
+                                return row.createdBy;
+                            } else {
+                                return row.lastModifiedBy;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                }
+            });
+        };
+
+        function initTableForSpares(spares) {
+            $('#priceHistoryTableForSpares').DataTable({
+                "scrollY": '55vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "scroller": true,
+                "oLanguage": @localizer["LanguageDataTable"],
+                "sAjaxSource": "/Sales/Price/LoadPriceHistoryTable",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "productId", "value": @ViewBag.productId },
+                        { "name": "structureId", "value": @ViewBag.structureId },
+                        { "name": "spares", "value": spares }
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "order": [[1, "desc"]],
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false
+                    },
+                    {
+                        "data": "lastModifiedOn",
+                        "render": function (data, type, row) {
+                            if (row.lastModifiedOn === null) {
+                                return moment(row.createdOn).format('DD/MM/YYYY');
+                            } else {
+                                return moment(row.lastModifiedOn).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceAll",
+                        "render": function (priceAll) {
+                            return $.fn.dataTable.render.number('.', ',', 2).display(priceAll);
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceAllObservations",
+                        "render": function (priceAllObservations) {
+                            return priceAllObservations;
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "lastModifiedBy",
+                        "render": function (data, type, row) {
+                            if (row.lastModifiedBy === null) {
+                                return row.createdBy;
+                            } else {
+                                return row.lastModifiedBy;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                }
+            });
+        };
+    </script>
+}

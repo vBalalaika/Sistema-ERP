@@ -1,0 +1,1112 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = ViewData["PriceTitle"].ToString();
+}
+@using ERP.Web.Areas.Sales.Models
+@model IEnumerable<PriceViewModel>
+
+<head>
+    <link rel="stylesheet" href="~/css/Sales/prices.css" />
+</head>
+<body>
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+
+            <div class="form-row">
+
+                <div class="col-md-3 mb-3">
+                    <label for="PricesTypes">@localizer["Price list to update"]</label>
+                    <select class="form-control select2bs4" id="PriceTypes">
+                    </select>
+                </div>
+                <div class="col-md-1 mb-3">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label for="Providers">@localizer["Providers to update"]</label>
+                    <select class="form-control select2bs4" id="Providers">
+                        <option value="0">@localizer["Select provider"]</option>
+                    </select>
+                </div>
+                <div class="col-md-5 mb-3">
+                </div>
+
+                <div class="col-md-3 mt-3">
+                    <label class="control-label font-weight-light">@localizer["By product"]</label>
+                </div>
+
+                @if (ViewBag.spares)
+                {
+                    <div class="col-md-1 mb-3">
+                    </div>
+                    <div class="col-md-3 mt-3">
+                        <label class="control-label font-weight-light">@localizer["By product group"]</label>
+                    </div>
+                    <div class="col-md-3 mt-3">
+                    </div>
+                }
+                else{
+                    <div class="col-md-4 mt-3">
+                    </div>
+                    <div class="col-md-3 mt-3">
+                        <label class="control-label font-weight-light">@localizer["By product group"]</label>
+                    </div>
+                    <div class="col-md-2 mt-3">
+                    </div>
+                }
+
+                <div class="col-md-3 mb-3">
+                    <label for="products">@localizer["Product"]</label>
+                    <select class="form-control select2bs4" id="products">
+                         <option value="0">@localizer["Select product"]</option>
+                    </select>
+                </div>
+                @if (ViewBag.spares)
+                {
+                    <div class="col-md-1 mb-3">
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="productsSource">@localizer["Products source"]</label>
+                        <select class="form-control select2bs4" id="productsSource">
+                            <option value="0">@localizer["Simplemak"]</option>
+                            <option value="1">@localizer["Imported"]</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="Subcategories">@localizer["Subcategories to update"]</label>
+                        <select class="form-control select2bs4" id="Subcategories">
+                            <option value="0">@localizer["Select subcategory"]</option>
+                           
+                        </select>
+                    </div>
+                }
+                else
+                {
+                    <div class="col-md-3 mb-3">
+                        <label for="configurations">@localizer["Configuration"]</label>
+                        <select class="form-control select2bs4" id="configurations">
+                            <option value="0">@localizer["Select configuration"]</option>
+                        </select>
+                    </div>
+                    <div class="col-md-1 mb-3">
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label for="productsSource">@localizer["Products source"]</label>
+                        <select class="form-control select2bs4" id="productsSource">
+                            <option value="0">@localizer["Simplemak"]</option>
+                            <option value="1">@localizer["Imported"]</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="Subcategories">@localizer["Subcategories to update"]</label>
+                        <select class="form-control select2bs4" id="Subcategories">
+                            <option value="0">@localizer["Select subcategory"]</option>
+                           
+                        </select>
+                    </div>
+                }
+
+                <div class="col-md-2 mb-3 d-none">
+                    <label for="Categories">@localizer["Categories to update"]</label>
+                    <select class="form-control select2bs4" id="Categories">
+                        <option value="0">@localizer["Select category"]</option>
+                    </select>
+                </div>
+
+                <div class="col-md-12 mt-3">
+                    <label class="control-label font-weight-light">@localizer["Update by"]</label>
+                </div>
+                <div class="col-md-auto mb-3 pt-2 mr-4 text-left">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="radioButtons" id="percentageRadioButton">
+                        <label class="form-check-label" for="percentageRadioButton">
+                            @localizer["Percentage"]
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="radioButtons" id="valueRadioButton" checked>
+                        <label class="form-check-label" for="valueRadioButton">
+                            @localizer["Fixed amount"]
+                        </label>
+                    </div>
+                </div>
+
+                <div class="col-md-auto mb-3 pt-2 pl-4 mr-4 text-left">
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="AddOrSubtractRadioButtons" id="addRadioButton" checked>
+                        <label class="form-check-label" for="addRadioButton">
+                            @localizer["Increase"]
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <input class="form-check-input" type="radio" name="AddOrSubtractRadioButtons" id="subtractRadioButton">
+                        <label class="form-check-label" for="subtractRadioButton">
+                            @localizer["Decrease"]
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-auto mb-3">
+                    <label class="pt-2">@localizer["Value"]</label>
+                </div>
+                <div class="col-md-1 mb-3">
+                    <input id="PriceToAdd" name="PriceToAdd" type="text" class="form-control text-center text-red" value="0" onkeypress="return validateIsNumber(event);">
+                </div>
+                <div class="col-md-1 mb-3">
+                     <a id="btn-calculate" class="btn btn-secondary text-white mb-3" title="Calcular">
+                        @localizer["Calculate"]
+                    </a>
+                </div>
+               
+            </div>
+
+            @if (ViewBag.spares)
+            {
+                <table id="updatedPricesTableForSpares" class="table table-striped-blue w-100 nowrap">
+                    <thead class="bg-thead">
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Family/Heading"]</th>
+                            <th>@localizer["Code"]</th>
+                            <th>@localizer["Description"]</th>
+                            <th>@localizer["Configuration"]</th>
+                            <th>Precio USD COMEX</th>
+                            <th class="text-danger">Precio USD COMEX *</th>
+                            <th>@localizer["Date"]</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            }
+            else
+            {
+                <table id="updatedPricesTable" class="table table-striped-blue w-100 nowrap">
+                    <thead class="bg-thead">
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Family/Heading"]</th>
+                            <th>@localizer["Code"]</th>
+                            <th>@localizer["Description"]</th>
+                            <th>@localizer["Configuration"]</th>
+                            <th>Precio USD ARG</th>
+                            <th class="text-danger">Precio USD ARG *</th>
+                            <th>@localizer["Date"]</th>
+                            <th>Precio USD COMEX</th>
+                            <th class="text-danger">Precio USD COMEX *</th>
+                            <th>@localizer["Date"]</th>
+                            <th>Precio MXN</th>
+                            <th class="text-danger">Precio MXN *</th>
+                            <th>@localizer["Date"]</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            }
+
+            <div class="col-md-12 mt-3 text-right">
+                <button id="btn-save" type="button" class="btn btn-primary" disabled>@localizer["Save"]</button>
+            </div>
+        </div>
+    </div>
+</body>
+
+@section Scripts
+{
+    <script type="text/javascript" src="~/js/site.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            //#region Variables
+
+            /* Format decimals */
+            const decimalInputsIds = ['PriceToAdd'];
+
+            let indexForTable = 0;
+            let spares = false;
+            let priceToAddValue = 0;
+            let categoryId = 0;
+
+            //#endregion
+
+            if ("@ViewBag.spares" == "True") {
+                spares = true;
+            }
+
+            $('.table').hide();
+
+            // Load Categories
+            $('#Categories').select2({
+                placeholder: "@localizer["Select category"]",
+                theme: "bootstrap4",
+                escapeMarkup: function (m) {
+                    return m;
+                }
+            });
+            $.ajax({
+                url: '/Sales/Price/LoadCategoriesOnSelect2',
+                data: {
+                    spares: spares
+                },
+                dataType: 'json',
+                success: function (data) {
+                    $('#Categories').empty();
+                    $.each(data.categories, function (index, item) {
+                        if (data.categories.length == 2) {
+                            $('#Categories').append($('<option />', { value: item.value, text: item.text }).attr('selected', true));
+                            categoryId = 1;
+                        } else {
+                            $('#Categories').append($('<option />', { value: item.value, text: item.text }));
+                        }
+
+                    });
+
+                }
+            });
+
+            $('#Categories').on('change', function () {
+                if (this.value == "Maquinas y Accesorios") {
+                    categoryId = 1;
+                } else if (this.value == "Conjuntos") {
+                    categoryId = 2;
+                } else if (this.value == "Piezas Individuales") {
+                    categoryId = 3;
+                } else if (this.value == "Componentes Comprados") {
+                    categoryId = 4;
+                } else {
+                    categoryId = 0;
+                }
+
+                $('#Subcategories').empty();
+
+                refreshTable(spares);
+            });
+
+            //#region Load price list
+
+            if (spares) {
+                let $option1 = $("<option selected='selected'></option>").val("1").text("USD COMEX");
+
+                $("#PriceTypes").append($option1).trigger('change');
+                $('#PriceTypes').select2();
+
+                $('.table').show();
+                initTableForSpares();
+            } else {
+                let $option1 = $("<option selected='selected'></option>").val("1").text("USD COMEX")
+                let $option2 = $("<option></option>").val("2").text("USD ARG")
+                let $option3 = $("<option></option>").val("3").text("$ MXN")
+
+                //$("#PriceTypes").append($option0);
+                $("#PriceTypes").append($option1);
+                $("#PriceTypes").append($option2);
+                $("#PriceTypes").append($option3);
+
+                $('#PriceTypes').select2();
+
+                $('.table').show();
+                initTable();
+            }
+
+            //#endregion
+
+            //#region Define select2 elements
+
+            $('#Subcategories').select2({
+                language: "es",
+                placeholder: '@localizer["Select subcategory"]',
+                theme: "bootstrap4",
+                escapeMarkup: function (m) {
+                    return m;
+                },
+                ajax: {
+                    delay: 250,
+                    url: '/Sales/Price/LoadSubCategoriesOnSelect2',
+                    data: function (params) {
+                        return {
+                            q: params.term,
+                            categoryId: categoryId
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.subCategories
+                        };
+                    },
+                    minimumInputLength: 2
+                }
+            });
+
+            $('#Providers').select2({
+                language: "es",
+                placeholder: '@localizer["Select provider"]',
+                theme: "bootstrap4",
+                escapeMarkup: function (m) {
+                    return m;
+                },
+                ajax: {
+                    delay: 250,
+                    url: '/Sales/Price/LoadProvidersOnSelect2',
+                    data: function (params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.providers
+                        };
+                    },
+                    minimumInputLength: 2
+                }
+            });
+
+            $('#productsSource').select2({
+                language: "es",
+                theme: "bootstrap4",
+                escapeMarkup: function (m) {
+                    return m;
+                }
+            });
+            
+            let products_Select2 = $('#products').select2({
+                language: "es",
+                placeholder: '@localizer["Select product"]',
+                theme: "bootstrap4",
+                escapeMarkup: function (m) {
+                    return m;
+                },
+                ajax: {
+                    delay: 250,
+                    url: '/Sales/Price/LoadProductsSelect2',
+                    data: function (params) {
+                        return {
+                            search: params.term,
+                            spares: spares
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.products
+                        };
+                    },
+                    minimumInputLength: 2
+                }
+            });
+
+            let configurations_Select2 = null;
+            if(!spares){
+                configurations_Select2 = $('#configurations').select2({
+                    language: "es",
+                    placeholder: '@localizer["Select configuration"]',
+                    theme: "bootstrap4",
+                    escapeMarkup: function (m) {
+                        return m;
+                    }
+                });
+            }
+
+            //#endregion
+
+            //#region Methods and listeners
+
+            $('#PriceTypes').on('change', function () {
+                if ($('#PriceTypes').val() != 0) {
+                    refreshTable(spares);
+                } else {
+                    alert('Debe seleccionar una lista de precios.');
+                }
+            });
+
+            $('#Subcategories').on('change', function () {
+                if ($('#PriceTypes').val() != 0) {
+                    if ($('#Subcategories').val() != 0) {
+
+                    } else {
+                        $('#Subcategories').empty();
+                        alert('Debe seleccionar una sub-categoría.');
+                    }
+                    refreshTable(spares);
+                } else {
+                    $('#Subcategories').empty();
+                    alert('Debe seleccionar una lista de precios.');
+                }
+            });
+
+            $('#Providers').on('change', function () {
+                if ($('#PriceTypes').val() != 0) {
+                    if ($('#Providers').val() != 0) {
+
+                    } else {
+                        $('#Providers').empty();
+                        alert('Debe seleccionar un proveedor.');
+                    }
+                    refreshTable(spares);
+                } else {
+                    $('#Providers').empty();
+                    alert('Debe seleccionar una lista de precios.');
+                }
+            });
+
+            $('#productsSource').on('change', function () {
+                refreshTable(spares);
+            });
+
+            $('#PriceToAdd').on('change', function () {
+                priceToAddValue = parseFloat($('#PriceToAdd').val().toString().replaceAll(".", "").replace(",", "."));
+            });
+
+            if(!spares){
+                products_Select2.change(function () {
+                        $.ajax({
+                            url: '/Sales/Price/LoadConfigurationsByProductIdOnSelect2',
+                            method: 'get',
+                            dataType: 'json',
+                            data: {
+                                productId: $('#products').val()
+                            },
+                        }).done(function (response) {
+                        
+                            configurations_Select2.empty();
+                            $.each(response.configurations, function (index, item) {
+                                if (response.configurations.length == 2 && item.value != 0) {
+                                    configurations_Select2.append($('<option />', { value: item.id, text: item.text }).attr('selected', true));
+                                } else {
+                                    configurations_Select2.append($('<option />', { value: item.id, text: item.text }));
+                                }
+                            });
+
+                            refreshTable(spares);
+                        });
+                });
+
+                configurations_Select2.change(function () {
+                    refreshTable(spares);
+                });
+
+            } 
+            else{
+                products_Select2.change(function () {
+                    refreshTable(spares);
+                });
+            }
+
+            $('#btn-calculate').on('click', function () {
+
+                if ($('#PriceToAdd').val() != 0) {
+
+                    if ($('#PriceTypes').val() != 0) {
+
+                        $('#btn-save').removeAttr('disabled');
+
+                        document.querySelectorAll('.priceInput').forEach(item => {
+                            item.removeAttribute('disabled');
+                        });
+
+                        if ($('#subtractRadioButton').prop('checked')) {
+                            let addMinus = "-" + $('#PriceToAdd').val();
+                            priceToAddValue = parseFloat(addMinus.toString().replaceAll(".", "").replace(",", "."));
+                        }
+
+                        if ($('#percentageRadioButton').prop('checked')) {
+                            if (spares) {
+                                calculateForTableSpares(priceToAddValue, $('#percentageRadioButton').prop('checked'));
+                            } else {
+                                calculateForTable(priceToAddValue, $('#percentageRadioButton').prop('checked'));
+                            }
+                        } else {
+                            if (spares) {
+                                calculateForTableSpares(priceToAddValue, $('#percentageRadioButton').prop('checked'));
+                            } else {
+                                calculateForTable(priceToAddValue, $('#percentageRadioButton').prop('checked'));
+                            }
+                        }
+                    } else {
+                        alert('Debe seleccionar una lista de precios.');
+                    }
+
+                } else {
+
+                    alert('Debe agregar un valor diferente de 0.');
+
+                }
+               
+            });
+
+            validateDecimalsNumbersOnInput(decimalInputsIds);
+
+            $('#btn-save').on('click', function () {
+
+                if ($('#PriceToAdd').val() != 0) {
+
+                    if ($('#percentageRadioButton').prop('checked')) {
+                        if (confirm('¡Atención!. Usted esta a punto de actualizar la lista de precios: ' + $('#PriceTypes :selected').text() + ', con un porcentaje = ' + $('#PriceToAdd').val() + '% , si esto es correcto haga click en "Aceptar".')) {
+                            savePricesUpdated(spares);
+                        }
+                    } else {
+                        if (confirm('¡Atención!. Usted esta a punto de actualizar la lista de precios: ' + $('#PriceTypes :selected').text() + ', con un monto fijo = ' + $('#PriceToAdd').val() + ' , si esto es correcto haga click en "Aceptar".')) {
+                            savePricesUpdated(spares);
+                        }
+                    }
+
+                } else {
+                    alert('Debe agregar un valor diferente de 0.');
+                }
+                
+            });
+
+            //#endregion
+
+        });
+
+        function initTable() {
+            $('#updatedPricesTable').DataTable({
+                "scrollY": '55vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "oLanguage": @localizer["LanguageDataTable"],
+                "sAjaxSource": "/Sales/Price/LoadUpdatePricesTable",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "categoryValue", "value": $("#Categories").val() },
+                        { "name": "subCategoryId", "value": $("#Subcategories").val() },
+                        { "name": "providerId", "value": $("#Providers").val() },
+                        { "name": "spares", "value": false },
+                        { "name": "priceType", "value": $('#PriceTypes').val() },
+                        { "name": "productsSource", "value": $('#productsSource').val() },
+                        { "name": "productId", "value": $('#products').val() },
+                        { "name": "configurationId", "value": $('#configurations').val() }
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "paging": false,
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "order": [[2, "desc"]],
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                if (value.subCategory === null) {
+                                    return "";
+                                } else {
+                                    return value.subCategory.description;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.code;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "structureViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceArg",
+                        "render": $.fn.dataTable.render.number('.', ','),
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceArg",
+                        "render": function (priceArg) {
+                            return '<input type="text" placeholder="0" value="' + $.fn.dataTable.render.number('.', ',').display(priceArg) + '" class="priceInput form-control text-center text-red" onkeypress="return validateIsNumber(event);">'
+                        },
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceArgDate",
+                        "render": function (priceArgDate) {
+                            if (priceArgDate === null) {
+                                return "";
+                            } else {
+                                return moment(priceArgDate).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceAll",
+                        "render": $.fn.dataTable.render.number('.', ','),
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceAll",
+                        "render": function (priceAll) {
+                            return '<input type="text" placeholder="0" value="' + $.fn.dataTable.render.number('.', ',').display(priceAll) +'" class="priceInput form-control text-center text-red" onkeypress="return validateIsNumber(event);">'
+                        },
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceAllDate",
+                        "render": function (priceAllDate) {
+                            if (priceAllDate === null) {
+                                return "";
+                            } else {
+                                return moment(priceAllDate).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceMx",
+                        "render": $.fn.dataTable.render.number('.', ','),
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceMx",
+                        "render": function (priceMx) {
+                            return '<input type="text" placeholder="0" value="' + $.fn.dataTable.render.number('.', ',').display(priceMx) +'" class="priceInput form-control text-center text-red" onkeypress="return validateIsNumber(event);">'
+                        },
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceMxDate",
+                        "render": function (priceMxDate) {
+                            if (priceMxDate === null) {
+                                return "";
+                            } else {
+                                return moment(priceMxDate).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                ],
+                initComplete: function () {
+
+                    document.querySelectorAll('.priceInput').forEach(item => {
+
+                        item.setAttribute('disabled', 'disabled');
+
+                        item.addEventListener('input', (e) => {
+                            var entrada = e.target.value.split(','),
+                                parteEntera = entrada[0].replace(/\./g, ''),
+                                parteDecimal = entrada[1],
+                                salida = parteEntera.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+
+                            e.target.value = salida + (parteDecimal !== undefined ? ',' + parteDecimal : '');
+                        }, false);
+                    });
+
+                    var list = document.getElementsByClassName("priceInput");
+                    for (var i = 0; i < list.length; i++) {
+                        list[i].id = "price_" + (i + 1);
+                    }
+
+                },
+                drawCallback: function () {
+
+                    var list = document.getElementsByClassName("priceInput");
+                    for (var i = 0; i < list.length; i++) {
+                        list[i].id = "price_" + (i + 1);
+                    }
+
+                    // Si el valor es 1 - Lista general.
+                    // Si el valor es 2 - Lista Arg.
+                    // Si el valor es 3 - Lista MX.
+
+                    if ($('#PriceTypes').val() == 2) {
+                        this.api().column(5).visible(true);
+                        this.api().column(6).visible(true);
+                        this.api().column(7).visible(true);
+
+                        this.api().column(8).visible(false);
+                        this.api().column(9).visible(false);
+                        this.api().column(10).visible(false);
+
+                        this.api().column(11).visible(false);
+                        this.api().column(12).visible(false);
+                        this.api().column(13).visible(false);
+                    }
+                    if ($('#PriceTypes').val() == 1) {
+                        this.api().column(5).visible(false);
+                        this.api().column(6).visible(false);
+                        this.api().column(7).visible(false);
+
+                        this.api().column(8).visible(true);
+                        this.api().column(9).visible(true);
+                        this.api().column(10).visible(true);
+
+                        this.api().column(11).visible(false);
+                        this.api().column(12).visible(false);
+                        this.api().column(13).visible(false);
+                    }
+                    if ($('#PriceTypes').val() == 3) {
+                        this.api().column(5).visible(false);
+                        this.api().column(6).visible(false);
+                        this.api().column(7).visible(false);
+
+                        this.api().column(8).visible(false);
+                        this.api().column(9).visible(false);
+                        this.api().column(10).visible(false);
+
+                        this.api().column(11).visible(true);
+                        this.api().column(12).visible(true);
+                        this.api().column(13).visible(true);
+                    }
+                }
+            });
+        };
+
+        function initTableForSpares() {
+            $('#updatedPricesTableForSpares').DataTable({
+                "scrollY": '55vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "oLanguage": @localizer["LanguageDataTable"],
+                "sAjaxSource": "/Sales/Price/LoadUpdatePricesTable",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "categoryValue", "value": $("#Categories").val() },
+                        { "name": "subCategoryId", "value": $("#Subcategories").val() },
+                        { "name": "providerId", "value": $("#Providers").val() },
+                        { "name": "spares", "value": true },
+                        { "name": "priceType", "value": $('#PriceTypes').val() },
+                        { "name": "productsSource", "value": $('#productsSource').val() },
+                        { "name": "productId", "value": $('#products').val() }
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "paging": false,
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "order": [[2, "desc"]],
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                if (value.subCategory === null) {
+                                    return "";
+                                } else {
+                                    return value.subCategory.description;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.code;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "structureViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceAll",
+                        "render": $.fn.dataTable.render.number('.', ',', 2),
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceAll",
+                        "render": function (priceAll) {
+                            return '<input type="text" placeholder="0" value="' + $.fn.dataTable.render.number('.', ',', 2).display(priceAll) + '" class="priceInput form-control text-center text-red" onkeypress="return validateIsNumber(event);">'
+                        },
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceAllDate",
+                        "render": function (priceAllDate) {
+                            if (priceAllDate === null) {
+                                return "";
+                            } else {
+                                return moment(priceAllDate).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                ],
+                initComplete: function () {
+                    document.querySelectorAll('.priceInput').forEach(item => {
+
+                        item.setAttribute('disabled', 'disabled');
+
+                        item.addEventListener('input', (e) => {
+                            var entrada = e.target.value.split(','),
+                                parteEntera = entrada[0].replace(/\./g, ''),
+                                parteDecimal = entrada[1],
+                                salida = parteEntera.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+
+                            e.target.value = salida + (parteDecimal !== undefined ? ',' + parteDecimal : '');
+                        }, false);
+                    });
+
+                    var list = document.getElementsByClassName("priceInput");
+                    for (var i = 0; i < list.length; i++) {
+                        list[i].id = "price_" + (i + 1);
+                    }
+                },
+                drawCallback: function () {
+
+                    var list = document.getElementsByClassName("priceInput");
+                    for (var i = 0; i < list.length; i++) {
+                        list[i].id = "price_" + (i + 1);
+                    }
+
+                }
+            });
+        };
+
+        function calculateForTable(priceToAddValue, percentageOrValue) {
+            let actualPriceValue = 0
+            let finalValue = 0
+
+            for (var i = 1; i <= $('#updatedPricesTable').DataTable().data().count(); i++) {
+
+                if ($('#PriceTypes').val() == 1) {
+                    actualPriceValue = $('#updatedPricesTable').DataTable().row(i - 1).data().priceAll;
+                }
+                if ($('#PriceTypes').val() == 2) {
+                    actualPriceValue = $('#updatedPricesTable').DataTable().row(i - 1).data().priceArg;
+                }
+                if ($('#PriceTypes').val() == 3) {
+                    actualPriceValue = $('#updatedPricesTable').DataTable().row(i - 1).data().priceMx;
+                }
+
+                if (percentageOrValue) {
+                    finalValue = parseFloat(actualPriceValue) + (parseFloat(actualPriceValue) * parseFloat(priceToAddValue) / 100);
+                    // Agregar separador de miles
+                    document.getElementById('price_' + i).value = parseFloat(finalValue).toFixed(0).replace('.', ',').toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                } else {
+                    finalValue = parseFloat(actualPriceValue) + parseFloat(priceToAddValue);
+                    // Agregar separador de miles
+                    document.getElementById('price_' + i).value = parseFloat(finalValue).toFixed(0).replace('.', ',').toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                }
+            }
+        };
+
+        function calculateForTableSpares(priceToAddValue, percentageOrValue) {
+            let actualPriceValue = 0
+            let finalValue = 0
+
+            for (var i = 1; i <= $('#updatedPricesTableForSpares').DataTable().data().count(); i++) {
+
+                actualPriceValue = $('#updatedPricesTableForSpares').DataTable().row(i - 1).data().priceAll;
+
+                if (percentageOrValue) {
+                    finalValue = parseFloat(actualPriceValue) + (parseFloat(actualPriceValue) * parseFloat(priceToAddValue) / 100);
+                    // Agregar separador de miles
+                    document.getElementById('price_' + i).value = parseFloat(finalValue).toFixed(2).replace('.', ',').toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                } else {
+                    finalValue = parseFloat(actualPriceValue) + parseFloat(priceToAddValue);
+                    // Agregar separador de miles
+                    document.getElementById('price_' + i).value = parseFloat(finalValue).toFixed(2).replace('.', ',').toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+                }
+            }
+
+        };
+
+        function savePricesUpdated(spares) {
+
+            let prices = new Array();
+            let productId = 0
+            let structureId = 0
+            let priceAll = 0
+            let priceArg = 0
+            let priceMx = 0
+
+            if (spares) {
+
+                prices = new Array();
+                for (var i = 1; i <= $('#updatedPricesTableForSpares').DataTable().data().count(); i++) {
+
+                    priceVM = {};
+
+                    productId = $('#updatedPricesTableForSpares').DataTable().row(i - 1).data().productId;
+                    structureId = $('#updatedPricesTableForSpares').DataTable().row(i - 1).data().structureId;
+
+                    //priceAll = parseFloat(document.getElementById('price_' + i).value);
+                    priceAll = parseFloat(document.getElementById('price_' + i).value.toString().replaceAll('.', '').replace(',', '.'));
+                    priceArg = $('#updatedPricesTableForSpares').DataTable().row(i - 1).data().priceArg;
+                    priceMx = $('#updatedPricesTableForSpares').DataTable().row(i - 1).data().priceMx;
+
+                    priceVM.ProductId = productId;
+                    priceVM.StructureId = structureId;
+                    priceVM.PriceAll = priceAll;
+                    priceVM.PriceArg = priceArg;
+                    priceVM.PriceMx = priceMx;
+
+                    prices.push(priceVM);
+
+                }
+
+            } else {
+
+                prices = new Array();
+                for (var i = 1; i <= $('#updatedPricesTable').DataTable().data().count(); i++) {
+
+                    priceVM = {};
+
+                    productId = $('#updatedPricesTable').DataTable().row(i - 1).data().productId;
+                    priceVM.ProductId = productId;
+                    structureId = $('#updatedPricesTable').DataTable().row(i - 1).data().structureId;
+                    priceVM.StructureId = structureId;
+
+                    if ($('#PriceTypes').val() == 1) {
+                        priceAll = parseFloat(document.getElementById('price_' + i).value.toString().replaceAll('.', '').replace(',', '.'));
+                        priceArg = $('#updatedPricesTable').DataTable().row(i - 1).data().priceArg;
+                        priceMx = $('#updatedPricesTable').DataTable().row(i - 1).data().priceMx;
+                    }
+                    if ($('#PriceTypes').val() == 2) {
+                        priceAll = $('#updatedPricesTable').DataTable().row(i - 1).data().priceAll;
+                        priceArg = parseFloat(document.getElementById('price_' + i).value.toString().replaceAll('.', '').replace(',', '.'));
+                        priceMx = $('#updatedPricesTable').DataTable().row(i - 1).data().priceMx;
+                    }
+                    if ($('#PriceTypes').val() == 3) {
+                        priceAll = $('#updatedPricesTable').DataTable().row(i - 1).data().priceAll;
+                        priceArg = $('#updatedPricesTable').DataTable().row(i - 1).data().priceArg;
+                        priceMx = parseFloat(document.getElementById('price_' + i).value.toString().replaceAll('.', '').replace(',', '.'));
+                    }
+
+                    priceVM.PriceAll = priceAll;
+                    priceVM.PriceArg = priceArg;
+                    priceVM.PriceMx = priceMx;
+
+                    prices.push(priceVM);
+
+                }
+
+            }
+
+            $.ajax({
+                url: '/Sales/Price/UpdatePrices',
+                method: 'POST',
+                data: {
+                    pricesViewModel: JSON.stringify(prices),
+                    spares: spares,
+                    priceType: $('#PriceTypes').val()
+                },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.isValid) {
+
+                        refreshTable(response.spares);
+
+                        document.getElementById('PriceToAdd').value = 0;
+                        $('#btn-save').attr('disabled', 'disabled');
+                    }
+                }
+            });
+        };
+
+        function refreshTable(spares) {
+
+            $('table').hide();
+
+            if (spares) {
+
+                $("#updatedPricesTableForSpares").DataTable().destroy();
+                initTableForSpares();
+
+            } else {
+
+                $("#updatedPricesTable").DataTable().destroy();
+                initTable();
+
+            }
+
+            $('table').show('slow');
+
+        };
+    </script>
+}

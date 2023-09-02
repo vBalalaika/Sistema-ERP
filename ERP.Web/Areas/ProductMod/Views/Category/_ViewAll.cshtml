@@ -1,0 +1,139 @@
+﻿@using ERP.Web.Areas.ProductMod.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<CategoryViewModel>
+
+<div id="div-export-buttons">
+    <div class="btn-group">
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Categories.Create)).Result.Succeeded)
+        {
+            <a id="btn-create" onclick="jQueryModalGet('/productmod/category/OnGetCreateOrEdit','@localizer["Create Category"]')" class="btn btn-secondary text-white">
+                <i class="fa fa-plus-square"></i> 
+            </a>
+        }
+    </div>
+</div>
+<table id="categoryTable" class="table table-striped-blue w-100 nowrap" cellspacing="0">
+    <thead class="bg-thead text-white">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["State"]</th>
+
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var category in Model)
+        {
+            <tr>
+                <td hidden>
+                    @category.Id
+                </td>
+                <td class="text-left">
+                    <div class="btn-group">
+                        <div class="d-flex animated--grow-in">
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Categories.Edit)).Result.Succeeded)
+                            {
+                                <a class="btn action-btn" title="@localizer["Edit"]" onclick="jQueryModalGet('/productmod/category/OnGetCreateOrEdit?id=@category.Id','@localizer["Edit Category"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Edit"]" onclick="jQueryModalGet('/productmod/category/OnGetCreateOrEdit?id=@category.Id','@localizer["Edit Category"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Categories.Delete)).Result.Succeeded)
+                            {
+                                <form id="form_delete_@category.Id" asp-area="ProductMod" asp-controller="Category" method="post" asp-action="OnPostDelete" asp-route-id="@category.Id" onsubmit="return jQueryModalDelete(this, '@localizer["Are you sure to delete this record?"]')">
+                                    <a class="btn action-btn" title="@localizer["Delete"]" href="javascript:$('#form_delete_@category.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </form>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Delete"]" href="javascript:$('#form_delete_@category.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                            }
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    @category.Description
+                </td>
+                <td>
+                    @if (category.IsActive)
+                    {
+                        <span class="badge bg-success text-white">@localizer["Active"]</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger text-white">@localizer["Desactivated"]</span>
+                    }
+                </td>
+
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["State"]</th>
+
+        </tr>
+    </tfoot>
+</table>
+<script>
+    $(document).ready(function () {
+       //Busqueda en footers de tablas
+        $('#categoryTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+        let categoryTable = $("#categoryTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "columnDefs": [{ "targets": [0], "visible": false, "searchable": false }],
+            "dom": 'Bfrtip',
+            "buttons": [
+                {
+                    "extend": "excelHtml5",
+                    "className": "rounded",
+                    "text": '<img class="tables-img-icon" src="../../../images/Excel.svg" width="25" height="25" />',
+                    "titleAttr": "Exportar archivo Excel",
+                    "title": "Datos categorías",
+                    "exportOptions": {
+                        "columns": [2, 3]
+                    }
+                }],
+            scrollY: '60vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            stateSave: true,
+            stateLoadParams: function (settings, data) {
+                for (i = 0; i < data.columns["length"]; i++) {
+                    var col_search_val = data.columns[i].search.search;
+                    if (col_search_val != "") {
+                        $("input", $('#categoryTable tfoot th')[i]).val(col_search_val);
+                    }
+                }
+            }
+        });
+
+        categoryTable.buttons().container()
+            .appendTo("#div-export-buttons .btn-group");
+
+        $(categoryTable.table().container()).on('keyup', 'tfoot input', function () {
+            categoryTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+    });
+</script>

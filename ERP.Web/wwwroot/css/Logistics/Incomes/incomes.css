@@ -1,0 +1,11 @@
+﻿#incomesTable_filter {
+    display: none;
+}
+
+#incomeDetailsTable {
+    width: max-content;
+}
+
+.col-md-5-custom {
+    max-width: 38.4% !important;
+}

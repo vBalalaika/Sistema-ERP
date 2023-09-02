@@ -1,0 +1,49 @@
+﻿
+@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model CodeGeneratorViewModel
+
+@if (Model.Products != null)
+{
+    @for (var i = 0; i < Model.Products.Count; i++)
+    {
+        <tr>
+            <td class="d-none">
+                <input type="hidden" name="Products.Index" value="@i" />
+                @if (Model.Products[i].Id != 0)
+                {
+                    <input type="hidden" class="form-control" readonly asp-for="Products[i].Id" value="@Model.Products[i].Id" />
+                }
+
+                <input type="hidden" class="form-control" readonly asp-for="Products[i].SubCategoryId" value="@Model.Products[i].SubCategoryId" />
+
+            </td>
+            <td><input type="text" class="form-control" readonly asp-for="Products[i].Code" /></td>
+            <td>
+                @if (Model.Products[i].Id != 0)
+                {
+                    <input type="text" class="form-control" readonly asp-for="Products[i].Description" />
+                }
+                else
+                { <input type="text" class="form-control" asp-for="Products[i].Description" />}
+            </td>
+            <td><input type="text" class="form-control" readonly asp-for="Products[i].SubCategory.Description" /></td>
+            @if (Model.Products[i].Id != 0)
+            {
+                <td class="text-center"><a asp-area="ProductMod" asp-controller="Product" asp-action="OnGetCreateOrEdit" asp-route-id=@Model.Products[i].Id target="_blank"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a></td>
+                <td class="text-center">
+                    <span class="badge bg-success text-white">@localizer["Created"]</span>
+                </td>
+            }
+            else
+            {
+                <td class="text-center"><a><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a></td>
+                <td class="text-center">
+                    <span class="badge bg-warning text-white">@localizer["Not created"]</span>
+                </td>
+            }
+
+        </tr>
+    }
+}

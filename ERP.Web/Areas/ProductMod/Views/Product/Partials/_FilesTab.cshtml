@@ -1,0 +1,147 @@
+﻿@using ERP.Web.Areas.ProductMod.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IList<ArchiveViewModel>
+@{
+    int index = 1;
+}
+
+<form id="create-form" method="post" asp-controller="Product" asp-action="SaveFilesByProduct" onsubmit="return jQueryModalPost(this);" enctype="multipart/form-data">
+    <div class="col-md-12 pl-0">
+        <label class="text-capitalize">@localizer["Archives"]</label>
+    </div>
+
+    <div class="form-row p-1 mb-3">
+        <div class="col-md-2">
+            <label for="archiveTypes" class="control-label">@localizer["Type"]</label>
+            <select id="archiveTypes" class="form-control select2bs4">
+            </select>
+        </div>
+        <div class="col-md-9">
+            <label for="pathURL" class="control-label">@localizer["Path"]</label>
+            <input id="pathURL" type="text" class="form-control">
+        </div>
+        <div class="col-md-1 pr-3">
+            <label class="control-label">@localizer["Add"]</label>
+            <button id="btn-add-archive-type" type="button" class="form-control btn btn-primary w-100"><i class="fas fa-plus"></i></button>
+        </div>
+    </div>
+    <div class="col-md-12 pl-0">
+        <table id="productFilesTable" class="table table-striped-blue w-100 nowrap">
+            <thead class="bg-thead">
+                <tr>
+                    <th width="5%">@localizer["Actions"]</th>
+                    <th width="10%">@localizer["Type"]</th>
+                    <th width="75%">@localizer["Path"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var archiveVM in Model)
+                {
+                    <tr>
+                        <td class="d-none">
+                            <input type="hidden" name="archiveViewModels.Index" readonly value="@index" />
+                            <input type="hidden" name="archiveViewModels[@index].ConcurrencyToken" asp-for="@archiveVM.ConcurrencyToken" readonly value="@archiveVM.ConcurrencyToken" />
+                            <input type="hidden" name="archiveViewModels[@index].Id" asp-for="@archiveVM.Id" readonly value="@archiveVM.Id" />
+                            <input type="hidden" name="archiveViewModels[@index].ProductId" asp-for="@archiveVM.ProductId" readonly value="@archiveVM.ProductId" />
+                            <input type="hidden" name="archiveViewModels[@index].ArchiveTypeId" asp-for="@archiveVM.ArchiveTypeId" readonly value="@archiveVM.ArchiveTypeId" />
+                        </td>
+                        <td class="text-left">
+                            <div class="btn-group">
+                                <div class="d-flex animated--grow-in">
+                                    @{
+                                        var path = archiveVM.PathUrl.Replace(@"\\172.16.50.240\ARCHIVOS\SIMPLEMAK\OFICINA TECNICA", "/files");
+                                        var filename = archiveVM.PathUrl.Split("\\").Last();
+                                    }
+                                    <a href="http:@path" target="_blank" alt="@filename" class="btn action-btn"><img class="action-img-icon" src="../../../images/Ver.svg" width="20" height="20" /></a>
+                                    <a class="btn btn-outline-danger d-block m-auto btn-remove"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            @if (archiveVM.ArchiveTypeId.HasValue)
+                            {
+                                <input class="custom-form-control form-control" type="text" value="@archiveVM.ArchiveType.Description" />
+                            }
+                        </td>
+                        <td>
+                            <input class="pathUrl form-control" type="text" name="archiveViewModels[@index].PathUrl" asp-for="@archiveVM.PathUrl" value="@archiveVM.PathUrl" />
+                        </td>
+                    </tr>
+
+                    index++;
+                }
+            </tbody>
+        </table>
+        <div id="buttons-div" class="form-group justify-content-between">
+            <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+            <button type="submit" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+        </div>
+
+    </div>
+</form>
+
+<script>
+    $(document).ready(function () {
+
+        let index = @index;
+
+        let archiveTypesSelect2 = $('#archiveTypes').select2({
+            language: "es",
+            placeholder: "@localizer["Select archive type"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        loadArchiveTypes_select2(archiveTypesSelect2);
+    
+        $('#btn-add-archive-type').on('click', function(){
+            trHtml = '<tr>';
+            trHtml += '<td class="d-none">';
+            trHtml += '<input type="hidden" name="archiveViewModels.Index" readonly value="' + index + '" />';
+            trHtml += '<input type="hidden" name="archiveViewModels['+ index +'].Id" readonly value="' + 0 + '" />';
+            trHtml += '<input type="hidden" name="archiveViewModels['+ index +'].ProductId" readonly value="' + @Model.First().ProductId + '" />';
+            trHtml += '<input type="hidden" name="archiveViewModels['+ index +'].ArchiveTypeId" readonly value="' + archiveTypesSelect2.val() + '" />';
+            trHtml += '</td>';
+            trHtml += '<td class="text-left"><div class="btn-group"><div class="d-flex animated--grow-in"><a target="_blank" class="btn action-btn disabled"><img class="action-img-icon" src="../../../images/Ver.svg" width="20" height="20" /></a><a class="btn btn-outline-danger d-block m-auto btn-remove"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20"/></a></div></div></td>';
+            trHtml += '<td><input class="custom-form-control form-control" type="text" value="' + archiveTypesSelect2.find(':selected').text() + '"/></td>';
+            trHtml += '<td><input class="pathUrl form-control" name="archiveViewModels[' + index + '].PathUrl" type="text" value="' + $('#pathURL').val().toString().trim() + '"/></td>';
+            trHtml += '</tr>';
+            $('#productFilesTable tbody').append(trHtml);
+            index++;
+
+            archiveTypesSelect2.val(0).trigger('change');
+            $('#pathURL').val('');
+        });
+
+        $(document).on("click", ".btn-remove", function () {
+            $(this).closest('tr').remove();
+        });
+
+        $(document).on("change", ".pathUrl", function(){
+            if (!$($(this).parent().prev().prev().children().children().children()[0]).hasClass('disabled')) {
+                $($(this).parent().prev().prev().children().children().children()[0]).addClass('disabled');
+            }
+        });
+    
+    });
+
+    function loadArchiveTypes_select2(archiveTypesSelect2) {
+        $.ajax({
+            url: '/productmod/product/loadArchiveTypes_select2',
+            method: 'get',
+            dataType: 'json',
+        }).done(function (response) {
+            if (response.isValid) {
+                archiveTypesSelect2.empty();
+                archiveTypesSelect2.append($('<option />', { value: 0, text: '@localizer["Select archive type"]' }));
+                $.each(response.values, function (index, item) {
+                    archiveTypesSelect2.append($('<option />', { value: item.value, text: item.text }));
+                });
+            }
+        });
+    }
+
+</script>

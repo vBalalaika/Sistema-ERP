@@ -1,0 +1,34 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Work stations"];
+    //ViewData["Caption"] = localizer["Manage Stations here"];
+}
+@using ERP.Web.Areas.ProductMod.Models
+@model StationViewModel
+
+    <head>
+        <link href="~/css/Lists/lists.css" rel="stylesheet" />
+    </head>
+
+    <div class="card">
+
+        <div id="viewAll" class="card-body table-responsive">
+        </div>
+
+    </div>
+    @section Scripts
+{
+        <script>
+        $(document).ready(function () {
+            $("#stationTable").DataTable({ "oLanguage": @localizer["LanguageDataTable"] });
+            loadData();
+            $('#reload').on('click', function () {
+                loadData();
+            });
+        });
+        function loadData() {
+            $('#viewAll').load('/productmod/station/LoadAll');
+        }
+        </script>
+    }

@@ -1,0 +1,449 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Production.Models
+@using ERP.Application.Enums
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model WorkActivitiesViewModel
+
+<body>
+
+    <div id="div-export-buttons">
+        <div class="btn-group">
+
+            <div class="form-check form-check-inline">
+                <div class="custom-control custom-checkbox small">
+                    <input class="custom-control-input" type="checkbox" id="checkSelectAll">
+                    <label class="custom-control-label pt-1" for="checkSelectAll">@localizer["Select all"]</label>
+                </div>
+            </div>
+
+            <a id="btn-back" class="btn btn-secondary text-white rounded-left" title="@localizer["Back"]">
+                <img class="tables-img-icon" src="~/images/Back blanco.svg" width="30" height="30" />
+            </a>
+            <a id="btn-view-advance-detail" class="btn btn-secondary text-white" title="@localizer["Product progress detail"]">
+                <img class="tables-img-icon" src="~/images/Avance blanco.svg" width="30" height="30" />
+            </a>
+            @if (User.IsInRole(Roles.SuperAdmin.ToString()))
+            {
+                <a id="btn-get-OT" class="btn btn-secondary" title="@localizer["Work order"]">
+                    <img class="tables-img-icon" src="~/images/OT.svg" width="30" height="30" />
+                </a>
+            }
+            <a id="btn-create-delivery-note" class="btn btn-secondary text-white" title="@localizer["New delivery note"]">
+                <img class="tables-img-icon" src="~/images/newRemito.svg" width="30" height="30" />
+            </a>
+
+        </div>
+    </div>
+
+    <table id="allActivitiesShippingTable" class="table table-striped-blue table-hover w-100 nowrap">
+        <thead class="bg-thead">
+            <tr>
+                <th hidden>@localizer["Id"]</th>
+                <th>@localizer["Actions"]</th>
+                <th>@localizer["Code"]</th>
+                <th>@localizer["Description"]</th>
+                <th>@localizer["Quantity"]</th>
+                <th>@localizer["Archive"]</th>
+                <th>@localizer["State"]</th>
+                <th>@localizer["Provider"]</th>
+                <th>@localizer["Transport"]</th>
+                <th>@localizer["Shipping date"]</th>
+                <th>Nº @localizer["Shipping delivery note"]</th>
+                <th>@localizer["Package"]</th>
+                <th>@localizer["Package weight"]</th>
+                <th>@localizer["Comeback date"]</th>
+                <th>@localizer["Users"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var activitygroup in Model.ActivitiesGroups)
+            {
+                @foreach (var subgroup in activitygroup.SubGroups)
+                {
+                    @foreach (var activity in subgroup.Activities)
+                    {
+                        @if (activity.Id == subgroup.Activities.First().Id)
+                        {
+                            <tr>
+                                <td hidden>
+                                    @activity.Id
+                                </td>
+
+                                <td class="text-left">
+                                    <div class="btn-group">
+                                        <div class="d-flex animated--grow-in">
+                                            @if (subgroup.Activities.First().DeliveryNoteHeaderViewModel != null)
+                                            {
+                                                if (subgroup.Activities.First().ComebackDate != null)
+                                                {
+                                                    <a class="btn action-btn disabled"><div class="custom-control custom-checkbox small"><input disabled class="checkSelectedRow custom-control-input-finish" type="checkbox" checked id="checkSelectedRow_@activity.Id"><label class="custom-control-label" for="checkSelectedRow_@activity.Id"></label></div></a>
+                                                }
+                                                else
+                                                {
+                                                    <a class="btn action-btn disabled"><div class="custom-control custom-checkbox small"><input disabled class="checkSelectedRow custom-control-input-inprocess" type="checkbox" checked id="checkSelectedRow_@activity.Id"><label class="custom-control-label" for="checkSelectedRow_@activity.Id"></label></div></a>
+                                                }
+
+                                                <a class="btn action-btn" title="@localizer["Delivery note"]" onclick="getDeliveryNoteById(@subgroup.Activities.First().DeliveryNoteHeaderViewModel.Id)"><img class="action-img-icon" src="../../../images/remito.svg" width="25" height="25" /></a>
+                                            }
+                                            else
+                                            {
+                                                if (subgroup.Activities.First().ComebackDate != null)
+                                                {
+                                                    <a class="btn action-btn disabled"><div class="custom-control custom-checkbox small"><input disabled class="checkSelectedRow custom-control-input-finish" type="checkbox" checked id="checkSelectedRow_@activity.Id"><label class="custom-control-label" for="checkSelectedRow_@activity.Id"></label></div></a>
+                                                }
+                                                else if (subgroup.Activities.First().PreviousStation == "Para enviar")
+                                                {
+                                                    <a class="btn action-btn"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input" type="checkbox" id="checkSelectedRow_@activity.Id" data-workActivityId="@activity.Id" data-quantity="@subgroup.Quantity"><label class="custom-control-label" for="checkSelectedRow_@activity.Id"></label></div></a>
+                                                }
+                                                else if (subgroup.Activities.First().PreviousStation == "Pendiente")
+                                                {
+                                                    <a class="btn action-btn disabled"><div class="custom-control custom-checkbox small"><input disabled class="checkSelectedRow custom-control-input-disabled" type="checkbox" checked id="checkSelectedRow_@activity.Id"><label class="custom-control-label" for="checkSelectedRow_@activity.Id"></label></div></a>
+                                                }
+                                                else if (subgroup.Activities.First().PreviousStation == "Enviada")
+                                                {
+                                                    <a class="btn action-btn disabled"><div class="custom-control custom-checkbox small"><input disabled class="checkSelectedRow custom-control-input-inprocess" type="checkbox" checked id="checkSelectedRow_@activity.Id"><label class="custom-control-label" for="checkSelectedRow_@activity.Id"></label></div></a>
+                                                }
+                                                else
+                                                {
+                                                    <a class="btn action-btn disabled"><div class="custom-control custom-checkbox small"><input disabled class="checkSelectedRow custom-control-input-disabled" type="checkbox" checked id="checkSelectedRow_@activity.Id"><label class="custom-control-label" for="checkSelectedRow_@activity.Id"></label></div></a>
+                                                }
+                                                <a class="btn action-btn disabled" title="@localizer["Delivery note"]"><img class="action-img-icon" src="../../../images/remito.svg" width="25" height="25" /></a>
+                                            }
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    @subgroup.Activities.First().WorkOrderItem.Product.Code
+                                </td>
+
+
+                                <td>
+                                    @subgroup.Activities.First().WorkOrderItem.Product.Description
+                                </td>
+
+                                <td class="text-center">
+                                    @subgroup.Quantity
+                                </td>
+
+                                <td class="text-center">
+                                    @if (subgroup.Activities.First().WorkOrderItem.Product.Archives.Count > 0)
+                                    {
+                                        // Fran:
+                                        <a title="@localizer["Files"]" class="btn action-btn" onclick="jQueryModalGet('/productmod/product/GetFilesByProduct?id=@subgroup.Activities.First().WorkOrderItem.Product.Id','@subgroup.Activities.First().WorkOrderItem.Product.CodeAndDescription')"><img class="action-img-icon" src="../../../images/Archivos.svg" width="20" height="20" /></a>
+                                    }
+                                </td>
+
+                                <td>
+                                    @subgroup.Activities.First().PreviousStation
+                                </td>
+
+                                <td>
+                                    @if (subgroup.Activities.First().OutsourcedProvider != null)
+                                    {
+                                        @subgroup.Activities.First().OutsourcedProvider.getBussinessNameOrName.ToString()
+                                    }
+                                    else
+                                    {
+                                        if (subgroup.Activities.First().DeliveryNoteHeaderViewModel != null)
+                                        {
+                                            @subgroup.Activities.First().DeliveryNoteHeaderViewModel.Provider.getBussinessNameOrName.ToString()
+                                            ;
+                                        }
+
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (subgroup.Activities.First().DeliveryNoteHeaderViewModel != null)
+                                    {
+                                        @subgroup.Activities.First().DeliveryNoteHeaderViewModel.TransportProvider.getBussinessNameOrName.ToString()
+                                        ;
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (subgroup.Activities.First().DeliveryNoteHeaderViewModel != null)
+                                    {
+                                        @subgroup.Activities.First().DeliveryNoteHeaderViewModel.Date.ToShortDateString()
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (subgroup.Activities.First().DeliveryNoteHeaderViewModel != null)
+                                    {
+                                        @subgroup.Activities.First().DeliveryNoteHeaderViewModel.Number
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (subgroup.Activities.First().DeliveryNoteHeaderViewModel != null)
+                                    {
+                                        @subgroup.Activities.First().DeliveryNoteHeaderViewModel.DeliveryNoteDetails.First().Package
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (subgroup.Activities.First().DeliveryNoteHeaderViewModel != null)
+                                    {
+                                        @Math.Round(subgroup.Activities.First().DeliveryNoteHeaderViewModel.DeliveryNoteDetails.First().PackageWeight, 2)
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (subgroup.Activities.First().ComebackDate.HasValue)
+                                    {
+                                        @subgroup.Activities.First().ComebackDate.Value.ToShortDateString()                                        
+                                    }
+                                </td>
+
+                                <td>
+                                </td>
+                            </tr>
+                        }
+                    }
+                }
+            }
+        </tbody>
+        <tfoot>
+            <tr>
+                <th hidden>@localizer["Id"]</th>
+                <th>@localizer["Actions"]</th>
+                <th>@localizer["Code"]</th>
+                <th>@localizer["Description"]</th>
+                <th>@localizer["Quantity"]</th>
+                <th>@localizer["Archive"]</th>
+                <th>@localizer["State"]</th>
+                <th>@localizer["Provider"]</th>
+                <th>@localizer["Transport"]</th>
+                <th>@localizer["Shipping date"]</th>
+                <th>Nº @localizer["Shipping delivery note"]</th>
+                <th>@localizer["Package"]</th>
+                <th>@localizer["Package weight"]</th>
+                <th>@localizer["Comeback date"]</th>
+                <th>@localizer["Users"]</th>
+            </tr>
+        </tfoot>
+    </table>
+
+    <input type="hidden" id="start_datetime" value="@Model.StartDate" />
+    <input type="hidden" id="activity_percentage" value="@Model.ShipmentsTotalAdvance" />
+
+</body>
+
+<script>
+    $(document).ready(function () {
+
+        var total_advance = $("#activity_percentage").val();
+        var pbTotalAdvance = $("#pb_totalAdvance");
+        var start_date = $("#start_date");
+        var start_datetime = $("#start_datetime");
+        var end_date = $("#end_date");
+        var total_time = $("#total_time");
+
+        pbTotalAdvance
+            .width(`${total_advance}%`)
+            .html(`${total_advance}%`);
+        if (total_advance == 100) {
+            pbTotalAdvance.removeClass('bg-warning');
+            pbTotalAdvance.addClass('bg-success');
+
+            end_date.html("<b>@localizer["End"]: </b> @Model.ShippingEndDate");
+            total_time.html("<b>@localizer["Total time"]: </b>@Model.TotalTime");
+        } else {
+            if (!pbTotalAdvance.hasClass('bg-warning')) {
+                pbTotalAdvance.addClass('bg-warning');
+            }
+        }
+
+        if(start_datetime.attr('value') != undefined){
+            start_date.html("<b>@localizer["Start"]: </b>" + start_datetime.val());
+        }
+
+        let allWaIds = new Set();
+
+        $('#allActivitiesShippingTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let allActivitiesShippingTable = $("#allActivitiesShippingTable").DataTable({
+            "columnDefs": [{
+                "type": "chapter",
+                "targets": 0
+            }],
+            "sDom": 'Brtip',
+            "oLanguage": @localizer["LanguageDataTable"],
+            scrollY: '65vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            rowsGroup: [2, 1],
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img src="../../../images/Excel.svg" width="30" height="30" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: "Trabajo de puesto: " + '@Model.Station.AbreviationDescription',
+                    exportOptions: {
+                        columns: [2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13],
+                        format: {
+                            body: function (data, row, column, node) {
+                                return reformatExportData(data, row, column, node);
+                            }
+                        }
+                    },
+                    customize: function (xlsx) {
+                        addCustomNumberFormat(xlsx, '#,##0.0##');
+                        formatTargetColumn(xlsx, 'J'); // Excel column J
+                    }
+                }
+            ],
+            initComplete: function () {
+                //$('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+            }
+        });
+
+        allActivitiesShippingTable.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(allActivitiesShippingTable.table().container()).on('keyup', 'tfoot input', function () {
+            allActivitiesShippingTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+        $(document).on('click', '.checkSelectedRow', function(){
+
+            let waId = $(this).attr("data-workActivityId");
+            let quantity = $(this).attr("data-quantity")
+
+            if ($('#' + $(this).attr('id')).is(':checked')) 
+            {
+                allWaIds.add(waId + "-" + quantity);
+            }
+            else
+            {
+                allWaIds.delete(waId + "-" + quantity);
+            }
+
+        });
+
+        $('#btn-create-delivery-note').click(function () {
+            if (allWaIds.size > 0) {
+                //if (allWaIds.size > 25) {
+                //    alert("No se puede generar un remito con más de 25 ítems. Por favor, seleccione menos ítems.");
+                //} else {
+                    $.ajax({
+                        url: "/Logistics/DeliveryNote/CreateDeliveryNoteByWorkActivityIds",
+                        type: "POST",
+                        data: {
+                            workActivityIds: Array.from(allWaIds),
+                            stationId: @Model.Station.Id
+                        },
+                        dataType: "json",
+                        traditional: true,
+                        success: function (res) {
+                            if (res.isValid) {
+                                $('#form-modal .modal-header').html('<h5 class="modal-title">' + "@localizer["Delivery note"]" + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+                                $('#form-modal .modal-body').html(res.html);
+                                $('#form-modal').modal('show');
+                            }
+                        },
+                        complete: function () {
+                            allWaIds = new Set();
+
+                            document.querySelectorAll('.checkSelectedRow').forEach(function (item) {
+                                if ($('#' + item.getAttribute('id')).is(':checked') && !$('#' + item.getAttribute('id')).is(':disabled')) {
+                                    $('#' + item.getAttribute('id')).prop('checked', false);
+                                }
+                            });
+
+                            $('#checkSelectAll').prop('checked', false);
+                        }
+                    });
+                //}
+            }
+            else {
+                alert("Usted debe seleccionar al menos un item para generar un remito.");
+            }
+        });
+
+        $('#checkSelectAll').change(function () {
+            if (this.checked) {
+                $('.checkSelectedRow:not(:disabled)').prop('checked', true);
+
+                allWaIds = new Set();
+                document.querySelectorAll('.checkSelectedRow:not(:disabled)').forEach(function (item) {
+                    allWaIds.add(item.getAttribute("data-workActivityId") + "-" + item.getAttribute("data-quantity"));
+                });
+            }
+            else {
+                $('.checkSelectedRow:not(:disabled)').prop('checked', false);
+                
+                allWaIds = new Set();
+                document.querySelectorAll('.checkSelectedRow:not(:disabled)').forEach(function (item) {
+                    allWaIds.delete(item.getAttribute("data-workActivityId") + "-" + item.getAttribute("data-quantity"));
+                });
+            }
+        });
+
+        $('#btn-get-OT').on('click', function(){
+            url = "/production/workorderheader/OnGetWorkOrderHeader?idWorkOrder=" + @Model.urlIds;
+            jQueryModalGet(url, '@localizer["View work order"]');
+        });
+
+        $('#btn-back').on('click', function(){ 
+            // For refresh page when btn back is pressed.
+            location.replace(document.referrer);
+            //window.history.go(-1); 
+            //return false;
+        });
+
+        $('#btn-view-advance-detail').on('click', function(){
+            window.location.href = '/production/workorder/loadworkorder?workorderId=' + @Model.WorkOrders.First().Id;
+        });
+
+    });
+
+    function getDeliveryNoteById(deliveryNoteHeaderId) {
+        if (deliveryNoteHeaderId != 0 && deliveryNoteHeaderId != null) {
+            $.ajax({
+                url: "/Logistics/DeliveryNote/GetDeliveryNoteById",
+                type: "POST",
+                data: {
+                    dnhId: deliveryNoteHeaderId
+                },
+                dataType: "json",
+                traditional: true,
+                success: function (res) {
+                    if (res.isValid) {
+                        $('#form-modal .modal-header').html('<h5 class="modal-title">' + "@localizer["Delivery note"]" + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+                        $('#form-modal .modal-body').html(res.html);
+                        $('#form-modal').modal('show');
+                    }
+                }
+            });
+        }
+    }
+
+    function reformatExportData(data, row, column, node) {
+        if (column === 9) {
+            // replace spaces with nothing; replace commas with points.
+            var newData = data.replace(',', '.').replaceAll(' ', '');
+            return newData;
+        }
+        else {
+            return data;
+        }
+    }
+
+</script>

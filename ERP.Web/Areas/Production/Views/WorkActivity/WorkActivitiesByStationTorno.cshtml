@@ -1,0 +1,488 @@
+﻿@using ERP.Web.Areas.Production.Models
+@using ERP.Application.Enums
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model WorkActivitiesViewModel
+
+<div class="form-row d-flex justify-content-center">
+    <div id="div-export-buttons">
+        <div class="btn-group">
+            <a id="btn-back" class="btn btn-secondary text-white" title="@localizer["Back"]">
+                <img class="tables-img-icon" src="~/images/Back blanco.svg" width="30" height="30" />
+            </a>
+            <a id="btn-view-advance-detail" class="btn btn-secondary text-white" title="@localizer["Product progress detail"]">
+                <img class="tables-img-icon" src="~/images/Avance blanco.svg" width="30" height="30" />
+            </a>
+            @if (User.IsInRole(Roles.SuperAdmin.ToString()))
+            {
+                <a id="btn-get-OT" class="btn btn-secondary" title="@localizer["Work order"]">
+                    <img class="tables-img-icon" src="~/images/OT.svg" width="30" height="30" />
+                </a>
+            }
+            <a id="btnInProcess" class="btn btn-secondary text-white" title="@localizer["In process"]">
+                @localizer["In process"]
+            </a>
+            <a id="btnManageActivities" class="btn btn-secondary text-white" title="@localizer["Manage activities"]">
+                <img id="img_btnInProcess" class="tables-img-icon" src="~/images/fabricar blanco.svg" width="30" height="30" />
+            </a>
+        </div>
+    </div>
+</div>
+
+<table id="activitiesTableTorno" class="table table-striped-blue table-hover w-100 nowrap" cellspacing="0">
+    <thead class="bg-thead">
+        <tr>
+            <th></th>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Next station"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["Start"]</th>
+            <th>@localizer["End"]</th>
+            <th>@localizer["Time"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @{
+            var index = 0;
+            var quantityWorkOrderItem = 0;
+            var productCodeWorkOrderItem = "";
+        }
+
+        @foreach (var activitygroup in Model.ActivitiesGroups)
+        {
+
+            @foreach (var activity in activitygroup.Activities)
+            {
+                quantityWorkOrderItem = 0;
+                if (productCodeWorkOrderItem != activity.WorkOrderItem.Product.Code)
+                {
+                    productCodeWorkOrderItem = activity.WorkOrderItem.Product.Code;
+                    <tr>
+
+                        <td class="td_class">
+
+                        </td>
+                        <td hidden class="td_class">
+                            @{
+                                string activitiesId = "";
+                                foreach (var act in activitygroup.Activities)
+                                {
+                                    activitiesId += act.Id + ",";
+                                }
+                                activitiesId = activitiesId.Trim().Remove(activitiesId.Length - 1);
+                            }
+                            @activitiesId.ToString()
+                        </td>
+
+                        <td class="td_class">
+                            @activitygroup.Activities.First().WorkOrderItem.Product.Code
+                        </td>
+
+                        <td class="td_class">
+                            @activitygroup.Activities.First().WorkOrderItem.Product.Description
+                        </td>
+                        <td class="td_class">
+                            @{
+                                if (activitygroup.Activities.Count > 1)
+                                {
+                                    @foreach (var act in activitygroup.Activities)
+                                    {
+                                        quantityWorkOrderItem += act.WorkOrderItem.Quantity;
+                                    }
+                                }
+                                else if (activitygroup.Activities.Count == 1)
+                                {
+                                    quantityWorkOrderItem = activity.WorkOrderItem.Quantity;
+                                }
+                            }
+                            @quantityWorkOrderItem
+                        </td>
+
+                        <td class="td_class">
+                            @activity.NextStation
+                        </td>
+
+                        <td class="td_class w-25">
+                            <div class="row pl-3">
+                                @foreach (var rps in activity.WorkOrderItem.Product.RelProductStations.OrderBy(ps => ps.Order))
+                                {
+                                    <div class="pl-1 pr-1"> @rps.Station.Abbreviation </div> 
+                                    if (!rps.Equals(activity.WorkOrderItem.Product.RelProductStations.Last()))
+                                    {
+                                        <div class="pl-1 pr-1"><i class="fa fa-arrow-right" aria-hidden="true"></i></div>
+                                    }
+                                }
+                            </div>
+                        </td>
+
+                        <td class="td_class">
+                            @if (activity.StartDate != null)
+                            {
+                                @activity.StartDate;
+                            }
+                        </td>
+                        <td class="td_class">
+                            @if (activity.EndingDate != null)
+                            {
+                                @activity.EndingDate;
+                            }
+                        </td>
+                        <td class="td_class">
+                            @*@activitygroup.TotalTimeAllRelativeActivities*@
+                            @*@if (activity.TotalTime != new TimeSpan(0, 0, 0, 0))
+                            {
+                                @activity.TotalTimeString
+                            }*@
+                            @activitygroup.TotalTimeRelativeActivitiesMontajeAndSoldadura
+                        </td>
+
+                        @*<td class="td_class">
+                                @if (activitygroup.FirstActionAllRelativesActivities != null)
+                                {
+                                    @activitygroup.FirstActionAllRelativesActivities.StartDate;
+                                }
+                            </td>
+                            <td class="td_class">
+                                @if (activitygroup.StopActionAllRelativeActivities != null)
+                                {
+                                    @activitygroup.StopActionAllRelativeActivities.StartDate;
+                                }
+                            </td>
+                            <td class="td_class">
+                                @activitygroup.TotalTimeAllRelativeActivities
+                            </td>*@
+
+                    </tr>
+                }
+
+                index++;
+            }
+        }
+
+    </tbody>
+    <tfoot>
+        <tr>
+            <th></th>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Next station"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["Start"]</th>
+            <th>@localizer["End"]</th>
+            <th>@localizer["Time"]</th>
+        </tr>
+    </tfoot>
+</table>
+<input type="hidden" id="start_datetime" value="@Model.StartDate" />
+<input type="hidden" id="activity_percentage" value="@Model.TotalAdvance" />
+<script>
+    $(document).ready(function () {
+        let ActivitiesIdList = [];
+        var total_advance = $("#activity_percentage").val();
+        var pbTotalAdvance = $("#pb_totalAdvance");
+        var start_date = $("#start_date");
+        var start_datetime = $("#start_datetime");
+        var end_date = $("#end_date");
+        var total_time = $("#total_time");
+
+        pbTotalAdvance
+            .width(`${total_advance}%`)
+            .html(`${total_advance}%`);
+        if (total_advance == 100) {
+            pbTotalAdvance.removeClass('bg-warning');
+            pbTotalAdvance.addClass('bg-success');
+ 
+            end_date.html("<b>@localizer["End"]: </b> @Model.EndDate");
+            total_time.html("<b>@localizer["Total time"]: </b>@Model.TotalTime");
+        } else {
+            if (!pbTotalAdvance.hasClass('bg-warning')) {
+                pbTotalAdvance.addClass('bg-warning');
+            }
+        }
+
+        if(start_datetime.attr('value') != undefined){
+            start_date.html("<b>@localizer["Start"]: </b>" + start_datetime.val());
+        }
+
+        PostAction = (ids, action) => {
+            try {
+
+                setPageScrollPos($('.dataTables_scrollBody').scrollTop());
+
+                $.ajax({
+                    type: 'POST',
+                    url: "/production/workactivity/newAction?activitiesIds=" + ids + "&actionName=" + action + "",
+                    contentType: false,
+                    processData: false,
+                    success: function (res) {
+                        if (res.isValid) {
+
+                        }
+                    },
+                    complete: function(){
+                        saveGroupedWorkActions(ActivitiesIdList, @Model.Station.Id);
+                        ActivitiesIdList = [];
+                        loadData();
+                    },
+                    error: function (err) {
+                        console.log(err)
+                    }
+                });
+
+                return false;
+            } catch (ex) {
+                console.log(ex)
+            }
+        }
+
+        $('#btnInProcess').on('click', function () {
+            window.location.href = "/production/workactivity/IndexWAInProcess?workOrderIds=@Model.urlIds" + "&stationId=@Model.Station.Id";
+        });
+
+        $('#activitiesTableTorno tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let activitiesTableTorno = $("#activitiesTableTorno").DataTable({
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row, meta) {
+                        // Inicio -> Index 7
+                        // Fin -> Index 8
+                        if (row[7] != "" && row[8] != "") {
+                            // Finalizado
+                            return '<a class="btn action-btn"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input-finish" checked disabled type="checkbox" value="" id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>'
+                        } else if (row[7] != "") {
+                            // En proceso
+                            return '<a class="btn action-btn"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input-inprocess" checked disabled type="checkbox" value="" id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>'
+                        } else {
+                            return '<a class="btn action-btn"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input" type="checkbox" value="" id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>'
+                        }
+                    }
+                },
+            ],
+            "aaSorting": [],
+            "sDom": 'Brtip',
+            "oLanguage": @localizer["LanguageDataTable"],
+            scrollY: '65vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img src="../../../images/Excel.svg" width="30" height="30" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: "Trabajo de puesto: " + '@Model.Station.AbreviationDescription',
+                    exportOptions: {
+                        columns: [2, 3, 4, 5, 6, 7, 8, 9]
+                    }
+                }
+            ],
+            initComplete: function () {
+                //$('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+            },
+            drawCallback: function () {
+                $('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+            }
+        });
+
+        $('#btnManageActivities').on('click', function () {
+            if (ActivitiesIdList.length > 0) {
+
+                // Antes de ejecutar accion play para activar todos tengo que validar que se les pueda dar play si se iniciaron o no en los puestos anteriores.
+
+                $.ajax({
+                    type: 'POST',
+                    url: "/production/workactivity/validatePreviousStationForTorno?workActivitiesIds=" + ActivitiesIdList + "&stationId=" + @Model.Station.Id,
+                    contentType: false,
+                    processData: false,
+                    success: function (res) {
+                        if (res.isValid) {
+
+                            PostAction(ActivitiesIdList, "play");
+
+                            //saveGroupedWorkActions(ActivitiesIdList, @Model.Station.Id);
+                            //ActivitiesIdList = [];
+                            //loadData();
+                            //activitiesTableTorno.draw(false);
+
+                            // Fran 14/4/2023: Estaba MAL, iniciaba las actividades de torno de todas las OTs generadas.
+                            // Acá tengo que ejecutar la acción play para los Ids que fueron seleccionados para activarlos, estos que se activaron se mostrarán en la view ejecutada por el botón "En proceso".
+                            //$.ajax({
+                            //    type: 'POST',
+                            //    url: "/production/workactivity/GetActivitiesAndChildsToActivate?strFatherActivitiesIds=" + ActivitiesIdList + "&stationId=" + @Model.Station.Id + "&initialFathersIds=" + ActivitiesIdList,
+                            //    success: function (res) {
+                            //        if (res.isValid) {
+
+                            //            let fathersActivitiesIds = JSON.parse(res.fathersActivitiesIds);
+
+                            //            for (let i = 0; i < fathersActivitiesIds.length; i++) {
+                            //                PostAction(fathersActivitiesIds[i].Id, "play");
+                            //            }
+
+                            //            // Guardo en una tabla (GroupedWorkActions) de la base de datos los identificadores que fueron seleccionados con cada check para agruparlos.
+                            //            saveGroupedWorkActions(ActivitiesIdList, @Model.Station.Id)
+
+                            //            ActivitiesIdList = [];
+                            //            loadData();
+                            //            activitiesTableTorno.draw(false);
+                            //        }
+                            //    },
+                            //    complete: function () {
+
+                            //    },
+                            //    error: function (err) {
+                            //        console.log(err)
+                            //    }
+                            //});
+
+                        } else {
+                            alert("Asegurese de que los items seleccionados hayan completado sus tareas en los puestos anteriores.");
+                            ActivitiesIdList = [];
+                            loadData();
+                            activitiesTableTorno.draw(false);
+                        }
+                    },
+                    error: function (err) {
+                        console.log(err)
+                    }
+                });
+
+            }
+            else {
+                alert("Asegurese de haber seleccionado algún ítem.");
+            }
+
+        });
+
+        @*$('#btnManageActivities').on('click', function () {
+            if (ActivitiesIdList.length > 0) {
+                // Guardo en localstorage : localStorage.setItem(key,value); to set - localStorage.getItem(key); to get.
+                // Activities selected ids -> Guardo como key: (Nº OT, Id first activity) y como value: los Id de cada actividad seleccionada
+                let key = @Model.workOrderIdsString + ', ' + ActivitiesIdList[0];
+                localStorage.setItem(key, ActivitiesIdList);
+
+                // Acá tengo que ejecutar la acción play para los Ids que fueron seleccionados para activarlos, estos que se activaron se mostrarán en la view ejecutada por el botón "En proceso".
+                $.ajax({
+                    type: 'POST',
+                    url: "/production/workactivity/GetActivitiesAndChildsToActivate?strFatherActivitiesIds=" + ActivitiesIdList + "&stationId=" + @Model.Station.Id + "&initialFathersIds=" + ActivitiesIdList,
+                    success: function (res) {
+                        if (res.isValid) {
+
+                            let fathersActivitiesIds = JSON.parse(res.fathersActivitiesIds);
+
+                            for (let i = 0; i < fathersActivitiesIds.length; i++) {
+                                PostAction(fathersActivitiesIds[i].Id, "play");
+                            }
+                        }
+                    },
+                    complete: function () {
+                        ActivitiesIdList = [];
+                        loadData();
+                        activitiesTableTorno.draw(false);
+                        checksReset();
+                    },
+                    error: function (err) {
+                        console.log(err)
+                    }
+                });
+
+            } else {
+                alert("Asegurese de haber seleccionado algún ítem.");
+            }
+
+        });*@
+
+        let rows = activitiesTableTorno.rows().data();
+        for (let i = 0; i < rows.length; i++) {
+            let checkSelectedRow = document.getElementById('checkSelectedRow_' + i);
+
+            checkSelectedRow.addEventListener('change', function () {
+                if (this.checked) {
+                    ActivitiesIdList.push(rows[i][1]);
+                } else {
+                    const index = ActivitiesIdList.indexOf(rows[i][1]);
+                    if (index > -1) {
+                        ActivitiesIdList.splice(index, 1);
+                    }
+                }
+            });
+        }
+
+        activitiesTableTorno.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(activitiesTableTorno.table().container()).on('keyup', 'tfoot input', function () {
+            activitiesTableTorno
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+        $('#btn-get-OT').on('click', function(){
+            url = "/production/workorderheader/OnGetWorkOrderHeader?idWorkOrder=" + @Model.urlIds;
+            jQueryModalGet(url, '@localizer["View work order"]');
+        });
+
+        $('#btn-back').on('click', function(){
+            // For refresh page when btn back is pressed.
+            location.replace(document.referrer);
+            //window.history.go(-1); 
+            //return false;
+        });
+
+        $('#btn-view-advance-detail').on('click', function(){
+            window.location.href = '/production/workorder/loadworkorder?workorderId=' + @Model.WorkOrders.First().Id;
+        });
+
+    });
+
+    function saveGroupedWorkActions(workActivitiesIds, stationId) {
+        try {
+
+            setPageScrollPos($('.dataTables_scrollBody').scrollTop());
+
+            $.ajax({
+                type: 'POST',
+                url: "/production/workactivity/newGroupedWorkAction?workActivitiesIds=" + workActivitiesIds + "&stationId=" + stationId,
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (!res.isValid) {
+                        alert("No se pudo generar el agrupamiento de actividades.");
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            });
+
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+    function checksReset() {
+        let rows = $("#activitiesTableTorno").DataTable().rows().data();
+        for (let i = 0; i < rows.length; i++) {
+            let checkSelectedRow = document.getElementById('checkSelectedRow_' + i);
+            checkSelectedRow.checked = false;
+        }
+    }
+</script>

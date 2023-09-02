@@ -1,0 +1,384 @@
+﻿@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+@model ProductViewModel
+<div id="specifications">
+
+<button class="btn btn-primary btn-block text-left collapsed my-3" type="button" data-toggle="collapse" data-target="#tabContent-especification" aria-expanded="false" aria-controls="collapseExample">
+    <i class="fa fas fa-plus-circle"></i> @localizer["Specifications"]
+</button>
+<div class="collapse col-12 colapsableTab border" id="tabContent-especification" role="tabpanel" aria-labelledby="especification-tab">
+
+<h5>@localizer["Own characteristics"]</h5>
+<div>
+    @* Fila 1 *@
+    <div class="form-row mb-3">
+
+        @* Fran: Se agrega para mantener en stock cuando se actualiza un producto que se está gestionando en stock. *@
+
+        @if (Model.Id != 0)
+        {
+            if (Model.ProductFeature.StoredStock)
+            {
+                <input hidden type="checkbox" asp-for="ProductFeature.StoredStock" value="true"/>
+            }
+            else
+            {
+                <input hidden type="checkbox" asp-for="ProductFeature.StoredStock" value="false"/>
+            }
+        }
+
+        <div class="form-row mb-3">
+            <div class="col-md-auto mt-auto">
+                <div id="operationAppreciation">
+                    <div class="row">
+                        <div class="col-md-4" id="appreciation">
+                            <label>@localizer["Appreciation"]</label>
+                            <input type="text" asp-for="ProductFeature.Appreciation" name="ProductFeature.Appreciation" class="form-control">
+                            <span asp-validation-for="ProductFeature.Appreciation" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-8" id="operation">
+                            <label> @localizer["Operation"]</label>
+                            <div class="input-group">
+                                @Html.DropDownListFor(m => m.OperationId, Model.Operations, "----------", new { @class = "form-control" })
+                            </div>
+                            <span asp-validation-for="OperationId" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    
+    <div class="form-row mb-3">
+        <div class="col-md-auto mt-auto">
+            <label>@localizer["Voltages"]</label>
+            <div class="row ml-1">
+                @foreach (var item in Model.SupplyVoltagesList)
+                {
+                    <div class="checkbox mr-3 mt-2">
+                        <input type="hidden" name="ProductSupplyVoltages.Index" value="@item.Value"/>
+                        <label>
+                            <input type="checkbox"
+                                   name="ProductSupplyVoltages[@item.Value].SupplyVoltageId"
+                                   value="@item.Value"
+                                   @if (Model.ProductSupplyVoltages != null && Model.ProductSupplyVoltages.Any(x => x.SupplyVoltageId == int.Parse(item.Value)))
+                                   {
+                                       <text> checked </text>
+                                   }/> @item.Text
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="form-row mb-3">
+        
+        <div class="col-md-1 mt-auto">
+            <label>@localizer["Production speed"]</label>
+            <input type="text" asp-for="ProductFeature.ProductionSpeed" name="ProductFeature.ProductionSpeed" class="form-control">
+            <span asp-validation-for="ProductFeature.ProductionSpeed" class="text-danger"></span>
+        </div>
+        <div class="col-md-1 mt-auto">
+            <label>@localizer["Work pressure"]</label>
+            <input type="text" asp-for="ProductFeature.WorkPressure" name="ProductFeature.WorkPressure" class="form-control">
+            <span asp-validation-for="ProductFeature.WorkPressure" class="text-danger"></span>
+        </div>
+        
+    </div>
+
+    <div class="form-row mb-3">
+        <div class="col-md-auto mt-auto">
+            <label>@localizer["Voltages"]</label>
+            <div class="row ml-1">
+                @foreach (var item in Model.SupplyVoltagesList)
+                {
+                    <div class="checkbox mr-3 mt-2">
+                        <input type="hidden" name="ProductSupplyVoltages.Index" value="@item.Value"/>
+                        <label>
+                            <input type="checkbox"
+                                   name="ProductSupplyVoltages[@item.Value].SupplyVoltageId"
+                                   value="@item.Value"
+                                   @if (Model.ProductSupplyVoltages != null && Model.ProductSupplyVoltages.Any(x => x.SupplyVoltageId == int.Parse(item.Value)))
+                                   {
+                                       <text> checked </text>
+                                   }/> @item.Text
+                        </label>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr>
+
+@* Fila 3 *@
+<h5 class="mt-4">@localizer["Processed product characteristics"]</h5>
+<div class="row ml-0 mr-0">
+    <div class="col-md-1">
+        <label>@localizer["Piece type"]</label>
+        @foreach (var item in Model.PieceTypesList)
+        {
+            <div class="checkbox">
+                <input type="hidden" name="ProductPieceTypes.Index" value="@item.Value"/>
+                <label>
+                    <input type="checkbox"
+                           name="ProductPieceTypes[@item.Value].PieceTypeId"
+                           value="@item.Value"
+                           @if (Model.ProductPieceTypes != null && Model.ProductPieceTypes.Any(x => x.PieceTypeId == int.Parse(item.Value)))
+                           {
+                               <text> checked </text>
+                           }/> @item.Text
+                </label>
+            </div>
+        }
+    </div>
+    <div class="col-md-1">
+        <label>@localizer["Piece format"]</label>
+        @foreach (var item in Model.PieceFormatsList)
+        {
+            <div class="checkbox">
+                <input type="hidden" name="ProductPieceFormats.Index" value="@item.Value"/>
+                <label>
+                    <input type="checkbox"
+                           name="ProductPieceFormats[@item.Value].PieceFormatId"
+                           value="@item.Value"
+                           @if (Model.ProductPieceFormats != null && Model.ProductPieceFormats.Any(x => x.PieceFormatId == int.Parse(item.Value)))
+                           {
+                               <text> checked </text>
+                           }/> @item.Text
+                </label>
+            </div>
+        }
+    </div>
+    <div class="col-md-2">
+        <label>@localizer["Piece width"] (mm)</label>
+        <div class="row">
+            <div class="col-md-6">
+                <label>@localizer["Min"]</label>
+                <input type="text" asp-for="ProductFeature.WidthMinPiece" name="ProductFeature.WidthMinPiece" class="form-control">
+                <span asp-validation-for="ProductFeature.WidthMinPiece" class="text-danger"></span>
+            </div>
+            
+            <div class="col-md-6">
+                <label>@localizer["Max"]</label>
+                <input type="text" asp-for="ProductFeature.WidthMaxPiece" name="ProductFeature.WidthMaxPiece" class="form-control">
+                <span asp-validation-for="ProductFeature.WidthMaxPiece" class="text-danger"></span>
+            </div>
+
+        </div>
+    </div>
+    
+    <div class="col-md-2">
+        <label>@localizer["Piece length"] (mm)</label>
+        <div class="row">
+            <div class="col-md-6">
+                <label>@localizer["Min"]</label>
+                <input type="text" asp-for="ProductFeature.LenghtMinPiece" name="ProductFeature.LenghtMinPiece" class="form-control">
+                <span asp-validation-for="ProductFeature.LenghtMinPiece" class="text-danger"></span>
+            </div>
+            
+            <div class="col-md-6">
+                <label>@localizer["Max"]</label>
+                <input type="text" asp-for="ProductFeature.LenghtMaxPiece" name="ProductFeature.LenghtMaxPiece" class="form-control">
+                <span asp-validation-for="ProductFeature.LenghtMaxPiece" class="text-danger"></span>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<h5 class="mt-4">Dimensiones</h5>
+<div class="row ml-0 mr-0">
+    <div class="col-md-3">
+        <label>Netas</label>
+        <div class="row">
+            
+            <div class="col-md-6">
+                <label>@localizer["Width"] (mm)</label>
+                <input type="text" asp-for="ProductFeature.MachineWidth" name="ProductFeature.MachineWidth" class="form-control">
+                <span asp-validation-for="ProductFeature.MachineWidth" class="text-danger"></span>
+            </div>
+            
+            <div class="col-md-6">
+                <label>@localizer["Length"] (mm)</label>
+                <input type="text" asp-for="ProductFeature.MachineLenght" name="ProductFeature.MachineLenght" class="form-control">
+                <span asp-validation-for="ProductFeature.MachineLenght" class="text-danger"></span>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <label>@localizer["Height"] (mm)</label>
+                <input type="text" asp-for="ProductFeature.MachineHeight" name="ProductFeature.MachineHeight" class="form-control">
+                <span asp-validation-for="ProductFeature.MachineHeight" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label>@localizer["Weight"] (kg)</label>
+                <input type="text" asp-for="ProductFeature.MachineWeight" name="ProductFeature.MachineWeight" class="form-control">
+                <span asp-validation-for="ProductFeature.MachineWeight" class="text-danger"></span>
+            </div>
+            
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <label>Embalaje</label>
+        <div class="row">
+
+            <div class="col-md-6">
+                <label>@localizer["Width"] (mm)</label>
+                <input type="text" asp-for="ProductFeature.MachineWidth" name="ProductFeature.MachineWidth" class="form-control">
+                <span asp-validation-for="ProductFeature.MachineWidth" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label>@localizer["Length"] (mm)</label>
+                <input type="text" asp-for="ProductFeature.MachineLenght" name="ProductFeature.MachineLenght" class="form-control">
+                <span asp-validation-for="ProductFeature.MachineLenght" class="text-danger"></span>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <label>@localizer["Height"] (mm)</label>
+                <input type="text" asp-for="ProductFeature.MachineHeight" name="ProductFeature.MachineHeight" class="form-control">
+                <span asp-validation-for="ProductFeature.MachineHeight" class="text-danger"></span>
+            </div>
+
+            <div class="col-md-6">
+                <label>@localizer["Weight"] (kg)</label>
+                <input type="text" asp-for="ProductFeature.MachineWeight" name="ProductFeature.MachineWeight" class="form-control">
+                <span asp-validation-for="ProductFeature.MachineWeight" class="text-danger"></span>
+            </div>
+            
+        </div>
+    </div>
+</div>
+
+<hr>
+
+@* Fila 6 *@
+<div id="divOtros" class="mt-4">
+    <h5>@localizer["Others"]</h5>
+    <div class="row ml-0 mr-0 ">
+        <div class="col-md-12 mb-3" id="slicersDiv">
+            <h5>@localizer["SLICERS"]</h5>
+            <div class="form-row d-flex">
+                <div class="col-md-1">
+                    <label>@localizer["Pieces per cut"]</label>
+                    <input type="number" asp-for="ProductFeature.PieceXCut" name="ProductFeature.PieceXCut" class="form-control">
+                    <span asp-validation-for="ProductFeature.PieceXCut" class="text-danger"></span>
+                </div>
+                <div class="col-md-1">
+                    <label>@localizer["Max. roll diameter"]</label>
+                    <input type="number" asp-for="ProductFeature.RollQuantityMax" name="ProductFeature.RollQuantityMax" class="form-control">
+                    <span asp-validation-for="ProductFeature.RollQuantityMax" class="text-danger"></span>
+                </div>
+                <div class="col-md-4 mt-auto">
+                    <label class="mr-2 col-12 text-left">@localizer["Cut type"]</label>
+                    <div class="row col-md-6 ml-2">
+                        @foreach (var item in Model.CutTypesList)
+                        {
+                            <div class="checkbox mr-3 mt-2">
+                                <input type="hidden" name="ProductCutTypes.Index" value="@item.Value"/>
+                                <label>
+                                    <input type="checkbox"
+                                           name="ProductCutTypes[@item.Value].CutTypeId"
+                                           value="@item.Value"
+                                           @if (Model.ProductCutTypes != null && Model.ProductCutTypes.Any(x => x.CutTypeId == int.Parse(item.Value)))
+                                           {
+                                               <text> checked </text>
+                                           }/> @item.Text
+                                </label>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 mb-3" id="printersDiv">
+            <h5>@localizer["PRINTERS"]</h5>
+            <div class="form-row d-flex">
+                <div class="col-md-1 mt-auto">
+                    <label>@localizer["Max. passage width"]</label>
+                    <input type="number" asp-for="ProductFeature.PassageWidthMax" name="ProductFeature.PassageWidthMax" class="form-control">
+                    <span asp-validation-for="ProductFeature.PassageWidthMax" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mt-auto">
+                    <label>@localizer["Max. printing width"]</label>
+                    <input type="number" asp-for="ProductFeature.PrintWidthMax" name="ProductFeature.PrintWidthMax" class="form-control">
+                    <span asp-validation-for="ProductFeature.PrintWidthMax" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mt-auto">
+                    <label>@localizer["Max. printing length"]</label>
+                    <input type="number" asp-for="ProductFeature.PrintHeightMax" name="ProductFeature.PrintHeightMax" class="form-control">
+                    <span asp-validation-for="ProductFeature.PrintHeightMax" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mt-auto ">
+                    <label>@localizer["Colors per pass"]</label>
+                    <input type="number" asp-for="ProductFeature.ColorsXPass" name="ProductFeature.ColorsXPass" class="form-control">
+                    <span asp-validation-for="ProductFeature.ColorsXPass" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 mb-3" id="pressesDiv">
+            <h5>@localizer["PRESSES"]</h5>
+            <div class="form-row d-flex">
+                <div class="col-md-1 mt-auto">
+                    <label>@localizer["Pressing capacity"]</label>
+                    <input type="number" asp-for="ProductFeature.PressingCapacity" name="ProductFeature.PressingCapacity" class="form-control">
+                    <span asp-validation-for="ProductFeature.PressingCapacity" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mt-auto">
+                    <label>@localizer["Reduction"]</label>
+                    <input type="number" asp-for="ProductFeature.Reduction" name="ProductFeature.Reduction" class="form-control">
+                    <span asp-validation-for="ProductFeature.Reduction" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mt-auto">
+                    <label>@localizer["Plate dimensions"]</label>
+                    <input type="number" asp-for="ProductFeature.DimensionPlates" name="ProductFeature.DimensionPlates" class="form-control">
+                    <span asp-validation-for="ProductFeature.DimensionPlates" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mt-auto">
+                    <label>@localizer["Max. openning"]</label>
+                    <input type="number" asp-for="ProductFeature.OpeningMax" name="ProductFeature.OpeningMax" class="form-control">
+                    <span asp-validation-for="ProductFeature.OpeningMax" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mt-auto">
+                    <label>@localizer["Pressing center"]</label>
+                    <input type="number" asp-for="ProductFeature.PressedCenter" name="ProductFeature.PressedCenter" class="form-control">
+                    <span asp-validation-for="ProductFeature.PressedCenter" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mt-auto">
+                    <label>@localizer["Pressing speed"]</label>
+                    <input type="number" asp-for="ProductFeature.PressedSpeed" name="ProductFeature.PressedSpeed" class="form-control">
+                    <span asp-validation-for="ProductFeature.PressedSpeed" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mt-auto">
+                    <label>@localizer["Opening speed"]</label>
+                    <input type="number" asp-for="ProductFeature.OpeningSpeed" name="ProductFeature.OpeningSpeed" class="form-control">
+                    <span asp-validation-for="ProductFeature.OpeningSpeed" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-12 " id="conversionsDiv">
+            <h5>@localizer["CONVERSION"]</h5>
+            <div class="form-row d-flex">
+                <div class="col-md-1 mt-auto">
+                    <label>@localizer["Max. bag diameter"]</label>
+                    <input type="number" asp-for="ProductFeature.BagQuantityMax" name="ProductFeature.BagQuantityMax" class="form-control">
+                    <span asp-validation-for="ProductFeature.BagQuantityMax" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+</div>

@@ -1,0 +1,167 @@
+﻿/*table tr:nth-child(31n) {
+    color: red;
+    display: block;
+    page-break-after: always;
+    position: relative;
+}*/
+
+.page-break {
+    /* Define the maximum number of rows per page */
+    page-break-inside: avoid;
+}
+
+    .page-break tr {
+        /* Apply page breaks after the specified number of rows */
+        page-break-after: always;
+    }
+
+.break-after {
+    display: block !important;
+    page-break-after: always !important;
+}
+
+.break-before {
+    display: block !important;
+    page-break-before: always !important;
+}
+
+img {
+    position: absolute;
+    top: 50%;
+    margin-top: -25px;
+    padding-left: 5%;
+}
+
+h5, h3 {
+    color: #343A40 !important;
+}
+
+h1 {
+    font-size: 45px !important;
+}
+
+#logo {
+    width: 60%;
+}
+
+#header_simplemak {
+    height: 10%;
+    color: white;
+}
+
+#header_right {
+    background: -webkit-linear-gradient(top, #A5A5A5 30%, #F5F5F5 70%);
+    text-align: right;
+    position: relative;
+    width: 20%;
+    border-top-right-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+}
+
+#header_middle {
+    width: 10%;
+    position: relative;
+    background-color: #84B6F4 !important;
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+}
+
+#header_middle_child {
+    height: 128px !important;
+    background-color: #84B6F4 !important;
+    border: 2px solid white;
+    border-radius: 10px !important;
+}
+
+#header_left {
+    width: 70%;
+    position: relative;
+    background-color: #84B6F4 !important;
+    border-top-left-radius: 10px !important;
+    border-bottom-left-radius: 10px !important;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    padding-right: 10px;
+}
+
+/*#body_two {
+    border-bottom: 1px solid grey;
+}*/
+
+#body_one_left {
+    width: 60% !important;
+}
+
+#body_two_left {
+    width: 40% !important;
+}
+
+#dateTitle, #date, #providerTitle, #provider, #adressTitleProvider, #adressProvider, #postalCodeProviderTitle, #postalCodeProvider, #cuitTitle, #cuit, #ivaTitle, #iva {
+    color: #000000 !important;
+}
+
+#docNotValid {
+    color: #000000 !important;
+    font-size: 10px !important;
+}
+
+#title {
+    position: absolute;
+    top: 80%;
+    margin-top: -25px;
+    padding-left: 5%;
+}
+
+#simplemak, #bussinessName, #adressTitle, #adress, #phoneTitle, #phone, #mailTitle, #mail, #web {
+    color: #0085CA !important;
+}
+
+.table-striped th {
+    border-top: 1px solid rgb(132, 182, 244) !important;
+    border-bottom: 1px solid rgb(132, 182, 244) !important;
+}
+
+.table-striped td {
+    border-top: none !important;
+}
+
+.table thead th {
+    padding: 0.6rem !important;
+    border-bottom: 1px solid rgb(132, 182, 244) !important;
+}
+
+.custom-font-size-th tr th {
+    font-size: 12px;
+}
+
+.custom-font-size-td tr td {
+    font-size: 12px;
+}
+
+.page-breaker {
+    display: block;
+    clear: both;
+    page-break-after: always;
+}
+
+.footer {
+    position: fixed;
+    bottom: 0;
+    width: 99%;
+}
+
+.lastItemClassTr {
+    border-bottom: 2px solid rgb(132, 182, 244) !important;
+}
+
+.flexrow {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex !important;
+}
+
+    .flexrow > div {
+        -webkit-box-flex: 1;
+        -webkit-flex: 1;
+        flex: 1;
+    }

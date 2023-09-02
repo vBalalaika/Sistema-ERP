@@ -1,0 +1,35 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+
+@model ProductViewModel
+    <div id="providersTab">
+
+        <button class="btn btn-primary btn-block text-left collapsed my-3" type="button" data-toggle="collapse" data-target="#tabContent-providers" aria-expanded="false" aria-controls="collapseExample">
+            <i class="fa fas fa-plus-circle"></i>   @localizer["Providers"]
+        </button>
+
+        @*TODO:Definir bien como se va a utilizar y que datos irian en cada caso, seguramente sean 2 listas distintas para compradosEstandar/Conjuntos*@
+        <div class="collapse colapsableTab border" id="tabContent-providers" aria-labelledby="providers-tab">
+            <div class="col-12">
+                <table class="table" id="ProvidersTable">
+                    <thead>
+                        <tr>
+                            <th scope="col">@localizer["Business name"]</th>
+                            <th scope="col" class="hidable">@localizer["Brand"]</th>
+                            <th scope="col" class="hidable">@localizer["Provider code"]</th>
+                            <th scope="col" class="hidable">@localizer["Presentation"]</th>
+                            <th scope="col" class="hidable">@localizer["Width"] (mm)</th>
+                            <th scope="col" class="hidable">@localizer["Length"] (mm) </th>
+                            <th scope="col" class="hidable">@localizer["Weight"] (kg)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @*TODO: cargar proveedores del producto*@
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>

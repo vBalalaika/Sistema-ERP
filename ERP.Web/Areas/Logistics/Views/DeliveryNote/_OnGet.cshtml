@@ -1,0 +1,177 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Logistics.Models.DeliveryNote
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model DeliveryNoteHeaderViewModel
+
+<div class="form-row">
+
+    <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+    <input type="checkbox" hidden asp-for="wasExportedToPDF" name="wasExportedToPDF" id="wasExportedToPDF" class="form-control">
+    <input type="hidden" asp-for="stationId" name="stationId" id="stationId" class="form-control">
+
+    <div class="col-md-4 mb-3 mt-1">
+        <label asp-for="ProviderId" class="control-label">@localizer["Provider"]</label>
+        <select disabled name="ProviderId" class="form-control select2bs4" id="Providers" asp-for="ProviderId" asp-items="@Model.Providers">
+        </select>
+    </div>
+    <div class="col-md-4 mb-3 mt-1">
+        <label asp-for="TransportProviderId" class="control-label">@localizer["Transport"]</label>
+        <select disabled name="TransportProviderId" class="form-control select2bs4" id="TransportProviders" asp-for="TransportProviderId" asp-items="@Model.TransportProviders">
+            <option value="-1">@localizer["Select transport"]</option>
+        </select>
+    </div>
+    <div class="col-md-2 mb-3 mt-1">
+        <label asp-for="Date" class="control-label">@localizer["Date"]</label>
+        <input asp-for="Date" name="Date" type="datetime-local" class="form-control" disabled value="@Model.Date.ToString("yyyy-MM-dd hh:mm")" id="Date">
+    </div>
+    <div class="col-md-2 mb-3 mt-1">
+        <label asp-for="Number" class="control-label">@localizer["Number"]</label>
+        <input asp-for="Number" name="Number" type="text" class="form-control" id="Number" disabled value="@Model.Number" onkeypress="return validateIsNumberWithMidDash(event);">
+    </div>
+
+</div>
+
+<div class="form-row">
+    <div id="table-div" class="col-md-12 py-3">
+        <div class="row d-flex  col-md-12 ml-1 p-0">
+            <label class="card-title text-capitalize mb-3">@localizer["Details"]</label>
+        </div>
+
+        <div id="table-responsive-div" class="col-md-12 p-0">
+            <table class="table table-striped-blue nowrap w-100" id="getDeliveryNoteDetailsTable">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden></th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th>@localizer["Quantity"]</th>
+                        <th>@localizer["Package"]</th>
+                        <th>@localizer["Package weight"]</th>
+                        <th>@localizer["Nº OT"]</th>
+                        <th>Nº @localizer["Product"]</th>
+                        <th>@localizer["Product"]</th>
+                        <th>@localizer["Configuration"]</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    @if (Model.DeliveryNoteDetails != null)
+                    {
+
+                        @foreach (var item in Model.DeliveryNoteDetails)
+                        {
+                            <tr>
+                                <td class="d-none">
+                                    <input type="hidden" name="DeliveryNoteDetails.Index" value="@item.WorkActivity.Id" />
+                                    <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].Id" readonly value="@item.Id" />
+                                    <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].ConcurrencyToken" readonly value="@item.ConcurrencyToken" />
+                                    <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].DeliveryNoteHeaderId" readonly value="@item.DeliveryNoteHeaderId" />
+                                    <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].ProductItemId" readonly value="@item.WorkActivity.WorkOrderItem.Product.Id" />
+                                    <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].ProductId" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Product.Id" />
+                                    @if (item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Structure != null)
+                                    {
+                                        <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].ConfigurationId" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Structure.Id" />
+                                    }
+                                    else
+                                    {
+                                        <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].ConfigurationId" readonly value="" />
+                                    }
+                                    <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].WorkActivityId" readonly value="@item.WorkActivity.Id" />
+                                </td>
+
+                                <td width="7%"><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].ProductItemCode" readonly value="@item.WorkActivity.WorkOrderItem.Product.Code" /></td>
+                                <td width="30%"><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].ProductItemDescription" readonly value="@item.WorkActivity.WorkOrderItem.Product.Description" /></td>
+                                <td><input type="text" class="custom-form-control form-control text-center" name="DeliveryNoteDetails[@item.WorkActivity.Id].Quantity" readonly value="@item.Quantity" /></td>
+
+                                <td><input type="number" class="custom-form-control inputPackage form-control text-center" name="DeliveryNoteDetails[@item.WorkActivity.Id].Package" readonly value="@item.Package" /></td>
+                                <td><input type="text" class="custom-form-control inputPackageWeight form-control text-center" name="DeliveryNoteDetails[@item.WorkActivity.Id].PackageWeight" readonly value="@Math.Round(item.PackageWeight, 2)" onkeypress="return validateIsNumber(event);" /></td>
+
+                                <td><input type="text" class="custom-form-control form-control text-center" name="DeliveryNoteDetails[@item.WorkActivity.Id].WorkOrderHeaderNumber" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.WorkOrderHeader.WorkOrderHeaderNumber" /></td>
+                                <td><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].ProductNumber" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.ProductNumber" /></td>
+                                <td width="15%"><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].Product" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Product.CodeAndDescription" /></td>
+                                @if (item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Structure != null)
+                                {
+                                    <td width="15%"><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].Configuration" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Structure.Description" /></td>
+                                }
+                                else
+                                {
+                                    <td width="15%"><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].Configuration" readonly value="" /></td>
+                                }
+
+                            </tr>
+                        }
+
+                    }
+
+                </tbody>
+            </table>
+        </div>
+        @if (Model.wasExportedToPDF)
+        {
+            <form id="form-exportToPdf" method="post" asp-controller="DeliveryNote" asp-action="ExportToPdf" asp-route-deliveryNoteHeaderId="@Model.Id" asp-route-wasExportedToPDF="true" enctype="multipart/form-data">
+                <div id="buttons-div" class="form-group justify-content-between">
+                    <button id="btn-export-to-pdf" type="submit" disabled class="btn btn-primary"><img src="../../../images/PDF.svg" width="30" height="30" /></button>
+                </div>
+            </form>
+        }
+        else
+        {
+            <form id="form-exportToPdf" method="post" asp-controller="DeliveryNote" asp-action="ExportToPdf" asp-route-deliveryNoteHeaderId="@Model.Id" asp-route-wasExportedToPDF="true" enctype="multipart/form-data">
+                <div id="buttons-div" class="form-group justify-content-between">
+                    <button id="btn-export-to-pdf" type="submit" class="btn btn-primary"><img src="../../../images/PDF.svg" width="30" height="30" /></button>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+<script src="~/js/site.js"></script>
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $("#getDeliveryNoteDetailsTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "ordering": false,
+            "searching": false,
+            "scroller": true,
+            "scrollX": true,
+            "scrollY": '30vh',
+            "scrollCollapse": true,
+            "info": false
+        });
+
+        $('#Providers').select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        $('#TransportProviders').select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        $('#form-exportToPdf').submit(function (e) {
+
+            // For get stationId param from url.
+            let params = (new URL(document.location)).searchParams;
+            let stationId = params.get("stationId");
+            $('#stationId').val(stationId);
+
+            // Se agrega el parametro stationId a la url action del formulario, para iniciar las actividades y queden "En proceso"
+            let newActionUrl = this.getAttribute('action') + '&stationId=' + $('#stationId').val();
+            document.getElementById('form-exportToPdf').action = newActionUrl;
+
+            e.preventDefault(); // don't submit multiple times
+            this.submit(); // use the native submit method of the form element
+            $('#btn-export-to-pdf').prop('disabled', true);
+            $('#form-modal').modal('hide');
+            // To refresh WorkActivitiesByStationEnvios.cshtml
+            //$('#viewAll').html('');
+            loadData();
+        });
+
+    });
+</script>

@@ -1,0 +1,296 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Production.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+@model WorkOrderHeaderViewModel
+@{var index = 0; }
+@foreach (var waGroup in Model.WorkActivitiesGroupsByStation)
+{
+    <input type="hidden" value="@waGroup.GroupStationId" asp-for="WorkActivitiesGroupsByStation[index].GroupStationId" name="WorkActivitiesGroupsByStation[@index].GroupStationId" class="form-control">
+    <div id="index_@index" class="station-row row w-100">
+
+        <div class="col-md-2 col-lg-2 col-xl-1 mb-1">
+            @if (!waGroup.IsGroupActive)
+            {
+
+                <div class="form-check form-check-inline mr-0">
+
+                    <a id="btn-switch-@index" class="btn action-btn btn-switch" onclick="activateWA(@Model.Id,@waGroup.GroupStation.Id, this); return false;"
+                       title="@localizer["To production"]">
+                        <img class="action-img-icon" src="~/images/OFF.svg" width="30" height="30" />
+                    </a>
+
+                    @if (waGroup.GroupStation.WorkOrderDisplayType == "Envios")
+                    {
+                        <a class="btn action-btn darkModeIcon disabled" onclick="navigateToWorkActivitiesbyWorkOrderAndStationShipments('@waGroup.WorkOrdersIds', @waGroup.GroupStation.Id); return false;">
+                            <img class="tables-img-icon" src="~/images/Ver.svg" width="25" height="25" />
+                        </a>
+                    }
+                    else
+                    {
+                        <a class="btn action-btn darkModeIcon disabled" onclick="navigateToWorkActivitiesbyWorkOrderAndStation('@waGroup.WorkOrdersIds', @waGroup.GroupStation.Id); return false;">
+                            <img class="tables-img-icon" src="~/images/Ver.svg" width="25" height="25" />
+                        </a>
+                    }
+
+                </div>
+            }
+            else
+            {
+                <div class="form-check form-check-inline mr-0">
+
+                    <a id="btn-switch-@index" class="btn action-btn btn-switch disabled" onclick="activateWA(@Model.Id,@waGroup.GroupStation.Id, this); return false;"
+                       title="@localizer["To production"]">
+                        <img src="~/images/ON fuccia.svg" width="30" height="30" />
+                    </a>
+
+                    @if (waGroup.GroupStation.WorkOrderDisplayType == "Envios")
+                    {
+                        <a class="btn action-btn darkModeIcon" onclick="navigateToWorkActivitiesbyWorkOrderAndStationShipments('@waGroup.WorkOrdersIds', @waGroup.GroupStation.Id); return false;">
+                            <img class="tables-img-icon" src="~/images/Ver.svg" width="25" height="25" />
+                        </a>
+                    }
+                    else
+                    {
+                        <a class="btn action-btn darkModeIcon" onclick="navigateToWorkActivitiesbyWorkOrderAndStation('@waGroup.WorkOrdersIds', @waGroup.GroupStation.Id); return false;">
+                            <img class="tables-img-icon" src="~/images/Ver.svg" width="25" height="25" />
+                        </a>
+                    }
+
+                </div>
+            }
+        </div>
+
+        <div class="col-md-4 col-lg-4 mb-1">
+            @{
+                var nameStation = waGroup.GroupStation.AbreviationDescription;
+            }
+            <input type="text" value="@nameStation" readonly class="form-control" />
+        </div>
+
+        <div class="col-md-4 col-lg-4 mb-1">
+            <div class="input-group row-col-md-12">
+                <div class="input-group">
+                    <select class="form-control select2bs4 selectUsers" multiple="multiple" id="WorkActivitiesGroupsByStation[@index].UsersList" name="WorkActivitiesGroupsByStation[@index].UsersList" asp-for="WorkActivitiesGroupsByStation[index].UsersList" asp-items="@waGroup.UsersSelectList">
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 col-lg-3 mb-1">
+            <div class="row align-items-center w-100">
+                <div class="col-md-12 pt-2">
+                    <div class="progress-bar-custom progress">
+                         @if (waGroup.GroupStation.WorkOrderDisplayType != "Envios")
+                        {
+                            if (waGroup.TotalAdvance == 0)
+                            {
+                                <div class="progress-bar" role="progressbar" style="width:@(waGroup.TotalAdvance+"%");" aria-valuenow="@(waGroup.TotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(waGroup.TotalAdvance + "%") </div>
+                            }
+                            else if (waGroup.TotalAdvance == 100)
+                            {
+                                <div class="progress-bar bg-success" role="progressbar" style="width:@(waGroup.TotalAdvance+"%");" aria-valuenow="@(waGroup.TotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(waGroup.TotalAdvance + "%") </div>
+                            }
+                            else
+                            {
+                                <div class="progress-bar bg-warning" role="progressbar" style="width:@(waGroup.TotalAdvance+"%");" aria-valuenow="@(waGroup.TotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(waGroup.TotalAdvance + "%") </div>
+                            }  
+                        }
+                        else
+                        {
+                            if (waGroup.ShipmentsTotalAdvance == 0)
+                            {
+                                <div class="progress-bar" role="progressbar" style="width:@(waGroup.ShipmentsTotalAdvance+"%");" aria-valuenow="@(waGroup.ShipmentsTotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(waGroup.ShipmentsTotalAdvance + "%") </div>
+                            }
+                            else if (waGroup.ShipmentsTotalAdvance == 100)
+                            {
+                                <div class="progress-bar bg-success" role="progressbar" style="width:@(waGroup.ShipmentsTotalAdvance+"%");" aria-valuenow="@(waGroup.ShipmentsTotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(waGroup.ShipmentsTotalAdvance + "%") </div>
+                            }
+                            else
+                            {
+                                <div class="progress-bar bg-warning" role="progressbar" style="width:@(waGroup.ShipmentsTotalAdvance+"%");" aria-valuenow="@(waGroup.ShipmentsTotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(waGroup.ShipmentsTotalAdvance + "%") </div>
+                            }
+                        }
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+    index++;
+}
+<script>
+    $(document).ready(function () {
+
+        $('select.selectUsers').each(function () {
+            $(this).select2({
+                theme: "bootstrap4",
+                language: @localizer["LanguageDataTable"],
+                placeholder: "@localizer["Select users"]",
+                escapeMarkup: function (m) {
+                    return m;
+                },
+                sorter: function (data) {
+                    return data.sort(function (a, b) {
+                        if (a.id != -1 && b.id != -1) {
+                            if (a.text > b.text) {
+                                return 1;
+                            }
+                            if (a.text < b.text) {
+                                return -1;
+                            }
+                            return 0;
+                        }
+
+                    });
+                }
+            })
+        });
+
+        $('#btn-enable-all').on('click', function () {
+
+            let elementsBtnSwitch = document.querySelectorAll('.btn-switch:not(.disabled)');
+            let url = '/production/WorkOrderHeader/setActivitiesActiveByStationMassive/';
+            let workOrderHeaderId = @Model.Id;
+
+            if (elementsBtnSwitch.length > 0) {
+
+                activateWAMassive(elementsBtnSwitch, workOrderHeaderId, url);
+
+            } else {
+                alert("Debe existir algun puesto para ejecutar la acción.");
+            }
+
+            $(this).prop('disabled', 'disabled');
+
+        });
+
+        $('.modal-body').addClass('pl-3');
+        $('.modal-body').addClass('pr-3');
+        $('.modal-body').addClass('pb-3');
+
+    });
+
+    function activateWA(workOrderHeaderId, stationId, object) {
+
+        showSpinner();
+
+        let url = '/production/WorkOrderHeader/setActivitiesActiveByStation/'
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                workOrderHeaderId,
+                stationId
+            },
+            success: function (response) {
+                if (response.isValid) {
+                    $(object).children().attr('src', '/images/ON fuccia.svg');
+                    $(object).children().removeClass('action-img-icon');
+                    $(object).addClass('disabled');
+                    $(object).next().removeClass('disabled');
+                }
+            },
+            complete: function () {
+                hideSpinner();
+            }
+        });
+    }
+
+    function activateWAMassive(elementsBtnSwitch, workOrderHeaderId, url) {
+
+        showSpinner();
+
+        let stationIds = [];
+        let objects = [];
+        for(let i = 0; i < elementsBtnSwitch.length; i++)
+        {
+            stationIds.push(parseInt(document.getElementById(elementsBtnSwitch[i].id).getAttribute('onclick').slice(14, 16)));
+            objects.push(document.getElementById(elementsBtnSwitch[i].id));
+        }
+
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: {
+                workOrderHeaderId,
+                stationIds
+            },
+            success: function (response) {
+                if (response.isValid) {
+                    for(let i = 0; i < objects.length; i++)
+                    {
+                        $(objects[i]).children().attr('src', '/images/ON fuccia.svg');
+                        $(objects[i]).children().removeClass('action-img-icon');
+                        $(objects[i]).addClass('disabled');
+                        $(objects[i]).next().removeClass('disabled');
+                    }
+                }
+            },
+            complete: function () {
+                hideSpinner();
+            }
+        });
+
+        //let i = 0;
+        //(function loopWithDelay(i) {
+        //    setTimeout(function () {
+
+        //        let stationId = parseInt(document.getElementById(elementsBtnSwitch[i].id).getAttribute('onclick').slice(14, 16));
+        //        let object = document.getElementById(elementsBtnSwitch[i].id);
+
+        //        if (workOrderHeaderId != 0) {
+        //            $.ajax({
+        //                url: url,
+        //                type: 'POST',
+        //                data: {
+        //                    workOrderHeaderId,
+        //                    stationId
+        //                },
+        //                success: function (response) {
+        //                    if (response.isValid) {
+        //                        $(object).children().attr('src', '/images/ON fuccia.svg');
+        //                        $(object).children().removeClass('action-img-icon');
+        //                        $(object).addClass('disabled');
+        //                        $(object).next().removeClass('disabled');
+        //                    }
+        //                },
+        //                complete: function () {
+        //                    if (i == elementsBtnSwitch.length - 1) {
+        //                        if (!$('#layout_main_body').hasClass('loaded')) {
+        //                            $('#layout_main_body').addClass('loaded');
+        //                        }
+        //                    }
+        //                }
+        //            });
+        //        }
+
+        //        if (i < elementsBtnSwitch.length - 1) loopWithDelay(i + 1)
+        //    }, 500);
+        //})(i)
+
+    }
+
+    function navigateToWorkActivitiesbyWorkOrderAndStation(workOrderId, stationId) {
+        url = "/production/workactivity?workOrderIds=" + workOrderId + "&stationId=" + stationId;
+        window.location.href = url;
+    }
+
+    function navigateToWorkActivitiesbyWorkOrderAndStationShipments(workOrderId, stationId) {
+        url = "/logistics/shipping/IndexByWorkOrderAndStation?workOrderIds=" + workOrderId + "" + "&stationId=" + stationId + "";
+        window.location.href = url;
+    }
+
+    function navigateToWorkActivityByStation(stationId, strStation) {
+        url = "/production/workactivity/IndexByStation?idStation=" + stationId + "&strStation=" + strStation;
+        window.location.href = url;
+    }
+
+    function manageActivitiesUsersByStation(workOrderId, stationId) {
+        url = "/production/workorderheader/manageActivitiesUsersByStation?workOrderId=" + workOrderId + "&stationId=" + stationId;
+        jQueryModalGet(url, '@localizer["Manage users assigment"]');
+    }
+
+</script>
+

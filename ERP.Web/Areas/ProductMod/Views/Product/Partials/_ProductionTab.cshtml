@@ -1,0 +1,72 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+
+@model ProductViewModel
+<div id="productionTab">
+
+    <button class="btn btn-primary btn-block text-left collapsed  my-3" type="button" data-toggle="collapse" data-target="#tabContent-production" aria-expanded="false" aria-controls="collapseExample">
+        <i class="fa fas fa-plus-circle"></i>  @localizer["Production"]
+    </button>
+
+    @*TODO: Datos produccion no tenemos nada en la bd??*@
+    <div class="collapse colapsableTab border" id="tabContent-production" aria-labelledby="production-tab">
+        @* Fila 1 *@
+        <div class="form-row mb-3 ml-0">
+            <div class="col-md-4">
+                <label>@localizer["Raw material"]</label>
+                <select class="form-control select2bs4" name="RawMaterial" id="RawMaterial" asp-items="@Model.RawMaterials">
+                    <option value="" selected="selected">----------</option>
+                </select>
+            </div>
+            <div hidden class="col-md-2">
+                <label>@localizer["Raw material code"]</label>
+                <input type="text" as asp-for="ProductFeature.RawMaterialCode" name="ProductFeature.RawMaterialCode" class="form-control">
+                <span asp-validation-for="ProductFeature.RawMaterialCode" class="text-danger"></span>
+            </div>
+            <div hidden class="col-md-6">
+                <label>@localizer["Raw material description"]</label>
+                <input type="text" asp-for="ProductFeature.RawMaterialDescription" name="ProductFeature.RawMaterialDescription" class="form-control">
+                <span asp-validation-for="ProductFeature.RawMaterialDescription" class="text-danger"></span>
+            </div>
+        </div>
+        @* Fila 2 *@
+        <div class="form-group row ml-0 mr-0">
+            <div class="col-md-2">
+                <div class="form-row">
+                    <label>@localizer["Width"] (mm)</label>
+                    <input type="text" asp-for="ProductFeature.ComponentWidhtPiece" name="ProductFeature.ComponentWidhtPiece" class="decimal form-control">
+                    <span asp-validation-for="ProductFeature.ComponentWidhtPiece" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-row">
+                    <label>@localizer["Length"] (mm)</label>
+                    <input type="text" asp-for="ProductFeature.ComponentLongPiece" name="ProductFeature.ComponentLongPiece" class="decimal form-control">
+                    <span asp-validation-for="ProductFeature.ComponentLongPiece" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="col-md-2">
+                <div class="form-row">
+                    <label>@localizer["Height"] (mm)</label>
+                    <input type="text" asp-for="ProductFeature.ComponentHighPiece" name="ProductFeature.ComponentHighPiece" class="decimal form-control">
+                    <span asp-validation-for="ProductFeature.ComponentHighPiece" class="text-danger"></span>
+                </div>
+            </div>
+            <!--<div class="col-md-2">
+                <div class="form-row">
+                    <label>@localizer["Weight"] (kg)</label>
+                    <input type="number" class="form-control">
+                    <span class="text-danger"></span>
+                </div>
+            </div>-->
+            <div class="col-md-2 text-center">
+                <label class="mr-3">@localizer["Standar"]</label>
+                <div>
+                    @Html.CheckBoxFor(model => model.ProductFeature.Standar)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

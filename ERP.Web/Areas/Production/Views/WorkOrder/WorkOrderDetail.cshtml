@@ -1,0 +1,44 @@
+﻿@using ERP.Web.Areas.Production.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model WorkOrderViewModel
+
+@{ 
+    var modelId = 0;
+    var workOrderIds = "";
+    if (Model.Id != 0)
+    {
+        modelId = Model.Id;
+    }
+    else
+    {
+        workOrderIds = ViewBag.workOrderIds;
+    }
+}
+
+<div id="viewAll">
+
+</div>
+
+@section Scripts
+{
+    <script src="~/js/site.js"></script>
+    <script>
+
+        $(document).ready(function () {
+
+            loadData();
+
+        });
+
+        function loadData() {
+            var modelId = @modelId;
+            var workOrderIds = '@workOrderIds';
+            if (modelId != 0) {
+                $('#viewAll').load('/production/workorder/loadworkorderdata?workorderId=' + modelId + '');
+            } else {
+                $('#viewAll').load('/production/workorder/LoadWorkOrderDataForSparesOrStock?workOrderIds=' + workOrderIds + '');
+            }
+        }
+    </script>
+}

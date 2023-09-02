@@ -1,0 +1,214 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Logistics.Models.DeliveryNote
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model DeliveryNoteHeaderViewModel
+@{
+    Layout = null;
+    int index = 1;
+    string lastItemClassTr = "";
+}
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i">
+    <link rel="stylesheet" type="text/css" href="~/lib/datatables/css/datatables.min.css" />
+    <link rel="stylesheet" type="text/css" href="~/css/adminlte.css" />
+    <link rel="stylesheet" type="text/css" href="~/css/CommercialDocuments/DeliveryNotes/PdfReport.css" />
+</head>
+<body>
+
+    <div id="header_simplemak" class="row flexrow">
+        <div id="header_left" class="col">
+            <img id="logo" src="~/images/logo-simplemak-white.png" class="rounded" alt="logo">
+            <h4 id="title" class="text-white text-uppercase font-weight-normal">@localizer["Delivery note"]</h4>
+        </div>
+        <div id="header_middle" class="col text-center">
+            <div id="header_middle_child" class="text-center w-100">
+                <h1 class="text-white font-weight-bold">R</h1>
+                <h6 class="font-weight-normal">Código</h6>
+                <h6 class="font-weight-normal">91</h6>
+            </div>
+        </div>
+        <div id="header_right" class="col">
+            <h5 id="number" class="pt-2 pr-2 text-white font-weight-light">Nº: @Model.Number.ToString() </h5>
+            <h6 id="dateTitle" class="font-weight-bold pt-2 pr-2">Fecha emisión:</h6>
+            <h6 id="date" class="font-weight-light pr-2">@Model.Date.ToString("dd/MM/yyyy")</h6>
+            <h6 id="docNotValid" class="font-weight-light text-left">Documento <br /> no válido como factura</h6>
+        </div>
+    </div>
+
+    <div id="body_two" class="pt-2 pb-2 row flexrow">
+
+        <div id="body_one_left" class="col mb-2">
+
+            <h6 id="bussinessName" class="text-uppercase font-weight-bold d-inline">RAZÓN SOCIAL: </h6>
+            <h6 id="simplemak" class="font-weight-light d-inline">Simplemak S.A.</h6>
+            <br />
+
+            <h6 id="adressTitle" class="text-uppercase font-weight-bold d-inline">DOMICILIO: </h6>
+            <h6 id="adress" class="font-weight-light d-inline">51 Nº1120 Colón, Buenos Aires, Argentina: CP: 2720</h6>
+            <br />
+
+            <h6 id="phoneTitle" class="text-uppercase font-weight-bold d-inline">TELÉFONO: </h6>
+            <h6 id="phone" class="text-capitalize font-weight-light d-inline">54 - 2473 - 431065</h6>
+            <br />
+
+            <h6 id="mailTitle" class="text-uppercase font-weight-bold d-inline">E-MAIL: </h6>
+            <h6 id="mail" class="font-weight-light d-inline">info@simplemak.com.ar</h6>
+            <br />
+
+            <h6 id="web" class="font-weight-bold d-inline">www.simplemak.net</h6>
+            <br />
+
+        </div>
+
+        <div id="body_two_left" class="col mt-4 mb-2">
+            <h6 class="text-uppercase font-weight-bold d-inline">CUIT: </h6>
+            <h6 class="text-capitalize font-weight-light d-inline">30-70971555-7</h6>
+            <br />
+
+            <h6 class="font-weight-bold d-inline">Ingresos Brutos </h6>
+            <h6 class="text-capitalize font-weight-light d-inline">30-70971555-7</h6>
+            <br />
+
+            <h6 class="font-weight-bold d-inline">Fecha inicio de actividades: </h6>
+            <h6 class="text-capitalize font-weight-light d-inline">01/07/2006</h6>
+            <br />
+
+            <h6 class="font-weight-light d-inline">I.V.A. Responsable inscripto</h6>
+            <br />
+        </div>
+
+    </div>
+
+    <div id="body_three" class="pt-2 pb-2 row flexrow">
+
+        <div id="body_three_child" class="col w-100 mb-2">
+
+            <h6 id="providerTitle" class="font-weight-bold d-inline">Señor/es: </h6>
+            <h6 id="provider" class="font-weight-light d-inline">@Model.Provider.getBussinessNameOrName</h6>
+            <br />
+
+            <h6 id="adressTitleProvider" class="font-weight-bold d-inline">Domicilio: </h6>
+            <h6 id="adressProvider" class="font-weight-light d-inline">@Model.Provider.Address; </h6>
+            <h6 id="postalCodeProviderTitle" class="font-weight-bold d-inline">CP: </h6>
+            <h6 id="postalCodeProvider" class="font-weight-bold d-inline">@Model.Provider.PostalCode</h6>
+            <br />
+
+            <h6 id="cuitTitle" class="font-weight-bold d-inline">CUIT: </h6>
+            <h6 id="cuit" class="font-weight-light d-inline">@Model.Provider.DocumentNumber</h6>
+
+            <h6 id="ivaTitle" class="font-weight-bold d-inline ml-5">I.V.A.: </h6>
+            <h6 id="iva" class="font-weight-light d-inline">Responsable inscripto</h6>
+
+        </div>
+
+    </div>
+
+    <table id="details_table" class="table table-striped-blue-pdf nowrap w-100 custom-font-size-td custom-font-size-th mt-4">
+        <thead id="bg-thead-pdf" class="border-top w-100">
+            <tr>
+                <th class="text-capitalize align-middle"></th>
+                <th class="text-capitalize text-left">@localizer["Code"]</th>
+                <th class="text-capitalize text-left">@localizer["Description"]</th>
+                <th class="text-capitalize text-left">@localizer["Quantity"]</th>
+                <th class="text-capitalize text-left">@localizer["Unit measure"]</th>
+                <th class="text-capitalize text-left">@localizer["Package"]</th>
+                <th class="text-capitalize text-left">@localizer["Package weight"]</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.DeliveryNoteDetails)
+            {
+                if (index == Model.DeliveryNoteDetails.Count())
+                {
+                    lastItemClassTr = "lastItemClassTr";
+                }
+
+                <tr class="@lastItemClassTr">
+                    <td class="text-center">
+                        @index
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ProductItem.Code)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ProductItem.Description)
+                    </td>
+
+                    <td class="text-center">
+                        @Html.DisplayFor(modelItem => item.Quantity)
+                    </td>
+
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ProductItem.UnitMeasure.Description)
+                    </td>
+
+                    <td class="text-center">
+                        @Html.DisplayFor(modelItem => item.Package)
+                    </td>
+
+                    <td class="text-center">
+                        @Html.DisplayFor(modelItem => item.PackageWeight)
+                    </td>
+                </tr>
+
+                index++;
+
+            }
+        </tbody>
+    </table>
+
+    <div class="footer">
+
+        <div id="observationsDiv" class="pb-5 border">
+            <h6 class="text-capitalize font-weight-bold d-inline">Observaciones: </h6>
+            @if (Model.Comments != null)
+            {
+                if (Model.Comments.ToString() != "")
+                {
+                    <h6 class="font-weight-light d-inline">@Model.Comments</h6>
+                }
+            }
+        </div>
+
+        <div id="footerOne" class="pb-3 row flexrow">
+            <div id="footerOneLeft" class="col w-50">
+                <h6 class="text-capitalize font-weight-bold d-inline">Transporte </h6>
+                <h6 class="font-weight-light d-inline">@Model.TransportProvider.getBussinessNameOrName</h6>
+                <br />
+
+                <h6 class="text-capitalize font-weight-bold d-inline">Domicilio: </h6>
+                <h6 class="font-weight-light d-inline">@Model.TransportProvider.Address</h6>
+                <br />
+
+                <h6 class="text-capitalize font-weight-bold d-inline">CP: </h6>
+                <h6 class="font-weight-light d-inline">@Model.TransportProvider.PostalCode</h6>
+                <br />
+
+                <h6 class="text-capitalize font-weight-bold d-inline">CUIT: </h6>
+                <h6 class="font-weight-light d-inline">@Model.TransportProvider.DocumentNumber</h6>
+                <br />
+            </div>
+            <div id="footerOneRight" class="col w-50">
+                <h6 class="font-weight-normal d-inline">Recibí conforme: </h6>
+                <br />
+
+                <h6 class="font-weight-normal d-inline">Firma: </h6>
+                <br />
+
+                <h6 class="font-weight-normal d-inline">Aclaración: </h6>
+                <br />
+            </div>
+        </div>
+
+        <div id="footerTwo" class="border text-right">
+            <h6 class="font-weight-bold d-inline">C.A.I. Nro: </h6>
+            <h6 class="font-weight-light d-inline"></h6>
+            <h6 class="font-weight-bold d-inline">Fecha de vencimiento: </h6>
+            <h6 class="font-weight-light d-inline"></h6>
+        </div>
+
+    </div>
+</body>

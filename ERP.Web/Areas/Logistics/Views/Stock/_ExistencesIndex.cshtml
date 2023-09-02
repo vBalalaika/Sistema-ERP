@@ -1,0 +1,114 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    if (ViewData["ExistencesTitle"] != null)
+    {
+        ViewData["Title"] = ViewData["ExistencesTitle"].ToString();
+    }
+}
+@using ERP.Web.Areas.ProductMod.Models
+@model ProductViewModel
+@{
+    var editPermission = false;
+    var deletePermission = false;
+    if ((AuthorizationService.AuthorizeAsync(User, Permissions.Logistic.Edit)).Result.Succeeded)
+    {
+        editPermission = true;
+    }
+    if ((AuthorizationService.AuthorizeAsync(User, Permissions.Logistic.Delete)).Result.Succeeded)
+    {
+        deletePermission = true;
+    }
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/Logistics/Stock/existences.css" />
+</head>
+
+<body>
+
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+
+            <div id="div-export-buttons">
+                <div class="btn-group">
+
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Logistic.Create)).Result.Succeeded)
+                    {
+                        <a id="btn-create" class="btn btn-secondary text-white" title="@localizer["New stock product"]">
+                            <img class="tables-img-icon" src="~/images/newStock.svg" width="30" height="30" />
+                        </a>
+                    }
+                    else
+                    {
+                        <a id="btn-create" class="btn btn-secondary text-white" title="@localizer["New stock product"]" disabled>
+                            <img class="tables-img-icon" src="~/images/newStock.svg" width="30" height="30" />
+                        </a>
+                    }
+
+                    <a id="btn-export-excel" class="btn btn-secondary text-white h-100" title="@localizer["Export all"]">
+                        <img class="tables-img-icon" src="~/images/Excel.svg" width="30" height="30" />
+                    </a>
+
+                </div>
+            </div>
+
+            <table id="existencesTable" class="table table-striped-blue table-hover w-100 nowrap">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Heading"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Product"]</th>
+                        <th>@localizer["Quantity available"]</th>
+                        <th>@localizer["Existence"]</th>
+                        <th>@localizer["Point of order"]</th>
+                        <th>@localizer["Quantity to order"]</th>
+                        <th>@localizer["Storage unit"]</th>
+                        <th>@localizer["Location"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Heading"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Product"]</th>
+                        <th>@localizer["Quantity available"]</th>
+                        <th>@localizer["Existence"]</th>
+                        <th>@localizer["Point of order"]</th>
+                        <th>@localizer["Quantity to order"]</th>
+                        <th>@localizer["Storage unit"]</th>
+                        <th>@localizer["Location"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+
+        </div>
+    </div>
+
+</body>
+
+@section Scripts {
+    <script type="text/javascript" src="~/js/site.js"></script>
+    @* Declaro todas las variables ASP.NET que voy a utilizar en el archivo javascript externo. *@
+    <script>
+        let stockInformation = "@localizer["Stock information"]";
+        let editStockProductTitle = "@localizer["Edit stock product"]";
+        let languageDataTable = @localizer["LanguageDataTable"];
+        let actions = "@localizer["Actions"]";
+        let archivesTitle = "@localizer["Archives"]";
+        let archivesPlanosTitle = "@localizer["Planos"]";
+        let archives3DTitle = "@localizer["3D"]";
+        let movementsTitle = "@localizer["Movements"]";
+        let deleteTitle = "@localizer["Delete"]"
+        let editPermissionFromView = "@editPermission";
+        let deletePermissionFromView = "@deletePermission";
+        let _areYouSure = "@localizer["Are you sure to delete this record?"]";
+    </script>
+    <script type="text/javascript" src="~/js/Logistics/Stock/existences.js"></script>
+}

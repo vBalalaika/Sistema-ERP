@@ -1,0 +1,42 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Lists.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["States"];
+}
+@model StateViewModel
+
+<head>
+    <link href="~/css/Lists/lists.css" rel="stylesheet" />
+</head>
+
+<body>
+    <div class="card">
+
+        <div id="viewAll" class="card-body table-responsive">
+
+        </div>
+
+    </div>
+</body>
+@section Scripts
+{
+    <script src="~/js/site.js"></script>
+    <script>
+
+        $(document).ready(function () {
+            let stateTable =  $("#stateTable").DataTable({ "oLanguage": @localizer["LanguageDataTable"] });
+
+            stateTable.buttons().container()
+                .appendTo('#div-export-buttons .btn-group');
+
+            loadData();
+
+        });
+
+        function loadData() {
+            $('#viewAll').load('/lists/state/LoadAll');
+        }
+
+    </script>
+}

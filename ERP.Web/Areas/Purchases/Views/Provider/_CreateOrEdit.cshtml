@@ -1,0 +1,794 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Purchases.Models.Providers
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Create provider"];
+}
+@model ProviderViewModel
+
+<form id="create-form" method="post" asp-controller="Provider" asp-action="OnPostCreateOrEdit" asp-route-id="@Model.Id" enctype="multipart/form-data">
+
+    @* Datos generales *@
+    <div class="form-row">
+        <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+
+        <div class="col-md-6 mb-3">
+            <label asp-for="Name" class="control-label">@localizer["Name"]</label>
+            <input type="text" name="Name" asp-for="Name" class="form-control" />
+            <span asp-validation-for="Name" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label asp-for="BusinessName" class="control-label">@localizer["Business name"]</label>
+            <input type="text" name="BusinessName" asp-for="BusinessName" class="form-control" />
+            <span asp-validation-for="BusinessName" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="ProviderType" class="control-label">@localizer["Provider type"]</label>
+            <select name="ProviderType" class="form-control select2bs4" id="ProviderTypes" asp-for="ProviderType" asp-items="@Model.ProviderTypes">
+                <option value="">@localizer["Select provider type"]</option>
+            </select>
+            <span asp-validation-for="ProviderType" class="text-danger"></span>
+        </div>
+
+        <div id="div-check" class="col-md-8 form-group">
+            <div class="custom-control custom-checkbox small">
+                <input asp-for="IsActive" name="IsActive" class="custom-control-input" type="checkbox" id="IsActive" checked>
+                <label asp-for="IsActive" class="custom-control-label" for="IsActive">@localizer["Active"]</label>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="CountryId" class="control-label">@localizer["Country"]</label>
+            <select name="CountryId" class="form-control select2bs4" id="CountriesId" asp-for="CountryId" asp-items="@Model.Countries">
+                <option value="-1">@localizer["Select country"]</option>
+            </select>
+            <span asp-validation-for="CountryId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="StateId" class="control-label">@localizer["State name"]</label>
+            <select name="StateId" disabled class="form-control select2bs4" id="StatesId" asp-for="StateId" asp-items="@Model.States">
+            </select>
+            <span asp-validation-for="StateId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="CityId" class="control-label">@localizer["City"]</label>
+            <select name="CityId" disabled class="form-control select2bs4" id="CitiesId" asp-for="CityId" asp-items="@Model.Cities">
+            </select>
+            <span asp-validation-for="CityId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="Address" class="control-label">@localizer["Address"]</label>
+            <input asp-for="Address" type="text" name="Address" class="form-control" />
+            <span asp-validation-for="Address" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="PostalCode" class="control-label">@localizer["Postal code"]</label>
+            <input asp-for="PostalCode" type="text" name="PostalCode" id="ZipCode" class="form-control" />
+            <span asp-validation-for="PostalCode" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="WebPage" class="control-label">@localizer["Web page"]</label>
+            <input asp-for="WebPage" type="text" name="WebPage" class="form-control" />
+            <span asp-validation-for="WebPage" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-8">
+
+            <div class="form-row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DocumentTypeId" class="control-label">@localizer["Document type"]</label>
+                    <select name="DocumentTypeId" class="form-control select2bs4" id="DocumentTypesId" asp-for="DocumentTypeId" asp-items="@Model.DocumentTypes">
+                        <option value="-1">@localizer["Select document type"]</option>
+                    </select>
+                    <span asp-validation-for="DocumentTypeId" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="DocumentNumber" class="control-label">@localizer["Document number"]</label>
+                    <input asp-for="DocumentNumber" type="text" name="DocumentNumber" class="form-control" />
+                    <span asp-validation-for="DocumentNumber" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="IVAConditionId" class="control-label">@localizer["IVA Conditions"]</label>
+                    <select name="IVAConditionId" class="form-control select2bs4" id="IVAConditionsId" asp-for="IVAConditionId" asp-items="@Model.IVAConditions">
+                        <option value="-1">@localizer["Select IVA condition"]</option>
+                    </select>
+                    <span asp-validation-for="IVAConditionId" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label asp-for="GrossIncome" class="control-label">@localizer["Gross income"]</label>
+                    <input asp-for="GrossIncome" type="text" name="GrossIncome" class="form-control" />
+                    <span asp-validation-for="GrossIncome" class="text-danger"></span>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="col-md-12 mb-3">
+                <label asp-for="Observations" class="control-label">@localizer["Observations"]</label>
+                <textarea asp-for="Observations" name="Observations" class="form-control" id="Observations" rows="5"></textarea>
+            </div>
+
+        </div>
+
+    </div>
+
+    @* Datos adicionales *@
+    <div class="accordion" id="accordionSection">
+
+        @* Sucursales *@
+        <div id="card-accordion" class="card">
+            <div class="card-header" id="SubsidiariesHeading">
+                <h2 class="mb-0">
+                    <button class="btn btn-outline-primary btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseTwo" aria-expanded="false" aria-controls="collapseTwo">
+                        <i class="fas fa-plus-circle"></i> @localizer["Subsidiaries"]
+                    </button>
+                </h2>
+            </div>
+            <div id="collapseTwo" class="collapse" aria-labelledby="SubsidiariesHeading">
+                <div id="subsidiary-body" class="card-body">
+                    @*<div id="btn-add-div" class="form-row">
+                    <button id="btn-add-subsidiary" type="button" class="btn btn-primary"><i class="fas fa-plus-square"></i></button>
+                    </div>*@
+                    <div class="form-row">
+                        <div id="table-div" class="col-md-11 py-3">
+
+                            <div id="table-responsive-div" class="table-responsive-sm col-12">
+                                <table class="table" id="SubsidiariesTable" width="100%">
+                                    <thead class="bg-thead">
+                                        <tr>
+                                            <th scope="col" width="5%">@localizer["Number"]</th>
+                                            <th scope="col" width="20%">@localizer["Country"]</th>
+                                            <th scope="col" width="20%">@localizer["State"]</th>
+                                            <th scope="col" width="20%">@localizer["City"]</th>
+                                            <th class="text-nowrap" scope="col" width="11%">@localizer["Postal code"]</th>
+                                            <th scope="col" width="40%">@localizer["Address"]</th>
+                                            <th scope="col" width="10%"></th>
+                                            <th scope="col" width="5%"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            @if (Model.Subsidiaries != null)
+                                            {
+
+                                                foreach (var item in Model.Subsidiaries)
+                                                {
+                                                    <tr>
+                                                        <td class="d-none">
+                                                            <input type="hidden" name="Subsidiaries.Index" value="@item.Id" />
+                                                            <input type="hidden" name="Subsidiaries[@item.Id].ConcurrencyToken" readonly value="@item.ConcurrencyToken" />
+                                                        </td>
+                                                        <td><input type="text" class="form-control text-center" name="Subsidiaries[@item.Id].SubsidiaryNumber" value="@item.SubsidiaryNumber" /></td>
+                                                        <td>
+                                                            <select id="Subsidiaries[@item.Id].CountryId" name="Subsidiaries[@item.Id].CountryId" class="countries form-control select2bs4" onchange="getStates(this ,this.value)" asp-for="@item.CountryId" asp-items="@item.CountriesList"> <option value="-1" selected>@localizer["Select country"]</option> </select>
+                                                        </td>
+                                                        @{
+                                                            if (item.StateId != null)
+                                                            {
+                                                                <td>
+                                                                    <select id="Subsidiaries[@item.Id].StateId" name="Subsidiaries[@item.Id].StateId" class="states form-control select2bs4" onchange="getCities(this, this.value)" asp-for="@item.StateId" asp-items="@item.StatesList"> <option value="-1" selected>@localizer["Select state"]</option> </select>
+                                                                </td>
+                                                            }
+                                                            else
+                                                            {
+                                                                <td>
+                                                                    <select id="Subsidiaries[@item.Id].StateId" disabled name="Subsidiaries[@item.Id].StateId" class="states form-control select2bs4" onchange="getCities(this, this.value)" asp-items="@item.StatesList"> <option value="-1" selected>@localizer["Select state"]</option> </select>
+                                                                </td>
+                                                            }
+                                                        }
+
+                                                        @{
+                                                            if (item.CityId != null)
+                                                            {
+                                                                <td>
+                                                                    <select id="Subsidiaries[@item.Id].CityId" name="Subsidiaries[@item.Id].CityId" class="cities form-control select2bs4" onchange="getZipCode(this.value, this.id)" asp-for="@item.CityId" asp-items="@item.CitiesList"> <option value="-1" selected>@localizer["Select city"]</option> </select>
+                                                                </td>
+                                                            }
+                                                            else
+                                                            {
+                                                                <td>
+                                                                    <select id="Subsidiaries[@item.Id].CityId" disabled name="Subsidiaries[@item.Id].CityId" class="cities form-control select2bs4" onchange="getZipCode(this.value, this.id)" asp-items="@item.CitiesList"> <option value="-1" selected>@localizer["Select city"]</option> </select>
+                                                                </td>
+                                                            }
+                                                        }
+
+                                                        <td><input type="text" id="Subsidiaries[@item.Id].PostalCode" class="form-control" name="Subsidiaries[@item.Id].PostalCode" value="@item.PostalCode" /></td>
+                                                        <td><input type="text" id="Subsidiaries[@item.Id].Address" class="form-control" name="Subsidiaries[@item.Id].Address" value="@item.Address" /></td>
+
+                                                        <td><button type="button" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td>
+                                                    </tr>
+                                                }
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="col-md-1 py-3 text-center">
+                            <button id="btn-add-subsidiary" type="button" class="btn btn-primary"><i class="fas fa-plus-square"></i></button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Contactos *@
+        <div id="card-accordion" class="card">
+            <div class="card-header" id="contactsHeading">
+                <h2 class="mb-0">
+                    <button id="expandContactSection" class="btn btn-outline-primary btn-block text-left" type="button" data-toggle="collapse" data-target="#collapseOne" aria-expanded="false" aria-controls="collapseOne">
+                        <i class="fas fa-plus-circle"></i> @localizer["Contacts"]
+                    </button>
+                </h2>
+            </div>
+
+            <div id="collapseOne" class="collapse" aria-labelledby="contactsHeading">
+                <div id="contact-body" class="card-body">
+                    @*<div id="btn-add-div" class="form-row">
+                    <button id="btn-add-contact" type="button" class="btn btn-primary"><i class="fas fa-plus-square"></i></button>
+                    </div>*@
+                    <div class="form-row">
+                        <div id="table-div" class="col-md-11 py-3">
+
+                            <div id="table-responsive-div" class="table-responsive-sm col-12">
+                                <table class="table" id="ContactsTable" width="100%">
+                                    <thead class="bg-thead">
+                                        <tr>
+                                            <th scope="col" width="15%">@localizer["Name"]</th>
+                                            <th scope="col" width="15%">@localizer["Charge"]</th>
+                                            <th scope="col">@localizer["Cell phone"]</th>
+                                            <th scope="col">@localizer["Telephone"]</th>
+                                            <th scope="col" width="25%">@localizer["Email"]</th>
+                                            <th scope="col" width="9%">@localizer["Nº Subsidiary"]</th>
+                                            <th scope="col"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            @if (Model.Contacts != null)
+                                            {
+
+                                                foreach (var item in Model.Contacts)
+                                                {
+                                                    <tr>
+                                                        <td class="d-none">
+                                                            <input type="hidden" name="Contacts.Index" value="@item.Id" />
+                                                            <input type="hidden" name="Contacts[@item.Id].ConcurrencyToken" readonly value="@item.ConcurrencyToken" />
+                                                        </td>
+                                                        <td><input type="text" class="form-control" name="Contacts[@item.Id].Name" value="@item.Name" /></td>
+                                                        <td><input type="text" class="form-control" name="Contacts[@item.Id].Charge" value="@item.Charge" /></td>
+                                                        <td><input type="text" class="form-control" name="Contacts[@item.Id].MobilePhoneNumber" value="@item.MobilePhoneNumber" /></td>
+                                                        <td><input type="text" class="form-control" name="Contacts[@item.Id].PhoneNumber" value="@item.PhoneNumber" /></td>
+                                                        <td><input type="text" class="form-control" name="Contacts[@item.Id].Email" value="@item.Email" /></td>
+                                                        <td><input type="text" class="form-control text-center" name="Contacts[@item.Id].SubsidiaryNumber" value="@item.SubsidiaryNumber" /></td>
+
+                                                        <td><button type="button" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td>
+                                                    </tr>
+                                                }
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="col-md-1 py-3 text-center">
+                            <button id="btn-add-contact" type="button" class="btn btn-primary"><i class="fas fa-plus-square"></i></button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Datos financieros *@
+        <div id="card-accordion" class="card">
+            <div class="card-header" id="FinancialInfoHeading">
+                <h2 class="mb-0">
+                    <button class="btn btn-outline-primary btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                        <i class="fas fa-plus-circle"></i> @localizer["Financial data"]
+                    </button>
+                </h2>
+            </div>
+            <div id="collapseThree" class="collapse" aria-labelledby="FinancialInfoHeading">
+                <div id="financial-info-body" class="card-body">
+                    @*<div id="btn-add-div" class="form-row">
+                    <button id="btn-add-financialdata" type="button" class="btn btn-primary"><i class="fas fa-plus-square"></i></button>
+                    </div>*@
+                    <div class="form-row">
+                        <div id="table-div" class="col-md-11 py-3">
+
+                            <div id="table-responsive-div" class="table-responsive-sm col-12">
+                                <table class="table" id="FinancialInformationTable" width="100%">
+                                    <thead class="bg-thead">
+                                        <tr>
+                                            <th scope="col">@localizer["Bank"]</th>
+                                            <th scope="col">@localizer["Account type"]</th>
+                                            <th scope="col">@localizer["Account number"]</th>
+                                            <th scope="col">@localizer["CBU"]</th>
+                                            <th scope="col">@localizer["Observations"]</th>
+                                            <th scope="col"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @{
+                                            @if (Model.FinancialInformations != null)
+                                            {
+
+                                                foreach (var item in Model.FinancialInformations)
+                                                {
+                                                    <tr>
+                                                        <td class="d-none">
+                                                            <input type="hidden" name="FinancialInformations.Index" value="@item.Id" />
+                                                            <input type="hidden" name="FinancialInformations[@item.Id].ConcurrencyToken" readonly value="@item.ConcurrencyToken" />
+                                                        </td>
+                                                        <td><input type="text" class="form-control" name="FinancialInformations[@item.Id].Bank" value="@item.Bank" /></td>
+                                                        <td><input type="text" class="form-control" name="FinancialInformations[@item.Id].AccountType" value="@item.AccountType" /></td>
+                                                        <td><input type="text" class="form-control" name="FinancialInformations[@item.Id].AccountNumber" value="@item.AccountNumber" /></td>
+                                                        <td><input type="text" class="form-control" name="FinancialInformations[@item.Id].CBU" value="@item.CBU" /></td>
+                                                        <td><input type="text" class="form-control" name="FinancialInformations[@item.Id].Observations" value="@item.Observations" /></td>
+
+                                                        <td><button type="button" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td>
+                                                    </tr>
+                                                }
+                                            }
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <div class="col-md-1 py-3 text-center">
+                            <button id="btn-add-financialdata" type="button" class="btn btn-primary"><i class="fas fa-plus-square"></i></button>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+        <button type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+    </div>
+</form>
+
+<script src="~/js/site.js"></script>
+<script src="~/js/Purchases/Providers/providers.js"></script>
+<script type="text/javascript" language="javascript">
+
+    $(document).ready(function () {
+        $.validator.unobtrusive.parse(document);
+
+        let index = 0;
+
+        let countriesSelect = $('#CountriesId');
+        let statesSelect = $('#StatesId');
+        let citiesSelect = $('#CitiesId');
+        let documentTypesSelect = $('#DocumentTypesId');
+        let ivaConditionsSelect = $('#IVAConditionsId');
+        let providerTypesSelect = $('#ProviderTypes');
+
+        $(document).on("click", ".btn-remove", function () {
+            $(this).parent().parent().remove();
+        });
+
+        $('.countries.form-control.select2bs4').select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            placeholder: '@localizer["Select country"]',
+            ajax: {
+                url: '/Purchases/Provider/SearchCountries',
+                data: function (params) {
+                    return {
+                        q: params.term // search term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.countries
+                    };
+                },
+                minimumInputLength: 2
+            }
+        });
+
+        countriesSelect.select2({
+            placeholder: "@localizer["Select country"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        statesSelect.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        citiesSelect.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        documentTypesSelect.select2({
+            placeholder: "@localizer["Select document type"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        ivaConditionsSelect.select2({
+            placeholder: "@localizer["Select IVA condition"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+                });
+            }
+        });
+
+        if (statesSelect.length > 0) {
+            statesSelect.prop('disabled', false);
+
+            if (citiesSelect.length > 0) {
+                citiesSelect.prop('disabled', false);
+            }
+        }
+
+        countriesSelect.change(function () {
+            $.ajax({
+                url: '/purchases/provider/GetStatesByCountryId',
+                method: 'get',
+                data: { countryId: $(this).val() },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.length > 0) {
+                        statesSelect.empty();
+                        statesSelect.prop('disabled', false);
+                        statesSelect.append($('<option/>', { value: -1, text: '@localizer["Select state"]' }));
+                    } else {
+                        statesSelect.empty();
+                        statesSelect.prop('disabled', true);
+                    }
+                    citiesSelect.empty();
+                    citiesSelect.prop('disabled', true);
+                    document.getElementById("ZipCode").value = "";
+
+                    $.each(data, function (index, item) {
+                        statesSelect.append($('<option/>', { value: item.id, text: item.name }));
+                    });
+                }
+            });
+        });
+
+        statesSelect.change(function () {
+            $.ajax({
+                url: '/purchases/provider/GetCitiesByStateId',
+                method: 'get',
+                data: { stateId: $(this).val() },
+                dataType: 'json',
+                success: function (data) {
+                    if (data.length > 0) {
+                        citiesSelect.empty();
+                        citiesSelect.prop('disabled', false);
+                        citiesSelect.append($('<option/>', { value: -1, text: '@localizer["Select city"]' }));
+                    } else {
+                        citiesSelect.empty();
+                        citiesSelect.prop('disabled', true);
+                        document.getElementById("ZipCode").value = "";
+                    }
+
+                    $.each(data, function (index, item) {
+                        citiesSelect.append($('<option/>', { value: item.id, text: item.name }));
+                    });
+                }
+            });
+        });
+
+        citiesSelect.change(function () {
+            $.ajax({
+                url: '/purchases/provider/GetPostalCodeByCityId',
+                method: 'get',
+                data: { cityId: $(this).val() },
+                dataType: 'json',
+                success: function (data) {
+                    if (data != null) {
+                        document.getElementById("ZipCode").value = data;
+                        document.getElementById("ZipCode").removeAttribute("disabled");
+                    } else {
+                        document.getElementById("ZipCode").removeAttribute("disabled");
+                    }
+                }
+            });
+        });
+
+        providerTypesSelect.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        if ($("#ContactsTable >tbody >tr").length == 0) {
+            $("#ContactsTable").hide();
+        }
+        if ($("#FinancialInformationTable >tbody >tr").length == 0) {
+            $("#FinancialInformationTable").hide();
+        }
+        if ($("#SubsidiariesTable >tbody >tr").length == 0) {
+            $("#SubsidiariesTable").hide();
+        }
+
+        $("#btn-add-contact").on('click', function () {
+
+            $("#ContactsTable").fadeIn();
+
+            index++;
+            let htmlForTable = '<tr>' +
+                '<td class="d-none">' +
+                '<input type="hidden" name="Contacts.Index" value="' + index + '" />' +
+                '</td>' +
+                '<td><input type="text" id="Contacts[' + index + '].Name" class="form-control" name="Contacts[' + index + '].Name" /></td>' +
+                '<td><input type="text" id="Contacts[' + index + '].Charge" class="form-control" name="Contacts[' + index + '].Charge" /></td>' +
+                '<td><input type="text" id="Contacts[' + index + '].MobilePhoneNumber" class="form-control" name="Contacts[' + index + '].MobilePhoneNumber" /></td>' +
+                '<td><input type="text" id="Contacts[' + index + '].PhoneNumber" class="form-control" name="Contacts[' + index + '].PhoneNumber" /></td>' +
+                '<td><input type="text" id="Contacts[' + index + '].Email" class="form-control" name="Contacts[' + index + '].Email" /></td>' +
+                '<td><input type="text" id="Contacts[' + index + '].SubsidiaryNumber" class="form-control text-center" name="Contacts[' + index + '].SubsidiaryNumber" /></td>' +
+                '<td><button type="button" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td></tr>';
+            $("#ContactsTable tbody").append(htmlForTable);
+        });
+
+        $("#btn-add-financialdata").on('click', function () {
+
+            $("#FinancialInformationTable").fadeIn()
+
+            index++;
+            let htmlForTable = '<tr>' +
+                '<td class="d-none">' +
+                '<input type="hidden" name="FinancialInformations.Index" value="' + index + '" />' +
+                '</td>' +
+                '<td><input type="text" id="FinancialInformations[' + index + '].Bank" class="form-control" name="FinancialInformations[' + index + '].Bank" /></td>' +
+                '<td><input type="text" id="FinancialInformations[' + index + '].AccountType" class="form-control" name="FinancialInformations[' + index + '].AccountType" /></td>' +
+                '<td><input type="text" id="FinancialInformations[' + index + '].AccountNumber" class="form-control" name="FinancialInformations[' + index + '].AccountNumber" /></td>' +
+                '<td><input type="text" id="FinancialInformations[' + index + '].CBU" class="form-control" name="FinancialInformations[' + index + '].CBU" /></td>' +
+                '<td><input type="text" id="FinancialInformations[' + index + '].Observations" class="form-control" name="FinancialInformations[' + index + '].Observations" /></td>' +
+                '<td><button type="button" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td></tr>';
+            $("#FinancialInformationTable tbody").append(htmlForTable);
+        });
+
+        $("#btn-add-subsidiary").on('click', function () {
+
+            $("#SubsidiariesTable").fadeIn();
+
+            index++;
+
+            let htmlForTable = '<tr>' +
+                '<td class="d-none">' +
+                '<input type="hidden" name="Subsidiaries.Index" value="' + index + '" />' +
+                '</td>' +
+                '<td><input type="text" class="form-control text-center" name="Subsidiaries[' + index + '].SubsidiaryNumber" /></td>' +
+
+                '<td><select id="Subsidiaries[' + index + '].CountryId" name="Subsidiaries[' + index + '].CountryId" class="countries form-control select2bs4" onchange="getStates(this ,this.value)"> <option value="-1" selected>@localizer["Select country"]</option> </select></td>' +
+
+                '<td><select id="Subsidiaries[' + index + '].StateId" disabled name="Subsidiaries[' + index + '].StateId" class="states form-control select2bs4" onchange="getCities(this, this.value)"> <option value="-1" selected>@localizer["Select state"]</option> </select></td>' +
+                '<td><select id="Subsidiaries[' + index + '].CityId" disabled name="Subsidiaries[' + index + '].CityId" class="cities form-control select2bs4" onchange="getZipCode(this.value, this.id)">  <option value="-1" selected>@localizer["Select city"]</option> </select></td>' +
+
+                '<td><input type="text" id="Subsidiaries[' + index + '].PostalCode" class="form-control" name="Subsidiaries[' + index + '].PostalCode" /></td>' +
+                '<td><input type="text" id="Subsidiaries[' + index + '].Address" class="form-control" name="Subsidiaries[' + index + '].Address" /></td>' +
+                '<td><button type="button" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td></tr>';
+            $("#SubsidiariesTable tbody").append(htmlForTable);
+
+            countrySubsidiarySelect = $('.countries.form-control.select2bs4').select2({
+                theme: "bootstrap4",
+                escapeMarkup: function (m) {
+                    return m;
+                },
+                placeholder: '@localizer["Select country"]',
+                ajax: {
+                    url: '/Purchases/Provider/SearchCountries',
+                    data: function (params) {
+                        return {
+                            q: params.term // search term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.countries
+                        };
+                    },
+                    minimumInputLength: 2
+                }
+            });
+
+        });
+
+        $( "#create-form" ).submit(function( event ) {
+
+            if("@Model.calledFromAnotherArea" == "True")
+            {
+                return jQueryModalPostWithoutRefresh(this);
+            }
+            else
+            {
+                return jQueryModalPost(this);
+            }
+            
+            event.preventDefault();
+        });
+
+    });
+
+    function getStates(element, countryIdSelected) {
+
+        $(element).closest('td').next().find('select').prop('disabled', false);
+        $(element).closest('td').next().next().find('select').empty();
+        $(element).closest('td').next().next().find('select').append($('<option>', {
+            value: -1,
+            text: '@localizer["Select city"]'
+        }));
+        $(element).closest('td').next().next().next().find('input').val('');
+        $(element).closest('td').next().find('select').empty();
+
+        $(element).closest('td').next().find('select').select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            placeholder: '@localizer["Select state"]',
+            ajax: {
+                delay: 250,
+                url: '/Purchases/Provider/SearchStates',
+                data: function (params) {
+                    return {
+                        q: params.term, // search term
+                        countryId: countryIdSelected
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.states
+                    };
+                },
+                minimumInputLength: 2
+            }
+        });
+
+    }
+
+    function getCities(element, stateIdSelected) {
+
+        $(element).closest('td').next().find('select').empty();
+        $(element).closest('td').next().find('select').prop('disabled', false);
+
+        $(element).closest('td').next().find('select').select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            placeholder: '@localizer["Select city"]',
+            ajax: {
+                url: '/Purchases/Provider/SearchCities',
+                data: function (params) {
+                    return {
+                        q: params.term, // search term
+                        stateId: stateIdSelected
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.cities
+                    };
+                },
+                minimumInputLength: 2
+            }
+        });
+    }
+
+    function getZipCode(cityIdSelected, id) {
+
+        $.ajax({
+            url: '/purchases/provider/GetPostalCodeByCityId',
+            method: 'get',
+            data: { cityId: cityIdSelected },
+            dataType: 'json',
+            success: function (data) {
+                if (data != null) {
+                    document.getElementById('Subsidiaries[' + id.match(/\d+/)[0] + '].PostalCode').value = data;
+                } else {
+                    document.getElementById('Subsidiaries[' + id.match(/\d+/)[0] + '].PostalCode').removeAttribute("disabled");
+                }
+            }
+        });
+    }
+
+</script>

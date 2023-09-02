@@ -1,0 +1,89 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+
+
+@model ProductViewModel
+    <div id="roadmapTab">
+
+        <button class="btn btn-primary btn-block text-left collapsed  my-3" type="button" data-toggle="collapse" data-target="#tabContent-roadmap" aria-expanded="false" aria-controls="collapseExample">
+            <i class="fa fas fa-plus-circle"></i>    @localizer["Road map"]
+        </button>
+
+        <div class="col-12 collapse colapsableTab border" id="tabContent-roadmap" role="tabpanel" aria-labelledby="roadmap-tab">
+            <div class="row w-100">
+                <div class="col-md-12 py-3">
+                    <div class="input-group row-col-md-12">
+                        <div class="col-md-6">
+                            <label class="card-title">@localizer["Add station to roadmap"]</label>
+                            <div class="input-group">
+                                @*@Html.DropDownList("RelProductStation", Model.StationsList, "----------", new { @class = "form-control" })*@
+                                <select  class="form-control" id="RelProductStation" name="RelProductStation" >
+                                    <option value="" selected="selected">----------</option>
+                                    @foreach (var station in Model.StationsList)
+                                    {
+                                        <option data-code="@station.Abbreviation"  value="@station.Id">@station.Description</option>
+                                    }
+                                </select>
+                            </div>
+
+
+                        </div>
+
+                        <div class="d-flex align-items-end col-md-4"><button type="button" id="btnAddStation" class="btn btn-primary text-white" ><i class="fa fa-plus" aria-hidden="true"></i></button></div>
+
+                    </div>
+                </div>
+                <div class="col-md-10 py-3">
+                    <div class="row d-flex ml-1 col-md-12">
+                        <label class="card-title">@localizer["ROADMAP"]</label>
+                    </div>
+                    <div class="table-responsive-sm col-12">
+                        <table class="table" id="RelProductStationsTable">
+                            <thead>
+                                <tr>
+                                    <th scope="col" width="10%">@localizer["Order"]</th>
+                                    <th scope="col" width="10%">@localizer["Station code"]</th>
+                                    <th scope="col">@localizer["Station"]</th>
+                                    <th scope="col" width="15%">@localizer["Time"]</th>
+                                    <th scope="col" width="15%">@localizer["Cost"]</th>
+                                    <th scope="col" width="5%">@localizer["Delete"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.RelProductStations != null)
+                                {
+                                    @for (var i=0;i<Model.RelProductStations.Count;i++)
+                                    {
+                                <tr>
+                                    <td class="d-none">
+                                        <input type="hidden" class="getMax" name="RelProductStations.Index" value="@i" />
+                                        <input type="hidden" asp-for="RelProductStations[i].Id" readonly value="@Model.RelProductStations[i].Id" />
+                                        <input type="hidden" asp-for="RelProductStations[i].ConcurrencyToken" readonly value="@Model.RelProductStations[i].ConcurrencyToken" />
+                                        <input type="hidden" asp-for="RelProductStations[i].StationId" readonly value="@Model.RelProductStations[i].StationId" />
+                                        <input type="hidden" asp-for="RelProductStations[i].Station.Id" readonly value="@Model.RelProductStations[i].StationId" />
+                                    </td>
+                                    <td><input type="number" min="1" class="form-control order" asp-for="RelProductStations[i].Order" placeholder="Ingrese un orden" value="@Model.RelProductStations[i].Order" /></td>
+                                    <td><input type="text" class="form-control" asp-for="RelProductStations[i].Station.Abbreviation" readonly value="@Model.RelProductStations[i].Station.Abbreviation" /></td>
+                                    <td><input type="text" class="form-control" asp-for="RelProductStations[i].Station.Description" readonly value="@Model.RelProductStations[i].Station.Description" /></td>
+                                    <td><input type="text" class="form-control time" asp-for="RelProductStations[i].Time" value="@Model.RelProductStations[i].Time" /></td>
+                                    <td><input type="text" class="form-control cost" asp-for="RelProductStations[i].Cost" value="@Model.RelProductStations[i].Cost" /></td>
+                                    <td><button type="button" class="btn btn-outline-danger d-block m-auto DeleteButtonRoadmap"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td>
+                                </tr>
+
+
+                                    }
+                                }
+
+                            </tbody>
+                            <tfoot>
+
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>

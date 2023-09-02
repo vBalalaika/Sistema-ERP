@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW 2018 (64 Bit Versión de evaluación) -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="24.4264mm" height="26.4mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 406.96 439.84"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <font id="FontID0" horiz-adv-x="743" font-variant="normal" style="fill-rule:nonzero" font-style="normal" font-weight="700">
+	<font-face 
+		font-family="Nunito">
+		<font-face-src>
+			<font-face-name name="Nunito Bold"/>
+		</font-face-src>
+	</font-face>
+   <missing-glyph><path d="M0 0z"/></missing-glyph>
+   <glyph unicode="O" horiz-adv-x="784" d="M393 -9.99897c-67.9971,0 -127.495,15.0036 -178.503,45.0005 -50.9978,29.9969 -90.4974,72.1642 -118.499,126.502 -28.0012,54.3274 -42.0019,118.168 -42.0019,191.5 0,73.9944 14.0006,138 42.0019,191.997 28.0012,53.9965 67.3353,95.8329 118.002,125.499 50.6669,29.666 110.33,44.5042 178.999,44.5042 68.6692,0 128.332,-14.8382 178.999,-44.5042 50.6669,-29.666 90.001,-71.5024 118.002,-125.499 28.0012,-53.9965 42.0019,-117.671 42.0019,-191.004 0,-73.9944 -14.0006,-138.166 -42.0019,-192.493 -28.0012,-54.3377 -67.3353,-96.505 -118.002,-126.502 -50.6669,-29.9969 -110.33,-45.0005 -178.999,-45.0005zm0 109.999c64.6676,0 115.004,22.3348 150.998,67.0044 36.0045,44.6593 54.0068,106.659 54.0068,185.999 0,79.9917 -17.8368,141.992 -53.5002,185.999 -35.6737,43.9975 -86.1752,66.0014 -151.504,66.0014 -64.6676,0 -115.004,-22.0039 -150.998,-66.0014 -36.0045,-44.0079 -54.0068,-106.008 -54.0068,-185.999 0,-79.3403 18.0023,-141.34 54.0068,-185.999 35.9942,-44.6696 86.3303,-67.0044 150.998,-67.0044z"/>
+   <glyph unicode="P" horiz-adv-x="652" d="M140.999 -8.00331c-42.6636,0 -63.9955,22.0039 -63.9955,66.0014l0 581.998c0,43.3357 21.6627,65.0088 64.9984,65.0088l240.999 0c77.3343,0 136.997,-19.3362 178.999,-58.0085 42.0019,-38.662 63.0028,-92.6585 63.0028,-162 0,-69.331 -21.0009,-123.493 -63.0028,-162.496 -42.0019,-39.0032 -101.665,-58.5048 -178.999,-58.5048l-177.996 0 0 -205.997c0,-43.9975 -21.3422,-66.0014 -64.0058,-66.0014zm64.0058 373.002l157.998 0c91.9967,0 138,40.0062 138,119.998 0,79.3403 -46.0035,119.005 -138,119.005l-157.998 0 0 -239.003z"/>
+  </font>
+  <style type="text/css">
+   <![CDATA[
+    @font-face { font-family:"Nunito";font-variant:normal;font-style:normal;font-weight:bold;src:url("#FontID0") format(svg)}
+    .str1 {stroke:#BFADFE;stroke-width:3.33;stroke-miterlimit:22.9256}
+    .str0 {stroke:#BFADFE;stroke-width:16.66;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .fil0 {fill:none}
+    .fil1 {fill:none;fill-rule:nonzero}
+    .fil3 {fill:#FEFEFE}
+    .fil2 {fill:#BFADFE}
+    .fnt0 {font-weight:bold;font-size:161.12px;font-family:'Nunito'}
+   ]]>
+  </style>
+ </defs>
+ <g id="Capa_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <path class="fil0 str0" d="M398.63 83.41l-0.13 311.66c-0.01,20.04 -16.4,36.44 -36.44,36.44l-259.93 0c-20.04,0 -36.44,-16.4 -36.44,-36.44l0 -20.83m0 -237.49l0 -91.97c0,-20.04 16.4,-36.45 36.44,-36.44l221.56 0.14"/>
+  <path class="fil1 str0" d="M323.69 8.47l74.94 74.94 -41.61 0c-18.35,0 -33.32,-14.97 -33.32,-33.32l0 -41.61z"/>
+  <rect class="fil2 str1" x="1.67" y="165.22" width="337.22" height="178.7" rx="26.38" ry="40.69"/>
+  <g transform="matrix(0.957942 0 0 1 -1109.7 -1067.29)">
+   <text x="1221.32" y="1381.85"  class="fil3 fnt0">OP</text>
+  </g>
+ </g>
+</svg>

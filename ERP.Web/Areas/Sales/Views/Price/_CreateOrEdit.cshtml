@@ -1,0 +1,284 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Sales.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+@model PriceViewModel
+@{
+    var modelId = Model.Id;
+    var productId = 0;
+    var structureId = 0;
+    var codeAndDescription = "";
+    var structureDescription = "";
+    if (modelId != 0)
+    {
+        productId = Model.ProductId;
+        codeAndDescription = Model.ProductViewModel.CodeAndDescription.ToString();
+        structureDescription = "Seleccione configuración";
+        if (Model.StructureViewModel != null)
+        {
+            structureId = Model.StructureId.Value;
+            structureDescription = Model.StructureViewModel.Description.ToString();
+        }
+    }
+}
+
+<form id="create-form" method="post" asp-controller="Price" asp-action="OnPostCreateOrEdit" asp-route-id="@Model.Id" onsubmit="return jQueryModalPostModified(this);" enctype="multipart/form-data">
+
+    <div class="form-row">
+
+        <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+        <input type="hidden" asp-for="isSpares" name="isSpares" class="form-control">
+
+        @if (Model.Id != 0)
+        {
+            <input type="hidden" asp-for="PriceAllDate" name="PriceAllDate" class="form-control">
+            <input type="hidden" asp-for="PriceArgDate" name="PriceArgDate" class="form-control">
+            <input type="hidden" asp-for="PriceMxDate" name="PriceMxDate" class="form-control">
+        }
+
+        <div class="col-md-6 mb-3">
+            <label asp-for="ProductId" class="control-label">@localizer["Products"]</label>
+            <select asp-for="ProductId" name="ProductId" class="form-control select2bs4" id="Products">
+                <option value="0">@localizer["Select product"]</option>
+            </select>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label asp-for="StructureId" class="control-label">@localizer["Configuration"]</label>
+            <select asp-for="StructureId" name="StructureId" class="form-control select2bs4" id="Configurations">
+                <option value="0">@localizer["Select configuration"]</option>
+            </select>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label asp-for="PriceAll" class="control-label">@localizer["USD COMEX"]</label>
+            <input type="text" name="PriceAll" asp-for="PriceAll" class="form-control text-center" />
+        </div>
+
+        <div class="col-md-9 mb-3">
+            <label asp-for="PriceAllObservations" class="control-label">@localizer["Observations"]</label>
+            <textarea type="text" name="PriceAllObservations" asp-for="PriceAllObservations" class="form-control" rows="1"></textarea>
+        </div>
+
+        @{
+            if (!Model.isSpares)
+            {
+                <div class="col-md-3 mb-3">
+                    <label asp-for="PriceArg" class="control-label">@localizer["USD ARG"]</label>
+                    <input type="text" name="PriceArg" asp-for="PriceArg" class="form-control text-center" />
+                </div>
+                <div class="col-md-9 mb-3">
+                    <label asp-for="PriceArgObservations" class="control-label">@localizer["Observations"]</label>
+                    <textarea type="text" name="PriceArgObservations" asp-for="PriceArgObservations" class="form-control" rows="1"></textarea>
+                </div>
+
+                <div class="col-md-3 mb-3">
+                    <label asp-for="PriceMx" class="control-label">@localizer["$ MXN"]</label>
+                    <input type="text" name="PriceMx" asp-for="PriceMx" class="form-control text-center" />
+                </div>
+                <div class="col-md-9 mb-3">
+                    <label asp-for="PriceMxObservations" class="control-label">@localizer["Observations"]</label>
+                    <textarea type="text" name="PriceMxObservations" asp-for="PriceMxObservations" class="form-control" rows="1"></textarea>
+                </div>
+            }
+        }
+
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+        <button type="submit" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+    </div>
+
+</form>
+
+
+<script type="text/javascript" language="javascript">
+
+    $.validator.unobtrusive.parse(document);
+
+    $(document).ready(function () {
+
+        /* Format decimals */
+        let decimalInputsIds = ['PriceArg', 'PriceMx', 'PriceAll'];
+
+        let spares = false;
+
+        if ("@Model.isSpares" == "True") {
+            spares = true;
+        }
+
+        let products_Select2 = $('#Products').select2({
+            language: "es",
+            placeholder: '@localizer["Select product"]',
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            ajax: {
+                delay: 250,
+                url: '/Sales/Price/LoadProductsOnSelect2',
+                data: function (params) {
+                    return {
+                        q: params.term,
+                        spares: spares
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.products
+                    };
+                },
+                minimumInputLength: 2
+            }
+        });
+
+        let configurations_Select2 = $('#Configurations').select2({
+            language: "es",
+            placeholder: '@localizer["Select configuration"]',
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        products_Select2.change(function () {
+            if ($('#Products').val() != 0) {
+
+                $.ajax({
+                    url: '/Sales/Price/LoadConfigurationsByProductIdOnSelect2',
+                    method: 'get',
+                    dataType: 'json',
+                    data: {
+                        productId: $('#Products').val()
+                    },
+                }).done(function (response) {
+
+                    configurations_Select2.empty();
+                    $.each(response.configurations, function (index, item) {
+
+                        if (response.configurations.length == 2 && item.value != 0) {
+                            configurations_Select2.append($('<option />', { value: item.id, text: item.text }).attr('selected', true));
+                        } else {
+                            configurations_Select2.append($('<option />', { value: item.id, text: item.text }));
+                        }
+
+                    });
+
+                });
+
+            } else {
+                alert("Usted debe seleccionar un producto.");
+            }
+        });
+
+        @*let configurations_Select2 = $('#Configurations').select2({
+            language: "es",
+            placeholder: '@localizer["Select configuration"]',
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            ajax: {
+                delay: 250,
+                url: '/Sales/Price/LoadConfigurationsByProductIdOnSelect2',
+                data: function (params) {
+                    return {
+                        q: params.term,
+                        productId: $('#Products').val()
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.configurations
+                    };
+                },
+                minimumInputLength: 2
+            }
+        });*@
+
+        if (@modelId != 0) {
+
+            $("#Products").empty().append('<option value="@productId">@codeAndDescription</option>').val('@productId').trigger('change');
+            $("#Configurations").empty().append('<option value="@structureId">@structureDescription</option>').val('@structureId').trigger('change');
+
+        }
+
+        validateDecimalsNumbersOnInput(decimalInputsIds);
+
+    });
+
+    jQueryModalPostModified = form => {
+        try {
+
+            if ($('#Configurations option').length == 2) {
+
+                if ($('#Configurations').val() != 0) {
+
+                    $.ajax({
+                        type: 'POST',
+                        url: form.action,
+                        data: new FormData(form),
+                        contentType: false,
+                        processData: false,
+                        success: function (res) {
+                            if (res.isValid) {
+
+                                $('#btn-save').attr('disabled', 'disabled');
+                                $('#btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#btn-save').text());
+
+                                if (res.spares) {
+                                    setTimeout(function () { $('#pricesTableForSpares').DataTable().ajax.reload(null, false); }, 1000);
+                                    $('#form-modal').modal('hide');
+                                } else {
+                                    setTimeout(function () { $('#pricesTable').DataTable().ajax.reload(null, false); }, 1000);
+                                    $('#form-modal').modal('hide');
+                                }
+                            }
+                        },
+                        error: function (err) {
+                            console.log(err)
+                        }
+                    })
+
+
+                } else {
+                    alert("Usted debe seleccionar una configuración.");
+                    return false;
+                }
+
+            } else {
+
+                $.ajax({
+                    type: 'POST',
+                    url: form.action,
+                    data: new FormData(form),
+                    contentType: false,
+                    processData: false,
+                    success: function (res) {
+                        if (res.isValid) {
+
+                            $('#btn-save').attr('disabled', 'disabled');
+                            $('#btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#btn-save').text());
+
+                            if (res.spares) {
+                                setTimeout(function () { $('#pricesTableForSpares').DataTable().ajax.reload(null, false); }, 1000);
+                                $('#form-modal').modal('hide');
+                            } else {
+                                setTimeout(function () { $('#pricesTable').DataTable().ajax.reload(null, false); }, 1000);
+                                $('#form-modal').modal('hide');
+                            }
+                        }
+                    },
+                    error: function (err) {
+                        console.log(err)
+                    }
+                })
+            }
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+</script>

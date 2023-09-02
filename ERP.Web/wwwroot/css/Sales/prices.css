@@ -1,0 +1,7 @@
+﻿#pricesTable_filter, #pricesTableForSpares_filter, #updatedPricesTable_filter, #updatedPricesTableForSpares_filter, #pricesTable_info, #updatedPricesTable_info, #updatedPricesTableForSpares_info, #priceHistoryTable_filter, #priceHistoryTableForSpares_filter {
+    display: none
+}
+
+.dataTables_scrollBody {
+    height: 40vh !important;
+}

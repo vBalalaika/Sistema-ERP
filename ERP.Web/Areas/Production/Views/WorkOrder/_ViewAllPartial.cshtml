@@ -1,0 +1,754 @@
+﻿@using ERP.Web.Areas.Production.Models
+@using ERP.Application.Enums
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model WorkOrderViewModel
+@{
+    var backgroundActivityColor = "";
+}
+
+<div class="w-100 mb-3">
+    <h3>@localizer["Detail of progress of the product in production"]</h3>
+</div>
+<div class="form-row ml-1">
+    <h5 class="mr-4"><b>@localizer["Product"]:</b> @Model.OrderDetail.Product.CodeAndDescription</h5>
+    <h5 class="mr-4"><b>@localizer["Configuration"]:</b> @Model.OrderDetail.Structure.Description</h5>
+    <h5 class="mr-4"><b>@localizer["N° Product"]:</b> @Model.OrderDetail.ProductNumber</h5>
+    <h5 class="mr-4"><b>@localizer["N° OT"]:</b> @Model.WorkOrderHeader.WorkOrderHeaderNumber</h5>
+    <h5 class="mr-2"><b>@localizer["Total advance"]:</b></h5>
+    <div class="progress-bar-custom progress mr-4 w-25"><div class="progress-bar bg-warning" role="progressbar" style="width:@Model.TotalAdvance%" aria-valuenow="@Model.TotalAdvance" aria-valuemin="0" aria-valuemax="100">@Model.TotalAdvance %</div></div>
+</div>
+
+<div class="col-md-12 mt-3 mt-1 align-items-end">
+    
+    <div id="addItemDiv" class="form-row mb-3 d-none">
+        <div class="col-md-4">
+            <label style="font-size:18px;font-weight:600"> @localizer["Add new item"]</label>
+            @Html.DropDownListFor(m => m.ProductSelectList, Model.ProductSelectList, "Seleccionar un producto", new { @class = "form-control w-100" })
+        </div>
+        <div class="col-md-1">
+            <label class="mr-2" style="font-size:18px;font-weight:600"> @localizer["Quantity"]</label>
+            <input type="number" name="itemQuantity" class="form-control text-center" id="NewItemQuantity" min="1" value="1" onkeypress="return validateIsNumber(event);">
+        </div>
+        <div class="col-md-4">
+             <label class="mr-2" style="font-size:18px;font-weight:600"> @localizer["Configuration"]</label>
+            <select class="form-control select2bs4" id="StructuresByProduct">
+                <option value="" selected>----------</option>
+            </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+            <a id="btnAddItem" class="btn btn-primary text-white ml-2" title="@localizer[" Add item"]">
+                <i class="fa fas fa-plus"></i>
+            </a>
+        </div>
+    </div>
+
+    <div id="div-export-buttons" class="col-12 align-self-center " style="height:100%">
+        <div class="btn-group align-bottom ">
+            <a id="btn-add-item" class="btn btn-secondary text-white" title="@localizer["Add item"]">
+                <img class="tables-img-icon" src="../../../images/newproduct.svg" width="30" height="30" />
+            </a>
+            @if (User.IsInRole(Roles.SuperAdmin.ToString()))
+            {
+                <a id="btn-get-OT" class="btn btn-secondary" title="@localizer["Work order"]">
+                    <img class="tables-img-icon" src="~/images/OT.svg" width="30" height="30" />
+                </a>
+            }
+            <a id="btn-send-to-shipments" class="btn btn-secondary text-white" title="@localizer["To shipments"]">
+                <img id="img_providers" class="tables-img-icon" src="../../../images/Proveedores.svg" width="30" height="30" />
+            </a>
+        </div>
+    </div>
+</div>
+<table id="productStructureTable" class="table table-striped-blue w-100 nowrap">
+    <thead class="bg-thead text-white">
+        <tr>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Level"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Unit"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["In stock"]</th>
+            <th>@localizer["Available"]</th>
+            <th>@localizer["Batch"]</th>
+            <th>@localizer["Provider"]</th>
+            <th>@localizer["Outsourced"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.WorkOrderItems.ToList())
+        {
+            <tr style="height:40.4px">
+                <td class="text-left">
+                    <div class="btn-group">
+                        <div class="d-flex animated--grow-in">
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.WorkOrderItems.Delete)).Result.Succeeded)
+                            {
+                                <form id="form_delete_@item.Id" asp-area="Production" asp-controller="WorkOrder" method="post" asp-action="OnPostDeleteItem" asp-route-idWorkOrder="@Model.Id" asp-route-idItem="@item.Id" onsubmit="return jQueryModalDeleteModify(this, '@localizer["Are you sure to delete this record?"]')">
+                                    <a class="btn action-btn" title="@localizer[" Delete"]" href="javascript:$('#form_delete_@item.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </form>
+
+                                if (item.isActive)
+                                {
+                                    <a onclick="ChangeItemState(@item.WorkOrderId,@item.Id,false)" class="btn action-btn" title="@localizer["Desactivate item"]">
+                                        <img class="action-img-icon" src="../../../images/font-awesome-solid.svg" width="20" height="20" />
+                                    </a>
+
+                                    if (item.AllStationsOutsourced || item.WorkActivities.All(wa => wa.isFinished))
+                                    {
+                                        <a class="btn action-btn">
+                                            <div class="custom-control custom-checkbox small">
+                                                <input class="checkSelectedRow custom-control-input-disabled productId_@item.Product.Id" disabled checked type="checkbox" value="" id="checkSelectedRow_@item.Id">
+                                                <label class="custom-control-label" for="checkSelectedRow_@item.Id"></label>
+                                            </div>
+                                        </a>
+                                    }
+                                    else if (item.Product != null)
+                                    {
+                                        if(item.WorkOrderItemOf != null)
+                                        {
+                                            if (item.WorkOrderItemOf.Product.ProductFeature.StoredStock)
+                                            {
+                                                <a class="btn action-btn">
+                                                    <div class="custom-control custom-checkbox small">
+                                                        <input class="checkSelectedRow custom-control-input-disabled productId_@item.Product.Id" disabled checked type="checkbox" value="" id="checkSelectedRow_@item.Id">
+                                                        <label class="custom-control-label" for="checkSelectedRow_@item.Id"></label>
+                                                    </div>
+                                                </a>
+                                            }
+                                            else
+                                            {
+                                                if (item.Product.ProductFeature.StoredStock)
+                                                {
+                                                    <a class="btn action-btn">
+                                                        <div class="custom-control custom-checkbox small">
+                                                            <input class="checkSelectedRow custom-control-input-disabled productId_@item.Product.Id" disabled checked type="checkbox" value="" id="checkSelectedRow_@item.Id">
+                                                            <label class="custom-control-label" for="checkSelectedRow_@item.Id"></label>
+                                                        </div>
+                                                    </a>
+                                                }
+                                                else
+                                                {
+                                                    <a class="btn action-btn">
+                                                        <div class="custom-control custom-checkbox small">
+                                                            <input class="checkSelectedRow custom-control-input productId_@item.Product.Id" type="checkbox" value="" id="checkSelectedRow_@item.Id">
+                                                            <label class="custom-control-label" for="checkSelectedRow_@item.Id"></label>
+                                                        </div>
+                                                    </a>
+                                                }
+                                            }
+                                        }
+                                        else
+                                        {
+                                             if (item.Product.ProductFeature.StoredStock)
+                                             {
+                                                 <a class="btn action-btn">
+                                                     <div class="custom-control custom-checkbox small">
+                                                         <input class="checkSelectedRow custom-control-input-disabled productId_@item.Product.Id" disabled checked type="checkbox" value="" id="checkSelectedRow_@item.Id">
+                                                         <label class="custom-control-label" for="checkSelectedRow_@item.Id"></label>
+                                                     </div>
+                                                 </a>
+                                             }
+                                             else
+                                             {
+                                                 <a class="btn action-btn">
+                                                     <div class="custom-control custom-checkbox small">
+                                                         <input class="checkSelectedRow custom-control-input productId_@item.Product.Id" type="checkbox" value="" id="checkSelectedRow_@item.Id">
+                                                         <label class="custom-control-label" for="checkSelectedRow_@item.Id"></label>
+                                                     </div>
+                                                 </a>
+                                             }
+                                        }
+                                    }
+                                    else if(item.Structure != null)
+                                    {
+                                        if (item.Structure.Product.ProductFeature.StoredStock)
+                                        {
+                                            <a class="btn action-btn">
+                                                <div class="custom-control custom-checkbox small">
+                                                    <input class="checkSelectedRow custom-control-input-disabled productId_@item.Product.Id" disabled checked type="checkbox" value="" id="checkSelectedRow_@item.Id">
+                                                    <label class="custom-control-label" for="checkSelectedRow_@item.Id"></label>
+                                                </div>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a class="btn action-btn">
+                                                <div class="custom-control custom-checkbox small">
+                                                    <input class="checkSelectedRow custom-control-input productId_@item.Product.Id" type="checkbox" value="" id="checkSelectedRow_@item.Id">
+                                                    <label class="custom-control-label" for="checkSelectedRow_@item.Id"></label>
+                                                </div>
+                                            </a>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <a class="btn action-btn">
+                                            <div class="custom-control custom-checkbox small">
+                                                <input class="checkSelectedRow custom-control-input productId_@item.Product.Id" type="checkbox" value="" id="checkSelectedRow_@item.Id">
+                                                <label class="custom-control-label" for="checkSelectedRow_@item.Id"></label>
+                                            </div>
+                                        </a>
+                                    }
+
+                                }
+                                else
+                                {
+                                    <a onclick="ChangeItemState(@item.WorkOrderId,@item.Id,true)" class="btn action-btn" title="@localizer["Activate item"]">
+                                        <img class="action-img-icon" src="../../../images/flag-checkered-solid.svg" width="20" height="20" />
+                                    </a>
+                                }
+
+                            }
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    @item.Level
+                </td>
+                <td>
+                    <div style="margin-left:@(item.SpacingPixels)px;">
+                        @if (item.Product != null)
+                        {
+                            @(item.Product.Code)
+                        }
+                        else
+                        {
+                            @(item.Structure.Product.Code)
+                        }
+                    </div>
+                </td>
+                <td>
+                    <div style="margin-left:@(item.SpacingPixels)px;">
+                        @if (item.Product != null)
+                        {
+                            @item.Product.Description
+                        }
+                        else
+                        {
+                            @(item.Structure.Product.Description + " - (" + item.Structure.Description + ')' );
+                        }
+                    </div>
+                </td>
+                <td>
+                    @item.Quantity
+                </td>
+
+                <td>
+                    @if(item.Product.UnitMeasure != null)
+                    {
+                        @item.Product.UnitMeasure.Description
+                    }
+                </td>
+
+                <td>
+                    <div class="row">
+
+                        @foreach (var rps in item.Product.RelProductStations.OrderBy(ps => ps.Order))
+                        {
+                            backgroundActivityColor = "background-color: ";
+                            var textBlackClass = "";
+                            foreach (var activity in item.WorkActivities.OrderBy(wa => wa.ProductStation.Order))
+                            {
+                                if (activity.ProductStationId == rps.Id)
+                                {
+                                    backgroundActivityColor += activity.Color;
+                                }
+                            }
+
+                            if(backgroundActivityColor == "background-color: ")
+                            {
+                                backgroundActivityColor = "";
+                            }
+                            else
+                            {
+                                textBlackClass = "text-dark";
+                            }
+
+                            <div class="@textBlackClass pl-1 pr-1" style="border-radius: 10px; display: inline-block; @backgroundActivityColor"> @rps.Station.Abbreviation </div> if (!rps.Equals(item.Product.RelProductStations.Last()))
+                            {
+                                <div class="pl-1 pr-1"><i class="fa fa-arrow-right" aria-hidden="true"></i></div>
+                            }
+
+                        }
+
+                    </div>
+                </td>
+
+                <td>
+                    @*Stock indica que es una pieza o conjunto que puede existir en stock, es decir, que va a figurar en la grilla stock del modulo logistica.*@
+                    
+                    @*Item padre*@
+                    @if (item.Product != null)
+                    {
+                        if (item.Product.ProductFeature.StoredStock)
+                        {
+                            @localizer["Yes"]
+                        }
+                        else
+                        {
+                             @localizer["No"]
+                        }
+                    }
+                    
+                    @*
+                        @if (item.Product != null)
+                        {
+                            @if (item.Product.ProductFeature.StoredStock)
+                            {
+                                <i class="fa fa-check-circle" style="color: #77DD77" aria-hidden="true"></i>
+                            }
+                            else
+                            {
+                                <i class="fa fa-times-circle" style="color: #FF6961 " aria-hidden="true"></i>
+                            }
+                        }
+                        else
+                        {
+                            @if (item.Structure.Product.ProductFeature.StoredStock)
+                            {
+                                <i class="fa fa-check-circle" style="color: #77DD77" aria-hidden="true"></i>
+                            }
+                            else
+                            {
+                                <i class="fa fa-times-circle" style="color: #FF6961 " aria-hidden="true"></i>
+                            }
+                        }
+                    *@
+
+                </td>
+
+                <td>
+                    @*  
+                        Disponibilidad indica en cambio que esa pieza o conjunto que puede existir en stock, cuenta con disponibilidad, es decir, 
+                        hay existencia disponible en estanterias de ese producto. (varia segun la operatoria diaria de ingresos y salidas).
+                    *@
+
+                    @*Item padre*@
+                    @if (item.Product != null)
+                    {
+                        if (item.Product.ProductFeature.StoredStock)
+                        {
+                            if(item.Product.SubCategory.CategoryId == 3 || item.Product.SubCategory.CategoryId == 4)
+                            {
+                                
+                            }
+                            else if(item.Product.SubCategory.CategoryId == 2)
+                            {
+                                
+                            }
+                        }
+                    }
+
+                </td>
+
+                @*Lote*@
+                <td>
+
+                </td>
+
+                @*Proveedor*@
+                <td>
+
+                </td>
+
+                <td>
+                    @if (item.StationOutsourced.ToString() == "")
+                    {
+                        @localizer["No"]
+                    }
+                    else
+                    {
+                        @localizer["Yes"]
+                    }
+                </td>
+
+            </tr>
+        }
+
+    </tbody>
+    <tfoot>
+        <tr>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Level"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Unit"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["In stock"]</th>
+            <th>@localizer["Available"]</th>
+            <th>@localizer["Batch"]</th>
+            <th>@localizer["Provider"]</th>
+            <th>@localizer["Outsourced"]</th>
+        </tr>
+    </tfoot>
+</table>
+<script>
+
+    $(document).ready(function () {
+
+        let allWoIIds = new Set();
+
+        //snipet de codigo para orden del level en la datatable
+        jQuery.extend(jQuery.fn.dataTableExt.oSort, {
+            'chapter-pre': function (a) {
+                var i, item;
+                var m = a.split('.'),
+                    x = '',
+                    xa = '';
+
+                for (i = 0; i < 10; i++) {
+                    if (i < m.length) 
+                    {
+                        item = m[i];
+
+                        if (item.length == 1) 
+                        {
+                            x += '0000000000' + item;
+                        } 
+                        else if (item.length == 2) 
+                        {
+                            x += '000000000' + item;
+                        } 
+                        else if (item.length == 3) 
+                        {
+                            x += '00000000' + item;
+                        }
+                        else if (item.length == 4) 
+                        {
+                            x += '0000000' + item;
+                        }
+                        else if (item.length == 5) 
+                        {
+                            x += '000000' + item;
+                        }
+                        else if (item.length == 6) 
+                        {
+                            x += '00000' + item;
+                        }
+                        else if (item.length == 7) 
+                        {
+                            x += '0000' + item;
+                        }
+                        else if (item.length == 8) 
+                        {
+                            x += '000' + item;
+                        }
+                        else if (item.length == 9) 
+                        {
+                            x += '00' + item;
+                        }
+                        else if (item.length == 10) 
+                        {
+                            x += '0' + item;
+                        }
+                        else 
+                        {
+                            x += item;
+                        }
+                    } 
+                    else 
+                    {
+                        x += '0000000000';
+                    }
+                }
+                return x;
+            },
+
+            'chapter-asc': function (a, b) {
+                return a < b ? -1 : a > b ? 1 : 0;
+            },
+
+            'chapter-desc': function (a, b) {
+                return a < b ? 1 : a > b ? -1 : 0;
+            }
+        });
+
+        $('#productStructureTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Stock"]" && title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let productStructureTable = $("#productStructureTable").DataTable({
+            "order": [[1, "asc"]],
+            "columnDefs": [{
+                "type": "chapter",
+                "targets": 1
+            }],
+            "oLanguage": @localizer["LanguageDataTable"],
+            "scrollY": '35vh',
+            "scrollX": true,
+            "scrollCollapse": true,
+            "scroller": true,
+            "sDom": 'Brtip',
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Detalle de avance ' + "@Model.OrderDetail.ProductNumber",
+                    exportOptions: {
+                        columns: [1, 2, 3, 4, 5, 6, 7],
+                        format: {
+                            body: function (data, row, column, node) {
+                                return reformatExportData(data, row, column, node);
+                            }
+                        }
+                    },
+                    customize: function (xlsx) {
+                        // To change name of sheet.
+                        $('sheets sheet', xlsx.xl['workbook.xml'] ).attr( 'name', 'Detalle de avance' );
+                        // To change format type to text Level column.
+                        var sheet = xlsx.xl.worksheets['sheet1.xml'];
+                        $('row c[r^="' + 'A' + '"]', sheet).attr('s', '50');
+                    }
+                }
+            ],
+            "initComplete": function () {
+                //$('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+            },
+            "drawCallback": function () {
+
+                $('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+
+                // Obtengo todos los checks con la clase checkSelectedRow
+                document.querySelectorAll('.checkSelectedRow').forEach(function (item) {
+                    item.addEventListener('change', function () {
+
+                        //let workOrderItemId = item.getAttribute('id').slice(17);
+
+                        if ($('#' + item.getAttribute('id')).is(':checked')) {
+                           
+                            //allWoIIds.add(workOrderItemId);
+
+                            $( "[class*="+ item.getAttribute('class').slice(38) +"]" ).each ( function () {
+                                // Checkeo todos los mismos productos.
+                                $(this).prop('checked', true);
+
+                                allWoIIds.add($(this).attr('id').slice(17));
+                            });
+
+                        } else {
+                            
+                            //allWoIIds.delete(workOrderItemId);
+
+                            $( "[class*="+ item.getAttribute('class').slice(38) +"]" ).each ( function () {
+                                // Checkeo todos los mismos productos.
+                                 $(this).prop('checked', false);
+
+                                  allWoIIds.delete($(this).attr('id').slice(17));
+                            });
+                        }
+
+                    });
+                });
+            }
+        });
+
+        productStructureTable.buttons().container().appendTo('#div-export-buttons .btn-group');
+
+        $(productStructureTable.table().container()).on('keyup', 'tfoot input', function () {
+            productStructureTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+        $("#ProductSelectList").select2({
+            placeholder: "Seleccionar producto",
+            language: {
+                noResults: function (params) {
+                    return 'No se encontraron resultados';
+                }
+            },
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text))
+        });
+
+        $("#StructuresByProduct").select2({
+            placeholder: "Seleccionar una configuración",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text))
+        });
+
+        $("#btnAddItem").on('click', async function () {
+
+            setPageScrollPos($('.dataTables_scrollBody').scrollTop());
+
+            var ProductId = $('#ProductSelectList').val();// Gets the selected value of the dropdown
+            var StructureId = $('#StructuresByProduct').val();
+            var Quantity = $('#NewItemQuantity').val();
+            if (ProductId == "" || Quantity == "") {
+                alert("Debe seleccionar un producto e ingresar una cantidad para agregar")
+            }
+            else {
+                StructureId = StructureId == null ? 0 : StructureId;
+                var Level = @Model.maxLevelChilds;
+                $.ajax({
+                    async: true,
+                    type: "POST",
+                    url: '/production/workorder/additem?productId=' + ProductId + '&structureId=' + StructureId + '&maxLevel=' + Level + '&workOrderId=' + @Model.Id + '&quantity=' + Quantity + '',
+                    success: function () {
+                        loadData();
+                    }
+                })
+            }
+        });
+
+        $("#btn-add-item").on("click", function(){
+            if($("#addItemDiv").hasClass("d-none"))
+            {
+                $("#addItemDiv").removeClass("d-none");
+            }
+            else
+            {
+                 $("#addItemDiv").addClass("d-none");
+            }
+        });
+
+        //ProductStructure "change"
+        $('#ProductSelectList').on('select2:select', function (e) {
+            var productId = $("#ProductSelectList").val();
+            if (productId != undefined) {
+                if (productId != "") {
+                    $.ajax({
+                        async: true,
+                        type: "GET",
+                        url: '/productmod/structure/GetStructuresByProduct?productId=' + productId,
+                        success: function (result) {
+                            if (result.isValid) {
+
+                                $("#StructuresByProduct").empty().trigger("change");
+
+                                result.structures.forEach(function (structure) {
+                                    if (structure.isStandard) {
+                                        structure.description += "-(Estándar)";
+                                    }
+                                    if (structure.isBase) {
+                                        structure.description += "-(Base)";
+                                    }
+                                    var option = new Option(structure.description, structure.id, false, structure.isStandard);
+                                    $('#StructuresByProduct').append(option).trigger('change');
+
+                                });
+                            }
+                        }
+                    });
+                }
+
+            }
+        });
+
+        $('#btn-send-to-shipments').click(function () {
+
+            setPageScrollPos($('.dataTables_scrollBody').scrollTop());
+
+            if (allWoIIds.size > 0) {
+
+                $.ajax({
+                    url: "/Logistics/Shipping/GetWorkActivitiesToShipments",
+                    type: "POST",
+                    data: {
+                        woiIds: Array.from(allWoIIds)
+                    },
+                    dataType: "json",
+                    traditional: true,
+                    success: function (res) {
+                        if(res.isValid){
+                             $('#form-modal .modal-header').html('<h5 class="modal-title">' + "@localizer["To shipments"]" + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+                            $('#form-modal .modal-body').html(res.html);
+                            $('#form-modal').modal('show');
+                        }
+                    },
+                    complete: function () {
+                        allWoIIds = new Set();
+                        document.querySelectorAll('.checkSelectedRow').forEach(function (item) {
+                            if ($('#' + item.getAttribute('id')).is(':checked') && !$('#' + item.getAttribute('id')).is(':disabled')) {
+                                $('#' + item.getAttribute('id')).prop('checked', false);
+                            }
+                        });
+                    }
+                });
+
+            } else {
+                alert("¡ Debe seleccionar al menos un ítem para ejecutar esta acción !");
+            }
+        });
+
+        $('#btn-get-OT').on('click', function(){
+            url = "/production/workorderheader/OnGetWorkOrderHeader?idWorkOrder=" + @Model.Id;
+            jQueryModalGet(url, '@localizer["View work order"]');
+        });
+
+    });
+
+    function ChangeItemState(workOrderId, workOrderItemId, state) {
+
+        setPageScrollPos($('.dataTables_scrollBody').scrollTop());
+
+        let url = '/production/workorder/ChangeWorkOrderItemState?workOrderId=' + workOrderId + '&workOrderItemId=' + workOrderItemId + '&state=' + state + '';
+        $.ajax({
+            url: url,
+            type: "POST",
+            success: function (response) {
+                if (response.isValid) {
+                    //$("#viewAll").html(response.html);
+                    loadData();
+                }
+            }
+        });
+    }
+
+    function reformatExportData(data, row, column, node) {
+        if(column == 0){
+            var newData = data.replace(',','.');
+            return newData;
+        }
+        else if (column == 1 || column === 2) {
+            var newData = data.split(">")[1].split("<")[0];
+            return newData.trim();
+        }
+        else if (column === 4) {
+
+            var newData = "";
+            var length = $(node).children().children().length;
+            $(node).children().children().each(function (index, element) {
+                if($(this).text() != ""){
+                    newData += $(this).text().trim();
+                    if (index != (length - 1))
+                    {
+                         newData += " -> ";
+                    }                   
+                }
+            });
+
+            return newData;
+        }
+        else if (column === 5) {
+            var newData = "";
+            if (data.includes("fa fa-check-circle")) {
+                newData = "Sí";
+            } else {
+                newData = "No";
+            }
+            return newData;
+        }
+        else {
+            return data;
+        }
+    }
+
+</script>

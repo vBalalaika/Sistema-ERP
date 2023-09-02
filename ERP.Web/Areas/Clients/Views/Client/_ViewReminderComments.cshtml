@@ -1,0 +1,12 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Clients.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model ReminderViewModel
+
+<div class="form-row">
+
+    <div class="col-md-12 mb-3">
+        <textarea disabled asp-for="Comment" name="Comment" class="form-control" id="Comment" rows="15"></textarea>
+    </div>
+
+</div>

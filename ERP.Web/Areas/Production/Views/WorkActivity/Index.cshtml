@@ -1,0 +1,31 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Production.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model WorkActivitiesViewModel
+
+<div class="sticky-top-title p-2 bg-filter-custom d-flex align-items-center justify-content-between">
+    <h3 class="mb-3">@localizer["Station"]: @Model.Station.AbreviationDescription</h3>
+    <h6 class="mb-3"><b>Nº OT: </b>@Model.workOrderIdsString</h6>
+</div>
+
+<partial name="_WorkOrderData" />
+
+<div id="viewAll" class="card-body table-responsive">
+
+</div>
+
+@section Scripts
+{
+    <script src="~/js/site.js"></script>
+    <script>
+
+        $(document).ready(function () {
+            loadData();
+        });
+
+        function loadData() {
+            $('#viewAll').load("/production/workactivity/LoadFiltered?workOrderIds=@Model.urlIds" + "&stationId=@Model.Station.Id");
+        }
+
+    </script>
+}

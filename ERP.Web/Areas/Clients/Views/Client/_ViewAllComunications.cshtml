@@ -1,0 +1,317 @@
+﻿@using ERP.Web.Areas.Clients.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<CommunicationViewModel>
+@{
+    ViewData["Title"] = localizer["List of comunications"];
+}
+
+<head>
+    <link href="~/css/Clients/comunications.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="card">
+        <div id="viewAllComunications" class="card-body table-responsive">
+
+            <div class="form-row d-flex">
+
+                <div class="col-md-4">
+                    <div class="form-check form-check-inline">
+                        <label class="control-label"> <i class="far fa-user"></i> @ViewBag.BusinessName</label>
+                    </div>
+                </div>
+
+                <div id="div-export-buttons" class="col-md-3 pt-4">
+                    <div class="btn-group pt-4">
+                        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Clients.Create)).Result.Succeeded)
+                        {
+                            <a id="btn-create" class="btn bg-secondary text-white">
+                                <img class="tables-img-icon" src="~/images/newComunication.svg" width="30" height="30" />
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-3 pl-5 ml-auto pt-4">
+                    <div id="div-country-time" class="col-md-8 form-check form-check-inline pl-3 pr-3 pt-2">
+                        <label id="countryTime" for="time">@localizer["The client`s country time is:"] @ViewBag.CountryTime</label>
+                    </div>
+                </div>
+
+            </div>
+
+            <table id="comunicationsTable" class="table table-striped-blue table-hover nowrap" width="100%">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Contact date"]</th>
+                        <th>@localizer["Consulted product"]</th>
+                        <th>@localizer["Functionality"]</th>
+                        <th>@localizer["Piece type"]</th>
+                        <th>@localizer["Contact source"]</th>
+                        <th>@localizer["Operation"]</th>
+                        <th>@localizer["Communication"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var com in Model)
+                    {
+                        if (com.ConsultedProducts.Count > 0)
+                        {
+                            foreach (var cp in com.ConsultedProducts)
+                            {
+                                <tr>
+                                    <td hidden>
+                                        @com.Id
+                                    </td>
+                                    <td>
+                                        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Clients.Delete)).Result.Succeeded)
+                                        {
+                                            <div class="btn-group">
+                                                <div class="d-flex  animated--grow-in">
+
+                                                    <a class="btn action-btn" title="@localizer["View communication"]" onclick="jQueryModalGet('/clients/client/OnGetCreateCommunication?id=@com.Id&viewAll=false','@localizer["Edit communication"]')"><img class="tables-img-icon" src="~/images/Editar.svg" width="25" height="25" /></a>
+
+                                                    <form id="form_delete_@com.Id" asp-area="Clients" asp-controller="Client" method="post" asp-action="OnPostDeleteCommunication" asp-route-id="@com.Id" asp-route-clientId="@com.ClientId" onsubmit="return jQueryModalDeleteModified(this, '@localizer["Are you sure to delete this record?"]')">
+                                                        <a class="btn action-btn" title="@localizer["Delete"]" href="javascript:$('#form_delete_@com.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                                    </form>
+                                                </div>
+                                            </div>
+                                        }
+                                    </td>
+                                    <td>
+                                        @com.ComunicationDate.ToShortDateString()
+                                    </td>
+                                    <td>
+                                        @cp.ProductCode - @cp.ProductDescription
+                                    </td>
+                                    <td>
+                                        @cp.Functionality
+                                    </td>
+                                    <td>
+                                        @cp.PieceType
+                                    </td>
+                                    <td>
+                                        @com.ContactSource
+                                    </td>
+                                    @if (com.SaleOperation is not null)
+                                    {
+                                        <td>
+                                            @com.SaleOperation.Operation
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td>
+                                            -
+                                        </td>
+                                    }
+                                    @if(com.CommunicationName != "")
+                                    {
+                                        <td>
+                                            @com.CommunicationName
+                                        </td>
+                                    }
+                                    else
+                                    {
+                                        <td>
+                                            -
+                                        </td>
+                                    }
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td hidden>
+                                    @com.Id
+                                </td>
+                                <td>
+                                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Clients.Delete)).Result.Succeeded)
+                                    {
+                                        <div class="btn-group">
+                                            <div class="d-flex  animated--grow-in">
+
+                                                <a class="btn action-btn" title="@localizer["View communication"]" onclick="jQueryModalGet('/clients/client/OnGetCreateCommunication?id=@com.Id&viewAll=false','@localizer["Edit communication"]')"><img class="tables-img-icon" src="~/images/Editar.svg" width="25" height="25" /></a>
+
+                                                <form id="form_delete_@com.Id" asp-area="Clients" asp-controller="Client" method="post" asp-action="OnPostDeleteCommunication" asp-route-id="@com.Id" asp-route-clientId="@com.ClientId" onsubmit="return jQueryModalDeleteModified(this, '@localizer["Are you sure to delete this record?"]')">
+                                                    <a class="btn action-btn" title="@localizer["Delete"]" href="javascript:$('#form_delete_@com.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    }
+                                </td>
+                                <td>
+                                    @com.ComunicationDate.ToShortDateString()
+                                </td>
+                                <td>
+                                    -
+                                </td>
+                                <td>
+                                    -
+                                </td>
+                                <td>
+                                    -
+                                </td>
+                                <td>
+                                    @com.ContactSource
+                                </td>
+                                @if (com.SaleOperation is not null)
+                                {
+                                    <td>
+                                        @com.SaleOperation.Operation
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td>
+                                        -
+                                    </td>
+                                }
+                                @if (com.CommunicationName is not null)
+                                {
+                                    <td>
+                                        @com.CommunicationName
+                                    </td>
+                                }
+                                else
+                                {
+                                    <td>
+                                        -
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Contact date"]</th>
+                        <th>@localizer["Consulted product"]</th>
+                        <th>@localizer["Functionality"]</th>
+                        <th>@localizer["Piece type"]</th>
+                        <th>@localizer["Contact source"]</th>
+                        <th>@localizer["Operation"]</th>
+                        <th>@localizer["Communication"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+
+@section Scripts
+{
+    <script>
+
+        $(document).ready(function () {
+
+            $('#comunicationsTable tfoot th').each(function (i) {
+                if ($(this).text() != "@localizer["Actions"]") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + $(this).text() + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let comunicationsTable = $("#comunicationsTable").DataTable({
+                "order": [[2, "asc"]],
+                "oLanguage": @localizer["LanguageDataTable"],
+                "columnDefs": [
+                    {
+                        "targets": [0],
+                        "visible": false,
+                        "searchable": false
+                    },
+                    {
+                        "targets": [1],
+                        "width": "5%"
+                    }
+                ],
+                scrollY: '40vh',
+                scrollX: true,
+                scrollCollapse: true,
+                scroller: true,
+                scroller: {
+                    loadingIndicator: true
+                },
+                "buttons": [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                        titleAttr: 'Exportar archivo Excel',
+                        title: 'Registro de comunicaciones',
+                        exportOptions: {
+                            columns: [2, 3, 4, 5, 6, 7, 8]
+                        }
+                    }]
+            });
+            comunicationsTable.buttons().container()
+                .appendTo('#div-export-buttons .btn-group');
+
+            $(comunicationsTable.table().container()).on('keyup', 'tfoot input', function () {
+                comunicationsTable
+                    .column($(this).data('index'))
+                    .search(this.value)
+                    .draw();
+            });
+
+            $('#btn-create').on('click', function () {
+                jQueryModalGetModified(@ViewBag.ClientId);
+            });
+
+        });
+
+        jQueryModalGetModified = (clientId) => {
+            try {
+                $.ajax({
+                    type: 'GET',
+                    url: '/clients/client/OnGetCreateCommunication?clientId=' + clientId,
+                    contentType: false,
+                    processData: false,
+                    success: function (res) {
+                        $('#form-modal .modal-header').html('<h5 class="modal-title">' + '@localizer["New register"]' + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+                        $('#form-modal .modal-body').html(res.html);
+                        $('#form-modal').modal('show');
+                    },
+                    error: function (err) {
+                        console.log(err)
+                    }
+                })
+                return false;
+            } catch (ex) {
+                console.log(ex)
+            }
+        }
+
+        jQueryModalDeleteModified = (form, title) => {
+            if (confirm(title)) {
+                try {
+                    $.ajax({
+                        type: 'POST',
+                        url: form.action,
+                        data: new FormData(form),
+                        contentType: false,
+                        processData: false,
+                        success: function (res) {
+                            if (res.isValid) {
+                                window.location.href = '/clients/client/_ViewAllComunications?clientId=' + res.clientId;
+                            }
+                        },
+                        error: function (err) {
+                            console.log(err)
+                        }
+                    })
+                } catch (ex) {
+                    console.log(ex)
+                }
+            }
+            return false;
+        };
+
+    </script>
+}

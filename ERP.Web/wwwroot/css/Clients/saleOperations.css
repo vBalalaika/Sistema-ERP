@@ -1,0 +1,9 @@
+﻿
+#saleOperationsTable {
+    display: none;
+}
+
+#btn-export-dataTable-excel {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}

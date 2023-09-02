@@ -1,0 +1,500 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Logistics.Models.DeliveryNote
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model DeliveryNoteHeaderViewModel
+
+<form id="create-form" method="post" asp-controller="DeliveryNote" asp-action="OnPostCreate" asp-route-id="@Model.Id" onsubmit="return jQueryModalPostModified(this);" enctype="multipart/form-data">
+
+    <div class="form-row">
+
+        <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+        <input type="checkbox" hidden asp-for="wasExportedToPDF" name="wasExportedToPDF" id="wasExportedToPDF" class="form-control">
+        <input type="hidden" asp-for="stationId" name="stationId" class="form-control">
+
+        <div class="col-md-2 mb-3">
+            <label asp-for="Date" class="control-label">@localizer["Date"]</label>
+            <input asp-for="Date" name="Date" type="datetime-local" class="form-control" id="Date">
+        </div>
+
+        <div class="col-md-10 mb-3">
+        </div>
+
+        <div class="col-md-5 mb-3">
+            <label asp-for="ProviderId" class="control-label">@localizer["Provider"]</label>
+            <select name="ProviderId" class="form-control select2bs4" id="Providers" asp-for="ProviderId" asp-items="@Model.Providers">
+            </select>
+        </div>
+        <div class="col-md-5 mb-3">
+            <label asp-for="TransportProviderId" class="control-label">@localizer["Transport"]</label>
+            <select name="TransportProviderId" class="form-control select2bs4" id="TransportProviders" asp-for="TransportProviderId" asp-items="@Model.TransportProviders">
+                <option value="-1">@localizer["Select transport"]</option>
+            </select>
+        </div>
+         <div class="col-md-2 mb-3 mt-1 align-self-end">
+            <a class="btn action-btn">
+                <div class="custom-control custom-checkbox small">
+                    <input class="custom-control-input" type="checkbox" id="checkOwnTransport">
+                    <label class="custom-control-label" for="checkOwnTransport">@localizer["Own transport"]</label>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-2 mb-3 mt-1 align-self-end">
+            <a class="btn action-btn">
+                <div class="custom-control custom-checkbox small">
+                    <input class="custom-control-input" type="checkbox" id="checkAddDeliveryNoteCreated">
+                    <label class="custom-control-label" for="checkAddDeliveryNoteCreated">@localizer["Add to existing delivery note"]</label>
+                </div>
+            </a>
+        </div>
+        <div id="divNumber" class="col-md-3 mb-3">
+            <label asp-for="Number" class="control-label">@localizer["Number"]</label>
+            <input asp-for="Number" name="Number" type="text" class="form-control" id="Number" onkeypress="return validateIsNumberWithMidDash(event);">
+            <span asp-validation-for="Number" class="text-danger"></span>
+        </div>
+
+        <div id="divDeliveryNoteNumbers" class="col-md-8 mb-3">
+            <label for="deliveryNoteNumbers" class="control-label">@localizer["Delivery note number"]</label>
+            <select class="form-control select2bs4" id="deliveryNoteNumbers" asp-items="@Model.deliveryNoteNumbers">
+                <option value="-1">@localizer["Select delivery note number"]</option>
+            </select>
+            <span asp-validation-for="Number" class="text-danger"></span>
+        </div>
+        <div id="divBtnAdd" class="col-md-1 mb-3">
+            <label class="control-label">@localizer["Add"]</label>
+            <button id="btn-add-details-from-deliveryNoteNumber" type="button" class="form-control btn btn-primary"><i class="fas fa-plus"></i></button>
+        </div>
+
+    </div>
+
+    <div class="form-row">
+        <div id="table-div" class="col-md-12 py-3">
+            <div class="row d-flex  col-md-12 ml-1 p-0">
+                <label class="card-title text-capitalize mb-3">@localizer["Details"]</label>
+            </div>
+
+            <div id="table-responsive-div" class="col-md-12 p-0">
+                <table class="table table-striped-blue nowrap w-100" id="deliveryNoteDetailsTable">
+                    <thead class="bg-thead">
+                        <tr>
+                             <th hidden></th>
+                            <th>@localizer["Code"]</th>
+                            <th>@localizer["Description"]</th>
+                            <th>@localizer["Quantity"]</th>
+                            <th>@localizer["Package"]</th>
+                            <th>@localizer["Package weight"]</th>
+                            <th>@localizer["Nº OT"]</th>
+                            <th>Nº @localizer["Product"]</th>
+                            <th>@localizer["Product"]</th>
+                            <th>@localizer["Configuration"]</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        @if (Model.DeliveryNoteDetails != null)
+                        {
+
+                            @foreach (var item in Model.DeliveryNoteDetails)
+                            {
+                                <tr>
+                                    <td class="d-none">
+                                        <input type="hidden" name="DeliveryNoteDetails.Index" value="@item.WorkActivity.Id" />
+                                        <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].Id" readonly value="@item.Id" />
+                                        <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].ConcurrencyToken" readonly value="@item.ConcurrencyToken" />
+                                        <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].DeliveryNoteHeaderId" readonly value="@item.DeliveryNoteHeaderId" />
+                                        <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].ProductItemId" readonly value="@item.WorkActivity.WorkOrderItem.Product.Id" />
+                                        <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].ProductId" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Product.Id" />
+                                        @if (item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Structure != null)
+                                        {
+                                            <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].ConfigurationId" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Structure.Id" />
+                                        }
+                                        else
+                                        {
+                                            <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].ConfigurationId" readonly value="" />
+                                        }
+                                        <input type="hidden" name="DeliveryNoteDetails[@item.WorkActivity.Id].WorkActivityId" readonly value="@item.WorkActivity.Id" />
+                                    </td>
+
+                                    <td width="7%"><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].ProductItemCode" readonly value="@item.WorkActivity.WorkOrderItem.Product.Code" /></td>
+                                    <td width="30%"><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].ProductItemDescription" readonly value="@item.WorkActivity.WorkOrderItem.Product.Description" /></td>
+                                    <td><input type="text" class="custom-form-control form-control text-center" name="DeliveryNoteDetails[@item.WorkActivity.Id].Quantity" readonly value="@item.Quantity" /></td>
+
+                                    <td><input type="number" class="inputPackage form-control text-center" name="DeliveryNoteDetails[@item.WorkActivity.Id].Package" value="1" /></td>
+                                    <td><input type="text" class="inputPackageWeight form-control text-center" name="DeliveryNoteDetails[@item.WorkActivity.Id].PackageWeight" value="0,00" onkeypress="return validateIsNumber(event);" /></td>
+
+                                    <td><input type="text" class="custom-form-control form-control text-center" name="DeliveryNoteDetails[@item.WorkActivity.Id].WorkOrderHeaderNumber" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.WorkOrderHeader.WorkOrderHeaderNumber" /></td>
+                                    <td><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].ProductNumber" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.ProductNumber" /></td>
+                                    <td width="15%"><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].Product" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Product.CodeAndDescription" /></td>
+
+                                    @if (item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Structure != null)
+                                    {
+                                        <td width="15%"><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].Configuration" readonly value="@item.WorkActivity.WorkOrderItem.WorkOrder.OrderDetail.Structure.Description" /></td>
+                                    }
+                                    else
+                                    {
+                                        <td width="15%"><input type="text" class="custom-form-control form-control" name="DeliveryNoteDetails[@item.WorkActivity.Id].Configuration" readonly value="" /></td>
+                                    }
+                                </tr>
+                            }
+
+                        }
+
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label asp-for="Comments" class="control-label">@localizer["Comments"]</label>
+            <textarea asp-for="Comments" name="Comments" class="form-control" id="Comments" rows="5"></textarea>
+        </div>
+
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        @{
+            if (Model.Id == 0)
+            {
+                <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+                <button type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+            }
+        }
+    </div>
+</form>
+
+<script src="~/js/site.js"></script>
+<script type="text/javascript">
+
+    $(document).ready(function () {
+
+        $('#divDeliveryNoteNumbers').hide();
+        $('#divBtnAdd').hide();
+
+        let providersSelect = $('#Providers');
+        let transportProvidersSelect = $('#TransportProviders');
+        let checkAddDeliveryNoteCreated = $('#checkAddDeliveryNoteCreated');
+        let checkOwnTransport = $('#checkOwnTransport');
+
+        $("#deliveryNoteDetailsTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "ordering": false,
+            "searching": false,
+            "paging": false,
+            "info": false
+        });
+
+        providersSelect.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        transportProvidersSelect.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        checkAddDeliveryNoteCreated.change(function () {
+            if (this.checked) {
+
+                $('#Number').prop('readonly', true);
+                if($('#deliveryNoteNumbers').val() != -1){
+                    $('#Number').val($('#deliveryNoteNumbers').find(":selected").text());
+                }
+
+                // Cargo el select2 con la informacion según Providers y TransportProviders que se seleccionaron.
+                if (getDeliveryNoteNumbersByProviderAndTransport(providersSelect, transportProvidersSelect)) {
+
+                    $('#divNumber').hide();
+
+                    $('#divDeliveryNoteNumbers').show('slow');
+                    $('#divBtnAdd').show('slow');
+                } else {
+                    checkAddDeliveryNoteCreated.prop('checked', false);
+                    alert("¡Atención!. No se pudieron cargar los remitos para el proveedor y el transporte seleccionados.");
+                }
+
+            } else {
+                $('#Number').prop('readonly', false);
+                $('#Number').val('');
+                $('#divDeliveryNoteNumbers').hide();
+                $('#divBtnAdd').hide();
+                $('#divNumber').show('slow');
+            }
+        });
+
+        checkOwnTransport.change(function(){
+            if(this.checked){
+                transportProvidersSelect.val(providersSelect.val()).trigger('change');
+            }
+            else{
+                transportProvidersSelect.val('-1').trigger('change');
+            }
+        });
+
+        $('#deliveryNoteNumbers').change(function(){
+            $('#Number').val($(this).find(":selected").text());
+        });
+
+        providersSelect.change(function () {
+            checkOwnTransport.prop('checked', false);
+            transportProvidersSelect.val('-1').trigger('change');
+            if ($('#checkAddDeliveryNoteCreated').prop('checked')) {
+                $('#deliveryNoteNumbers').val(null).trigger('change');
+            }
+        });
+
+        transportProvidersSelect.change(function () {
+            if ($('#checkAddDeliveryNoteCreated').prop('checked')) {
+                $('#deliveryNoteNumbers').val(null).trigger('change');
+            }
+        });
+
+        $('.inputPackage').on({
+            "focus": function (event) {
+                $(event.target).select();
+            }
+        });
+
+        $('.inputPackageWeight').on({
+            "focus": function (event) {
+                $(event.target).select();
+            },
+             "keyup": function (event) {
+                $(event.target).val(function (index, value) {
+                    return value.replace(/\D/g, "")
+                        //.replace(/^0+/, '0')
+                        .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                        .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                });
+            },
+            "change": function (event) {
+                $(event.target).val(function (index, value) {
+                    let valueAux = value;
+                    if (!value.includes(",")) {
+                        valueAux = value.concat(",00");
+                    }
+                    else {
+                        valueAux = value;
+                    }
+
+                    if (value.charAt(0) == "0" && value.length == 1) {
+                        valueAux = value.concat(",00");
+                    }
+                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                        if(value.charAt(1) == "."){
+                            valueAux = value.slice(2);
+                        }
+                        else if(value.charAt(2) == "."){
+                            valueAux = value.slice(1);
+                        }
+                        else{
+                            valueAux = value.slice(1);
+                        }
+                    }
+
+                    for (var i = 0; i < valueAux.length; i++) {
+                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                            let addZero = "";
+                            if(valueAux[i] == ","){
+                                addZero = "0";
+                            }
+                            valueAux = addZero + valueAux.slice(i);
+                            break;
+                        }
+                    }
+
+                    return valueAux;
+                });
+            }
+        });
+
+        $('#Number').on({
+            "focus": function (event) {
+                $(event.target).select();
+            }
+        });
+
+        $('#Number').focusout(function () {
+            if ($('#checkAddDeliveryNoteCreated').prop('checked')) {
+
+            }
+        });
+
+        $('#btn-add-details-from-deliveryNoteNumber').click(function () {
+
+            if ($('#deliveryNoteNumbers').val() != -1 && $('#deliveryNoteNumbers').val() != null && $('#deliveryNoteNumbers').val() != 0) {
+                $.ajax({
+                    type: 'GET',
+                    url: '/Logistics/Shipping/MergeDeliveryNoteByHeaderId',
+                    data: {
+                        dnhId: $('#deliveryNoteNumbers').val(),
+                        countRows: $('#deliveryNoteDetailsTable tbody tr').length
+                    },
+                    success: function (res) {
+                        if (res.isValid) {
+
+                            $('#tableBody').append(res.html);
+
+                            $('.inputPackage').on({
+                                "focus": function (event) {
+                                    $(event.target).select();
+                                }
+                            });
+
+                            $('.inputPackageWeight').on({
+                                "focus": function (event) {
+                                    $(event.target).select();
+                                },
+                                "keyup": function (event) {
+                                    $(event.target).val(function (index, value) {
+                                        return value.replace(/\D/g, "")
+                                        //.replace(/^0+/, '0')
+                                        .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                        .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                    });
+                                },
+                                "change": function (event) {
+                                    $(event.target).val(function (index, value) {
+                                        let valueAux = value;
+                                        if (!value.includes(",")) {
+                                            valueAux = value.concat(",00");
+                                        }
+                                        else {
+                                            valueAux = value;
+                                        }
+                                        
+                                        if (value.charAt(0) == "0" && value.length == 1) {
+                                            valueAux = value.concat(",00");
+                                        }
+                                        else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                            if(value.charAt(1) == "."){
+                                                valueAux = value.slice(2);
+                                            }
+                                            else if(value.charAt(2) == "."){
+                                                valueAux = value.slice(1);
+                                            }
+                                            else{
+                                                valueAux = value.slice(1);
+                                            }
+                                        }
+                                        
+                                        for (var i = 0; i < valueAux.length; i++) {
+                                            if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                let addZero = "";
+                                                if(valueAux[i] == ","){
+                                                    addZero = "0";
+                                                }
+                                                
+                                                valueAux = addZero + valueAux.slice(i);
+                                                break;
+                                            }
+                                        }
+                                        
+                                        return valueAux;
+                                    });
+                                }
+                            });
+
+                            $('#Number').on({
+                                "focus": function (event) {
+                                    $(event.target).select();
+                                }
+                            });
+
+                        }
+                    }
+                });
+            } else {
+                alert('Debe seleccionar un número de remito existente.');
+            }
+
+        });
+
+    });
+
+    jQueryModalPostModified = form => {
+        try {
+            $.ajax({
+                type: 'POST',
+                url: form.action,
+                data: new FormData(form),
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.isValid) {
+
+                        $('#form-modal #btn-save').attr('disabled', 'disabled');
+                        $('#form-modal #btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#form-modal #btn-save').text());
+                        $('#form-modal').modal('hide');
+
+                        // For refresh with params.
+                        let params = (new URL(document.location)).searchParams;
+                        let workOrderIds = params.get("workOrderIds");
+                        let stationId = params.get("stationId");
+
+                        url = "/logistics/shipping/IndexByWorkOrderAndStation?workOrderIds=" + workOrderIds + "" + "&stationId=" + stationId + "";
+                        window.location.href = url;
+
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+    function validateIsNumberWithMidDash(evt) {
+        // code is the decimal ASCII representation of the pressed key.
+        var code = (evt.which) ? evt.which : evt.keyCode;
+
+        if (code == 8) {
+            return true;
+        } else if (code == 44 || code == 45 || code == 46) {
+            return true;
+        } else if (code >= 48 && code <= 57) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    function getDeliveryNoteNumbersByProviderAndTransport(providersSelect, transportProvidersSelect) {
+        let success = false;
+        if (providersSelect.val() != -1 && transportProvidersSelect.val() != -1) {
+
+            success = true;
+
+            //$('#deliveryNoteNumbers').select2("destroy");
+            $('#deliveryNoteNumbers').select2({
+                theme: "bootstrap4",
+                ajax: {
+                    url: '/Logistics/Shipping/LoadDeliveryNoteNumbers',
+                    data: function (params) {
+                        return {
+                            search: params.term,
+                            providerId: providersSelect.val(),
+                            transportProviderId: transportProvidersSelect.val()
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.deliveryNoteNumbers
+                        };
+                    },
+                    success: function () {
+
+                    }
+                }
+            });
+        }
+
+        return success;
+    }
+
+</script>

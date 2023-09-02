@@ -1,0 +1,126 @@
+﻿tr{
+    height: 70px !important
+}
+
+#logo {
+    width: 60%;
+}
+
+#header_simplemak {
+    height: 10%;
+    color: white;
+    border-radius: 20px !important;
+}
+
+#body_one {
+    padding-top: 2%;
+    padding-bottom: 2%;
+    border-bottom: 3px solid #D3E1F3 !important;
+}
+
+#body_two {
+    padding-top: 2%;
+    padding-bottom: 2%;
+}
+
+#footer {
+    height: 5%;
+    padding-bottom: 2%;
+    border-bottom: 3px solid #D3E1F3 !important;
+}
+
+#footer_left {
+    margin-right: 1%;
+    background-color: #F5F5F5 !important;
+    position: relative;
+}
+
+#footer_right {
+    background-color: #F5F5F5 !important;
+    position: relative;
+}
+
+#products_table {
+    margin-top: 2%;
+}
+
+#bg-thead-pdf {
+    border-bottom: 3px solid #D3E1F3 !important;
+}
+
+#header_right {
+    background: -webkit-linear-gradient(top, #A5A5A5 50%, #F5F5F5 50%);
+    text-align: right;
+    position: relative;
+    width: 20%;
+    border-top-right-radius: 20px !important;
+    border-bottom-right-radius: 20px !important;
+}
+
+#header_left {
+    width: 80%;
+    position: relative;
+    background-color: #84B6F4 !important;
+    border-top-left-radius: 20px !important;
+    border-bottom-left-radius: 20px !important;
+}
+
+#quoteDate, #date {
+    color: #000000 !important;
+}
+
+#title {
+    position: absolute;
+    top: 80%;
+    margin-top: -25px;
+    padding-left: 5%;
+}
+
+img {
+    position: absolute;
+    top: 50%;
+    margin-top: -25px;
+    padding-left: 5%;
+}
+
+#bussinessName, #address, #simplemak, #simplemak_address, #cuit, #simplemak_cuit {
+    color: #0085CA !important;
+}
+
+h5, h3 {
+    color: #343A40 !important;
+}
+
+#P {
+    position: absolute;
+    top: 30%;
+    margin-top: -25px;
+    padding-left: 35%;
+}
+
+#cod {
+    color: white !important;
+    position: absolute;
+    top: 80%;
+    margin-top: -25px;
+    padding-left: 20%;
+}
+
+#simplemak_title, #provider_title {
+    position: absolute;
+    top: 70%;
+    margin-top: -25px;
+    padding-left: 30%;
+}
+
+.flexrow {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex !important;
+}
+
+    .flexrow > div {
+        -webkit-box-flex: 1;
+        -webkit-flex: 1;
+        flex: 1;
+    }

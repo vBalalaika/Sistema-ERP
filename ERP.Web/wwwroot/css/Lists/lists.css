@@ -1,0 +1,37 @@
+﻿#form-modal > div {
+    max-width: 800px;
+}
+
+#subCategoryTable_filter, #stationTable_filter, #categoryTable_filter, #functionalareaTable_filter, #cityTable_filter, #cityStateTable_filter {
+    display: none;
+}
+
+@media only screen and (max-width: 767px) {
+    #div-export-buttons {
+        display: contents;
+        text-align: center;
+    }
+
+    #btn-create, #reload {
+        width: 100%;
+        flex: 1 1 auto;
+        float: none;
+        text-align: center;
+        margin-bottom: 0.5em;
+    }
+
+    div.dt-buttons {
+        float: none;
+        width: 100%;
+        text-align: center;
+        margin-bottom: .5em;
+    }
+}
+
+@media only screen and (max-width: 1215px) and (min-width: 768px) {
+    #div-export-buttons {
+        right: 20px;
+        position: absolute;
+        top: -40px;
+    }
+}

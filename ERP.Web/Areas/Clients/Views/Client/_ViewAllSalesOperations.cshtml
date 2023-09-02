@@ -1,0 +1,322 @@
+﻿@using ERP.Web.Areas.Clients.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<SaleOperationViewModel>
+@{
+    if (ViewData["OrderTitle"] != null)
+    {
+        ViewData["Title"] = ViewData["OrderTitle"].ToString();
+    }
+}
+<head>
+    <link href="~/css/Clients/viewAllOperationSales.css" rel="stylesheet" />
+</head>
+
+
+
+<body>
+
+    <div class="card">
+
+            <h3>@localizer["Sales operations"]</h3>
+
+
+        <div class="col-sm-12 col-md-12 col-xl-6 mb-3 pr-0 mr-3">
+            <label for="daterange">@localizer["Date"]</label>
+            <input id="daterange" type="text" name="daterange" class="form-control pr-4 border-0" />
+        </div>
+
+        <div id="viewAll" class="card-body table-responsive">
+
+
+            <div id="div-export-buttons">
+                <div class="btn-group">
+
+                </div>
+            </div>
+
+            <table id="saleOperationsTable" class="table table-striped-blue nowrap" width="100%">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th class="col-1">@localizer["Operation"]</th>
+                        <th class="col-1">@localizer["Client"]</th>
+                        <th class="col-1">@localizer["Start date"]</th>
+                        <th class="col-1">@localizer["Ending date"]</th>
+                        <th class="col">@localizer["State"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th hidden>@localizer["id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Operation"]</th>
+                        <th>@localizer["Client"]</th>
+                        <th>@localizer["Start date"]</th>
+                        <th>@localizer["Ending date"]</th>
+                        <th>@localizer["State"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+
+
+@section Scripts
+    {
+    <script>
+
+        $(document).ready(function () {
+
+            $('#saleOperationsTable tfoot th').each(function (i) {
+                if ($(this).text() != "@localizer["Actions"]") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + $(this).text() + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let start = moment().subtract(6, 'months');
+            let end = moment();
+            let dateFromFilterValue = start.format('DD/MM/YYYY');
+            let dateToFilterValue = end.format('DD/MM/YYYY');
+
+
+            $('input[name="daterange"]').daterangepicker({
+                "locale": {
+                    "format": "DD/MM/YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Aceptar",
+                    "cancelLabel": "Cancelar",
+                    "fromLabel": "Desde",
+                    "toLabel": "Hasta",
+                    "daysOfWeek": [
+                        "Do",
+                        "Lu",
+                        "Ma",
+                        "Mi",
+                        "Ju",
+                        "Vi",
+                        "Sa"
+                    ],
+                    "monthNames": [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre"
+                    ],
+                    "firstDay": 1
+                },
+                "autoApply": true,
+                "showDropdowns": true,
+                "opens": "right",
+                "buttonClasses": "btn btn-sm",
+                "applyClass": "btn-primary",
+                "startDate": start,
+                "endDate": end,
+                "minYear": 1995
+            }, cb);
+
+            function cb(start, end) {
+                $('#daterange span').html(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+                dateFromFilterValue = start.format('DD/MM/YYYY');
+                dateToFilterValue = end.format('DD/MM/YYYY');
+                refreshTable();
+            }
+
+            $('#daterange').on('apply.daterangepicker', function (ev, picker) {
+                dateFromFilterValue = picker.startDate.format('DD/MM/YYYY');
+                dateToFilterValue = picker.endDate.format('DD/MM/YYYY');
+                refreshTable();
+            });
+
+            let saleOperationsTable = $("#saleOperationsTable").DataTable({
+                "scrollY": '55vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "scroller": true,
+                "oLanguage": @localizer["LanguageDataTable"],
+                "order": [[2, "asc"]],
+                "sAjaxSource": "/Clients/Client/LoadAllSaleOperations",
+                "sServerMethod": "POST",
+                "bServerSide": true,
+                "bProcessing": true,
+                scroller: {
+                    loadingIndicator: true
+                }, 
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "dateFromFilterValue", "value": dateFromFilterValue },
+                        { "name": "dateToFilterValue", "value": dateToFilterValue },
+                    );
+                },
+                "buttons": [
+                    {
+                        extend: 'excelHtml5',
+                        attr: { id: 'btn-export-dataTable-excel'},
+                        text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                        titleAttr: 'Exportar archivo Excel',
+                        title: 'Registro de operaciones',
+                        exportOptions: {
+                            columns: [1, 2, 3, 4, 5]
+                        }
+                    }],
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false
+                    },
+                    {
+                        "searchable": false,
+                        "render": function (data, type, row, meta) {
+
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+
+                            html += '<a class="btn action-btn" title="Editar operacion" onclick="editOperation(' + row.id + ')"> <img class="action-img-icon" src="../../../images/Editar.svg" width="22" height="22" /> </a>';
+
+                            html += '</div></div>';
+
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                    },
+                    {
+                        "data": "operation",
+                        "searchable": true,
+                        "visible": true
+                    },
+                    {
+                        "data": "client",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            } else {
+                                return value.businessName;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    },
+                    {
+                        "data": "startDate",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return moment(value).format('DD/MM/YYYY');
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    },
+                    {
+                        "data": "endingDate",
+                        "render": function (value) {
+                            if (value === '0001-01-01T00:00:00') {
+                                return "";
+                            } else {
+                                return moment(value).format('DD/MM/YYYY');
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    },
+                    {
+                        "data": "state",
+                        "searchable": true,
+                        "visible": true
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                }
+            });
+
+            saleOperationsTable.buttons().container()
+                .appendTo('#div-export-buttons .btn-group');
+
+            $(saleOperationsTable.table().container()).on('keyup', 'tfoot input', function () {
+                saleOperationsTable
+                    .column($(this).data('index'))
+                    .search(this.value)
+                    .draw();
+            });
+
+            colIndexOrder = saleOperationsTable.order()[0][0];
+            colOrderDirection = saleOperationsTable.order()[0][1];
+
+            $('div.dataTables_scrollHeadInner thead').on('click', 'th', function () {
+
+                if ($(this).hasClass("sorting") && !$(this).hasClass("sorting_asc") && !$(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+                else if ($(this).hasClass("sorting_asc")) {
+                    colOrderDirection = "desc";
+                }
+                else if ($(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+
+                switch (saleOperationsTable.column(this).index()) {
+                    case 2:
+                        // Operation
+                        colIndexOrder = 2;
+                        break;
+                    case 3:
+                        // Client
+                        colIndexOrder = 3;
+                        break;
+                    case 4:
+                        // Start date
+                        colIndexOrder = 4;
+                        break;
+                    case 5:
+                        // Ending date
+                        colIndexOrder = 5;
+                        break;
+                    case 6:
+                        // State
+                        colIndexOrder = 6;
+                        break;
+
+                }
+            });
+
+        });
+
+        function refreshTable() {
+            $('#saleOperationsTable').DataTable().clear();
+            $('#saleOperationsTable').DataTable().ajax.reload();
+        }
+
+
+        function editOperation(saleOperationId) {
+            jQueryModalGet('/Clients/Client/_EditSaleOperation?saleOperationId=' + saleOperationId + '&view=_ViewAllSalesOperations', '@localizer["Edit operation"]');
+        }
+
+    </script>
+}

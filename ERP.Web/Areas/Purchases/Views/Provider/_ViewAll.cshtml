@@ -1,0 +1,209 @@
+﻿@using ERP.Web.Areas.Purchases.Models.Providers
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<ProviderViewModel>
+
+<div id="div-export-buttons">
+    <div class="btn-group">
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Providers.Create)).Result.Succeeded)
+        {
+            <a id="btn-create" class="btn bg-secondary" title="@localizer["Create"]">
+                <i class="fa fa-plus-square"></i>
+            </a>
+        }
+    </div>
+</div>
+<table id="providersTable" class="table table-striped-blue table-hover nowrap" width="100%">
+    <thead class="bg-thead">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Name"]</th>
+            <th>@localizer["Business name"]</th>
+            <th>@localizer["Provider type"]</th>
+            <th>@localizer["Country"]</th>
+            <th>@localizer["State"]</th>
+            <th>@localizer["City"]</th>
+            <th>@localizer["Address"]</th>
+            <th>@localizer["Document type"]</th>
+            <th>@localizer["Document number"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var provider in Model)
+        {
+            <tr>
+                <td>
+                    @provider.Id
+                </td>
+                <td>
+                    <div class="btn-group">
+                        <div class="d-flex animated--grow-in">
+
+                            @if (provider.ProviderType == "Servicios")
+                            {
+                                <a class="btn action-btn" title="@localizer["Work stations"]" asp-controller="Provider" asp-action="WorkStationByProvider" asp-route-id="@provider.Id" asp-route-providerName="@provider.BusinessName"><img class="action-img-icon" src="~/images/Productos.svg" width="20" height="20" /></a>
+                            }
+                            else if (provider.ProviderType == "Productos")
+                            {
+                                <a class="btn action-btn" title="@localizer["See products"]" asp-controller="ProviderProduct" asp-action="Index" asp-route-id="@provider.Id" asp-route-providerName="@provider.BusinessName"><img class="action-img-icon" src="~/images/Productos.svg" width="20" height="20" /></a>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled"><img class="action-img-icon" src="~/images/Productos.svg" width="20" height="20" /></a>
+                            }
+
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Providers.Edit)).Result.Succeeded)
+                            {
+                                <a class="btn action-btn" title="@localizer["Edit"]" onclick="jQueryModalGet('/purchases/provider/OnGetCreateOrEdit?id=@provider.Id','@localizer["Edit provider"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Edit"]" onclick="jQueryModalGet('/purchases/provider/OnGetCreateOrEdit?id=@provider.Id','@localizer["Edit provider"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Providers.Delete)).Result.Succeeded)
+                            {
+                                <form id="form_delete_@provider.Id" asp-area="Purchases" asp-controller="Provider" method="post" asp-action="OnPostDelete" asp-route-id="@provider.Id" onsubmit="return jQueryModalDelete(this, '@localizer["Are you sure to delete this record?"]')">
+                                    <a class="btn action-btn" title="@localizer["Delete"]" href="javascript:$('#form_delete_@provider.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </form>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Delete"]" href="javascript:$('#form_delete_@provider.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                            }
+                        </div>
+                    </div>
+                </td>
+                <td class="text-capitalize">
+                    @provider.Name
+                </td>
+                <td class="text-capitalize">
+                    @provider.BusinessName
+                </td>
+                <td class="text-capitalize">
+                    @provider.ProviderType
+                </td>
+                <td>
+                    @{
+                        if (provider.Country != null)
+                        {
+                            @provider.Country.Description;
+                        }
+                    }
+                </td>
+                <td>
+                    @{
+                        if (provider.State != null)
+                        {
+                            @provider.State.Name;
+                        }
+                    }
+                </td>
+                <td>
+                    @{
+                        if (provider.City != null)
+                        {
+                            @provider.City.Name;
+                        }
+                    }
+                </td>
+                <td>
+                    @provider.Address
+                </td>
+                <td>
+                    @{
+                        if (provider.DocumentType != null)
+                        {
+                            @provider.DocumentType.Description;
+                        }
+                    }
+                </td>
+                <td>
+                    @provider.DocumentNumber
+                </td>
+
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Name"]</th>
+            <th>@localizer["Business name"]</th>
+            <th>@localizer["Provider type"]</th>
+            <th>@localizer["Country"]</th>
+            <th>@localizer["State"]</th>
+            <th>@localizer["City"]</th>
+            <th>@localizer["Address"]</th>
+            <th>@localizer["Document type"]</th>
+            <th>@localizer["Document number"]</th>
+        </tr>
+    </tfoot>
+</table>
+
+<script>
+    $(document).ready(function () {
+
+        $('#providersTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let providersTable = $("#providersTable").DataTable({
+            "order": [[3, "asc"]],
+            "oLanguage": @localizer["LanguageDataTable"],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }],
+            scrollY: '60vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            //stateSave: true,
+            //stateLoadParams: function (settings, data) {
+            //    for (i = 0; i < data.columns["length"]; i++) {
+            //        var col_search_val = data.columns[i].search.search;
+            //        if (col_search_val != "") {
+            //            $("input", $('#providersTable tfoot th')[i]).val(col_search_val);
+            //        }
+            //    }
+            //},
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="25" height="25" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Datos de proveedores',
+                    exportOptions: {
+                        columns: [2, 3, 4, 5, 6, 7, 8, 9, 10]
+                    }
+                }]
+        });
+
+        providersTable.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(providersTable.table().container()).on('keyup', 'tfoot input', function () {
+            providersTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+        $('#btn-create').on('click', function () {
+            jQueryModalGet('/purchases/provider/OnGetCreateOrEdit', '@localizer["New provider"]');
+        });
+
+    });
+</script>

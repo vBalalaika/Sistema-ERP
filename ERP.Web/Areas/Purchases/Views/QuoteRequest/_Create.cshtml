@@ -1,0 +1,699 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Purchases.Models.QuoteRequest
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["New quote request"];
+
+}
+@model QuoteRequestHeaderViewModel
+@{
+    int index = 1;
+}
+
+<form id="create-form" method="post" asp-controller="QuoteRequest" asp-action="OnPostCreate" asp-route-id="@Model.Id" enctype="multipart/form-data">
+    
+    <div class="form-row">
+        
+        <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+        <input type="hidden" asp-for="isGenerateMissingProducts" name="isGenerateMissingProducts" class="form-control">
+        
+        <div class="col-md-2 mb-3">
+            <label asp-for="Date" class="control-label">@localizer["Date"]</label>
+            <input asp-for="Date" name="Date" type="date" class="form-control" id="Date">
+            <span asp-validation-for="Date" class="text-danger"></span>
+        </div>
+        
+        <div class="col-md-7 mb-3">
+            <label asp-for="Providers" class="control-label">@localizer["Provider"]</label>
+            <select name="Providers[]" multiple="multiple" class="form-control select2bs4" id="Providers" asp-for="Providers">
+                @if(Model.RelQuoteRequestProviders != null)
+                {
+                    if(Model.RelQuoteRequestProviders.Count > 0)
+                    {
+                        foreach (var rqrp in Model.RelQuoteRequestProviders)
+                        {
+                            if(rqrp.Provider != null)
+                            {
+                                <option value="@rqrp.ProviderId" selected>@rqrp.Provider.getBussinessNameOrName</option>
+                            }
+                        }
+                    } 
+                }   
+            </select>
+        </div>
+
+        <div class="col-md-1 mb-3">
+            <label class="control-label">@localizer["New"]</label>
+            <button id="btn-create-provider" class="btn btn-secondary w-100" type="button"><i class="far fa-address-card"></i></button>
+        </div>
+        
+        @if(Model.Id != 0)
+        {
+            <div class="col-md-2 mb-3">
+                <label asp-for="Number" class="control-label">@localizer["Number"]</label>
+                <input asp-for="Number" name="Number" type="number" class="form-control text-center" id="Number" readonly tabindex="-1" value="@Model.Id">
+            </div>
+        }
+        else
+        {
+            <div class="col-md-2 mb-3">
+                <label asp-for="Number" class="control-label">@localizer["Number"]</label>
+                <input asp-for="Number" name="Number" type="number" class="form-control text-center" id="Number" readonly tabindex="-1">
+            </div>   
+        }
+        
+        @if (Model.isGenerateMissingProducts)
+        {
+            <div class="form-row col-md-12 d-flex mb-3">
+                <div class="form-check form-check-inline ml-2 mt-2 d-none">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkAddProduct">
+                        <label class="custom-control-label" for="checkAddProduct">@localizer["Add missing products"]</label>
+                    </div>
+                </div>
+            </div>
+        
+            <div class="form-row col-md-12 d-flex mb-3">
+                <div id="specialProductsDiv" class="form-check form-check-inline ml-2 mt-2">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkSpecialProduct">
+                        <label class="custom-control-label" for="checkSpecialProduct">@localizer["Special products"]</label>
+                    </div>
+                </div>
+            </div>
+            <div id="divSelect2Products" class="col-md-9 mb-3">
+                <label class="control-label">@localizer["Products"]</label>
+                <select class="form-control select2bs4" id="Products">
+                    <option value="">@localizer["Select product"]</option>
+                </select>
+            </div>
+        }
+        else
+        {
+            <div id="divSelect2Products" class="col-md-9 mb-3">
+                <label class="control-label">@localizer["Products"]</label>
+                <select class="form-control select2bs4" id="Products">
+                    <option value="">@localizer["Select product"]</option>
+                </select>
+            </div>
+        }
+
+     <div id="quantityDiv" class="col-md-1 mb-3">
+        <label class="control-label">@localizer["Quantity"]</label>
+        <input name="Quantity" type="text" class="form-control text-right" id="Quantity" readonly onkeypress="return validateIsNumber(event);">
+    </div>
+    <div id="unitMeasureDiv" class="col-md-1 mb-3">
+        <label class="control-label">@localizer["Unit"]</label>
+        <input type="text" class="custom-form-control form-control text-left" id="UnitMeasure" readonly>
+    </div>
+    <div id="btnAddDiv" class="col-md-1 mb-3">
+        <label class="control-label">@localizer["Add"]</label>
+        <button id="btn-add-detail" type="button" class="form-control btn btn-primary"><i class="fa fa-plus-circle" aria-hidden="true"></i></button>
+    </div>
+
+        <div id="table-div" class="col-md-12">
+            <table id="quoteRequestDetailsTable" class="table table-responsive table-striped-blue nowrap" width="100%">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th width="10%">@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th width="15%" class="text-right">@localizer["Quantity to order"]</th>
+                        <th hidden></th>
+                        <th width="15%" class="text-left">@localizer["Unit"]</th>
+                        <th width="5%">@localizer["Delete"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var quoteRequestDetail in Model.QuoteRequestDetails)
+                    {
+                        <tr>
+                            <td class="d-none">
+                                <input type="hidden" class="form-control" name="QuoteRequestDetails[@index].ProductId" readonly value="@quoteRequestDetail.ProductId" />
+                                <input type="hidden" name="QuoteRequestDetails.Index" value="@index" />
+                                <input type="hidden" class="form-control" name="QuoteRequestDetails[@index].QuantityToOrderUnitMeasureId" readonly value="@quoteRequestDetail.QuantityToOrderUnitMeasureId" />
+                                @if(quoteRequestDetail.MissingProductId != null)
+                                {
+                                    <input type="hidden" class="form-control" name="QuoteRequestDetails[@index].MissingProductId" readonly value="@quoteRequestDetail.MissingProductId" />
+                                }
+                                <input type="hidden" class="form-control" name="QuoteRequestDetails[@index].Id" readonly value="@quoteRequestDetail.Id" />
+                                <input type="hidden" class="form-control" name="QuoteRequestDetails[@index].ConcurrencyToken" readonly value="@quoteRequestDetail.ConcurrencyToken" />
+                            </td>
+                            @if(quoteRequestDetail.Product != null)
+                            {
+                                <td>
+                                    <input type="text" class="custom-form-control form-control" name="QuoteRequestDetails[@index].ProductCode" tabindex="-1" readonly value="@quoteRequestDetail.Product.Code" />
+                                </td>
+                                <td>
+                                    <input type="text" class="custom-form-control form-control" name="QuoteRequestDetails[@index].ProductDescription" tabindex="-1" readonly value="@quoteRequestDetail.Product.Description" />
+                                </td>
+                            }
+                            else
+                            {
+                                <td>
+                                    <input type="text" class="custom-form-control form-control" name="QuoteRequestDetails[@index].ProductCode" tabindex="-1" readonly value="" />
+                                </td>
+                                <td>
+                                    <input type="text" class="custom-form-control form-control" name="QuoteRequestDetails[@index].ProductDescription" tabindex="-1" readonly value="" />
+                                </td>
+                            }
+                        
+                            <td class="quantityToOrderTd">
+                                <input type="text" class="custom-form-control form-control text-right" name="QuoteRequestDetails[@index].QuantityToOrder" tabindex="-1" readonly value="@Math.Round(quoteRequestDetail.QuantityToOrder, 2)" />
+                            </td>
+                            <td>
+                                @if(quoteRequestDetail.QuantityToOrderUnitMeasure != null)
+                                {
+                                    <input type="text" class="custom-form-control form-control text-left" name="QuoteRequestDetails[@index].QuantityToOrderUnitMeasureDescription" tabindex="-1" readonly value="@quoteRequestDetail.QuantityToOrderUnitMeasure.Description" />                                    
+                                }
+                                else
+                                {
+                                    <input type="text" class="custom-form-control form-control text-left" name="QuoteRequestDetails[@index].QuantityToOrderUnitMeasureDescription" tabindex="-1" readonly value="0,00"/>
+                                }
+                            </td>
+                            <td>
+                                <button tabindex="-1" type="button" class="btn btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button>
+                            </td>
+                        </tr>
+                        index++;   
+                    }
+                </tbody>
+            </table>
+        </div>
+    
+        @if(Model.Id == 0){
+            <div class="col-md-12 mb-3">
+                <label asp-for="Comments" class="control-label">@localizer["Comments"]</label>
+                <textarea asp-for="Comments" name="Comments" class="form-control" id="Comments" rows="5"></textarea>
+            </div>
+        }
+        else
+        {
+            <div class="col-md-11 mb-3">
+                <label asp-for="Comments" class="control-label">@localizer["Comments"]</label>
+                <textarea asp-for="Comments" name="Comments" class="form-control" id="Comments" rows="5"></textarea>
+            </div>
+            <div class="col-md-1 mb-3">
+                <label class="control-label">@localizer["PDF Export"]</label>
+                <button id="btn-export-to-pdf" type="button" class="form-control btn btn-secondary h-50"><img src="~/images/PDF.svg" width="100%" height="100%" /></button>
+            </div>
+        }
+    </div>
+    
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+        <button type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+    </div>
+
+</form>
+
+<script src="~/js/site.js"></script>
+<script type="text/javascript">
+    $.validator.unobtrusive.parse(document);
+    $(document).ready(function () {    
+        
+        let index = @index;
+        let quantityInput = "Quantity";
+        let decimalInputsIds = [quantityInput];
+
+        let select2MultipleProviders = $('#Providers');
+        let select2Products = $('#Products');
+
+        $("#table-div").hide();
+
+        $('#Quantity').val('0,00');
+
+        $('#quantityDiv').hide();
+         
+        $('#unitMeasureDiv').hide();
+        
+        $('#btnAddDiv').hide();
+
+        if ($("#quoteRequestDetailsTable tbody tr").length > 0 && @Model.Id != 0) {
+            $("#table-div").show();
+        } else {
+            $("#table-div").hide();
+        }
+
+        if(@Model.Id != 0 || "@Model.isGenerateMissingProducts" == "True"){
+            $('#divSelect2Products').hide();
+        }
+        else{
+            $('#divSelect2Products').show();
+        }
+
+        $('#specialProductsDiv').hide();
+        $('#checkAddProduct').change(function(){
+            if(this.checked){
+                $('#divSelect2Products').show('slow');
+                $('#specialProductsDiv').show('slow');
+            }
+            else{
+                $('#divSelect2Products').hide('slow');
+                $('#specialProductsDiv').hide('slow');
+            }
+        });
+
+        validateDecimalsNumbersOnInput(decimalInputsIds);
+
+         if("@Model.isGenerateMissingProducts" == "True"){
+             // Filtro los proveedores que proveen los productos que se encuentran en la grilla de detalles.
+            let productIds = [];
+            $("#quoteRequestDetailsTable").find("td.d-none").each(function () {
+                productIds.push($(this).find("input").val());
+            });
+
+            if(productIds.length > 0){
+                select2MultipleProviders.select2({
+                    language: "es",
+                    theme: "bootstrap4",
+                    placeholder: "@localizer["Select provider"]",
+                    ajax: {
+                        url: '/Purchases/QuoteRequest/_LoadProvidersByProductIdsSelect2',
+                        data: function (params) {
+                            return {
+                                search: params.term,
+                                productIds: JSON.stringify(productIds)
+                            };
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: data.providers
+                            };
+                        }
+                    }
+                });
+            }
+            else{
+                select2MultipleProviders.select2({
+                    language: "es",
+                    theme: "bootstrap4",
+                    placeholder: "@localizer["Select provider"]",
+                    ajax: {
+                        url: '/Purchases/QuoteRequest/_LoadProvidersByMissingProductsSelect2',
+                        data: function (params) {
+                            return {
+                                search: params.term
+                            };
+                        },
+                        processResults: function (data) {
+                            return {
+                                results: data.providers
+                            };
+                        }
+                    }
+                });
+            }
+
+            $("#table-div").show();
+         }
+         else{
+             select2MultipleProviders.select2({
+                 language: "es",
+                 theme: "bootstrap4",
+                 placeholder: "@localizer["Select provider"]",
+                 ajax: {
+                     url: '/Purchases/QuoteRequest/_LoadProvidersByMissingProductsSelect2',
+                     data: function (params) {
+                         return {
+                             search: params.term
+                         };
+                     },
+                     processResults: function (data) {
+                         return {
+                             results: data.providers
+                         };
+                     }
+                 }
+             });
+         }
+
+         if(@Model.Id == 0){
+             select2Products.select2({
+                 theme: "bootstrap4",
+                 placeholder: "@localizer["Select product"]",
+                 escapeMarkup: function (m) {
+                     return m;
+                 }
+             });
+         }
+         else{
+             let providerIds = new Array();
+             for(let y = 0; y < select2MultipleProviders.val().length; y++){
+                 providerIds.push(select2MultipleProviders.val()[y])
+             }
+
+             select2Products.select2({
+                 language: "es",
+                 theme: "bootstrap4",
+                 placeholder: "@localizer["Select product"]",
+                 ajax: {
+                     url: '/purchases/quoterequest/_LoadMissingProductsByProviderId',
+                     dataType: 'json',
+                     traditional: true,
+                     data: function (params) {
+                         return {
+                             search: params.term,
+                             providerIds: providerIds
+                         };
+                     },
+                     processResults: function (data) {
+                         return {
+                             results: data.products
+                         };
+                     }
+                 }
+             });
+         }
+
+        // Load products in select2 when provider is selected 
+        select2MultipleProviders.on('select2:select', function (e) {
+
+            let data = e.params.data;
+            $.ajax({
+                // Me traigo la informacion del producto faltante (que no tiene estado "Comprado" ni "Ingreso parcial" ni "Finalizado") por id de producto.
+                url: '/purchases/quoterequest/GetProductsByProviderId',
+                method: 'get',
+                data: { 
+                    id: data.id
+                },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.isValid) {
+
+                        // Valido que los productos que provee el proveedor que se selecciona son todos los que estan en la grilla.
+
+                        let productIdsInTable = new Array();
+                        $("#quoteRequestDetailsTable").find("td.d-none").each(function () {
+                            productIdsInTable.push($(this).find("input").val());
+                        });
+
+                        let productIdsByProvider = new Array();
+                        for(let i = 0; i < response.data.length; i++){
+                            productIdsByProvider.push(response.data[i].value);
+                        }
+
+                        let diffArray = productIdsInTable.sort().filter(value => !productIdsByProvider.sort().includes(value));
+
+                        if(diffArray.length > 0){
+                            alert("Puede que el proveedor seleccionado no disponga de alguno de los productos que estan incluidos en la grilla.");
+                        }
+
+                        select2Products.append($("<option />").val("").text("@localizer["Select missing product"]"));
+                        $.each(response.data, function () {
+                            select2Products.append($("<option />").val(this.value).text(this.text));
+                        });
+                        // To avoid duplicated values
+                        var map = {};
+                        $("#Products > option").each(function () {
+                            if (map[this.value]) 
+                            {
+                                $(this).remove();
+                            } 
+                            else 
+                            {
+                                map[this.value] = this.text;
+                            }
+                        });
+                    } 
+                }
+            });
+        });
+
+        // Remove products in select2 when provider is unselected 
+        select2MultipleProviders.on('select2:unselect', function (e) {
+
+            let data = e.params.data;
+            $.ajax({
+                // Me traigo la informacion del producto faltante (que no tiene estado "Comprado" ni "Ingreso parcial" ni "Finalizado") por id de producto.
+                url: '/purchases/quoterequest/GetProductsByProviderId',
+                method: 'get',
+                data: {
+                    id: data.id
+                },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.isValid) {
+
+                        let providerIds = new Array();
+                        for(let y = 0; y < select2MultipleProviders.val().length; y++){
+                            providerIds.push(select2MultipleProviders.val()[y])
+                        }
+                        let productIds = new Array();
+                        $.each(response.data, function () {
+                            productIds.push(this.value);
+                        });
+
+                        if(providerIds.length > 0){
+                            $.ajax({
+                                url: '/purchases/quoterequest/canBeDeletedProduct',
+                                method: 'get',
+                                data: {
+                                    providerIds: providerIds,
+                                    productIds: productIds
+                                },
+                                dataType: 'json',
+                                traditional: true,
+                                success: function (response) {
+                                    for(let i = 0; i < response.productIdsToDelete.length; i++){
+                                        // Borro la opcion del select2
+                                        $("#Products option[value=" + response.productIdsToDelete[i] + "]").remove();
+                                        // Borro el producto de la grilla
+                                        $('#quoteRequestDetailsTable > tbody  > tr > td.d-none').each(function(index, tr) {
+                                            let productId = $(tr).children().val();
+                                            if(productId == response.productIdsToDelete[i]){
+                                                $(tr).parent().remove();
+                                                if ($("#quoteRequestDetailsTable tbody tr").length == 0) {
+                                                    $("#table-div").hide('slow');
+                                                }
+                                            }    
+                                        });
+                                    }
+                                }
+                            });
+                        }
+                        else{
+                            $.each(response.data, function () {
+                                // Borro la opcion del select2
+                                $("#Products option[value=" + this.value + "]").remove();
+                                // Borro el producto de la grilla
+                                let productByProviderId = this.value;
+                                if ($("#quoteRequestDetailsTable tbody tr").length > 0) {
+                                    $('#quoteRequestDetailsTable > tbody  > tr > td.d-none').each(function(index, tr) {
+                                        let productId = $(tr).children().val();
+                                        if(productId == productByProviderId){
+                                            $(tr).parent().remove();
+                                            if ($("#quoteRequestDetailsTable tbody tr").length == 0) {
+                                                $("#table-div").hide('slow');
+                                            }
+                                        }
+                                    });
+                                }
+                            });
+                        }
+
+                        $('#Quantity').val('0,00');
+                        
+                        $('#quantityDiv').hide('slow');
+                        $('#unitMeasureDiv').hide('slow');
+                        $('#btnAddDiv').hide('slow');
+                    }
+                }
+            });
+        });
+
+        select2Products.change(function () {
+            if (select2Products.val() != "") {
+                $.ajax({
+                    url: '/purchases/quoterequest/GetMissingProductByProductId',
+                    method: 'get',
+                    data: { id: select2Products.val() },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.isValid) {
+
+                            $('#Quantity').val(format_number_to_decimal((response.missingProductVM.quantityToOrder), 2, ',', '.'));
+                            $('#UnitMeasure').val(response.missingProductVM.quantityToOrderUnitMeasure.description);
+
+                            $('#quantityDiv').show('slow');
+                            $('#unitMeasureDiv').show('slow');
+                            $('#btnAddDiv').show('slow');
+
+                        }
+                    }
+                });
+            }
+        });
+
+        $("#btn-add-detail").on('click', function () {
+            if (select2Products.val() == "") {
+                $.ajax({
+                    url: '/purchases/quoterequest/ShowAlerts',
+                    method: 'get',
+                    data: { inputDetail: "product_notselected" },
+                    dataType: 'json',
+                    success: function (response) {
+                    }
+                });
+            } 
+            else 
+            {
+                $.ajax({
+                    url: '/purchases/quoterequest/GetMissingProductByProductId',
+                    method: 'get',
+                    data: { id: select2Products.val() },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.isValid) {
+                            
+                            // Valido que no se haya agregado ese producto en la grilla
+                            let exists = false;
+                            $("#quoteRequestDetailsTable").find("td.d-none").each(function () {
+                                if ($(this).find("input").val() == response.missingProductVM.product.id) {
+                                    exists = true;
+                                }
+                            });
+                            if (exists) {
+                                $.ajax({
+                                    url: '/purchases/quoterequest/ShowAlerts',
+                                    method: 'get',
+                                    data: { inputDetail: "product_repeat" },
+                                    dataType: 'json',
+                                    success: function (response) {
+                                    }
+                                });
+                                $("#Products").val("");
+                                $("#Products").change();
+                            }
+                            else {
+
+                                // Por defecto
+                                let quantityToOrderUnitMeasureId = 19;
+                                let quantityToOrderUnitMeasureDescription = "Unidades";
+
+                                if (response.missingProductVM.product.quantityToOrderUnitMeasure != null) {
+                                    quantityToOrderUnitMeasureId = response.missingProductVM.product.quantityToOrderUnitMeasureId;
+                                    quantityToOrderUnitMeasureDescription = response.missingProductVM.product.quantityToOrderUnitMeasure.description;
+                                }
+
+                                // Add product to table
+                                let htmlForTable = '<tr>' +
+                                    '<td class="d-none">' +
+                                    '<input type="hidden" class="productId form-control" name="QuoteRequestDetails[' + index + '].ProductId" readonly value="' + response.missingProductVM.product.id + '" />' +
+                                    '<input type="hidden" name="QuoteRequestDetails.Index" value="' + index + '" />' +
+                                    '<input type="hidden" class="form-control" name="QuoteRequestDetails[' + index + '].QuantityToOrderUnitMeasureId" readonly value="' + quantityToOrderUnitMeasureId + '" />' +
+                                    '<input type="hidden" class="form-control" name="QuoteRequestDetails[' + index + '].MissingProductId" readonly value="' + response.missingProductVM.id + '" />' +
+                                    '</td>' +
+
+                                    '<td><input type="text" class="custom-form-control form-control" name="QuoteRequestDetails[' + index + '].ProductCode" readonly value="' + response.missingProductVM.product.code + '" /></td>' +
+                                    '<td><input type="text" class="custom-form-control form-control" name="QuoteRequestDetails[' + index + '].ProductDescription" readonly value="' + response.missingProductVM.product.description + '" /></td>' +
+
+                                    '<td class="quantityToOrderTd"><input type="text" class="custom-form-control form-control text-right" name="QuoteRequestDetails[' + index + '].QuantityToOrder" readonly value="' + $('#Quantity').val() + '"/></td>' +
+                                    '<td><input type="text" class="custom-form-control form-control text-left" name="QuoteRequestDetails[' + index + '].QuantityToOrderUnitMeasureDescription" readonly value="' + quantityToOrderUnitMeasureDescription + '" /></td>' +
+                                    '<td><button type="button" class="btn btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td></tr>';
+
+                                $("#quoteRequestDetailsTable tbody").append(htmlForTable);
+
+                                $("#table-div").show("slow");
+
+                            }
+
+                            index += 1;
+                            select2Products.val('').trigger('change');
+                            $('#Quantity').val('0,00');
+
+                            $('#quantityDiv').hide('slow');
+                            $('#unitMeasureDiv').hide('slow');
+                            $('#btnAddDiv').hide('slow');
+                        }
+                    }
+                });
+            }
+        });
+
+        // .btn-remove delete row
+        $(document).on("click", ".btn-remove", function () {
+            $(this).parent().parent().remove();
+
+            if ($("#quoteRequestDetailsTable tbody tr").length == 0) {
+                $("#table-div").hide('slow');
+            }
+        });
+
+        $('#btn-create-provider').on('click', function () {
+            jQueryModalGet('/purchases/provider/OnGetCreateOrEdit?calledFromAnotherArea=true', '@localizer["New provider"]');
+        });
+
+        $("#create-form").submit(function (event) {
+            if(select2MultipleProviders.val().length == 0){
+                event.preventDefault();
+                alert("Debe seleccionar un proveedor.");
+            }
+            else{
+                return jQueryModalPostModified(this);
+                event.preventDefault();
+            }
+        });
+
+       //#region For download multiple PDFs
+       let multipleUrlPdfDownload = [];
+       for(let y = 0; y < select2MultipleProviders.val().length; y++){
+           let url = '/purchases/quoterequest/exporttopdf?qrhId=' + @Model.Id + '&providerId=' + select2MultipleProviders.val()[y];
+           multipleUrlPdfDownload.push(url);
+       } 
+       var count=0;
+       var downloadURL = function downloadURL(url){
+           var hiddenIFrameID = 'hiddenDownloader' + count++;
+           var iframe = document.createElement('iframe');
+           iframe.id = hiddenIFrameID;
+           iframe.style.display = 'none';
+           document.body.appendChild(iframe);
+           iframe.src = url;
+       }
+
+       $('#btn-export-to-pdf').on('click', function(){
+           for(var i = 0; i < multipleUrlPdfDownload.length; i++){
+               downloadURL(multipleUrlPdfDownload[i]);
+           }
+       });
+       //#endregion For download multiple PDFs
+
+    });
+    
+    jQueryModalPostModified = (form) => {
+
+        // Fran: 30/5/2023: Se agrega para bloquear la pagina y no permitir darle dos veces la boton de guardado.
+        showSpinner();
+
+        try {
+            $.ajax({
+                type: 'POST',
+                url: form.action,
+                data: new FormData(form),
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.isValid) {
+
+                        $('#form-modal #btn-save').attr('disabled', 'disabled');
+                        $('#form-modal #btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#form-modal #btn-save').text());
+
+                        // Fran: 30/5/2023: Se agrega para bloquear la pagina y no permitir darle dos veces la boton de guardado.
+                        hideSpinner();
+
+                        jQueryModalGet('/purchases/quoterequest/OnGetCreate?id=' + res.qrhId, "@localizer["Quote request"]");
+                        refreshTable();
+
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+</script>

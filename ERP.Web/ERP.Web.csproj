@@ -1,0 +1,95 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <CopyRefAssembliesToPublishDirectory>false</CopyRefAssembliesToPublishDirectory>
+    <MvcRazorCompileOnPublish>false</MvcRazorCompileOnPublish>
+    <UserSecretsId>44acf200-8423-46b9-af19-9f570153ae2f</UserSecretsId>
+    <StartupObject></StartupObject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AspNetCoreHero.ToastNotification" Version="1.1.0" />
+    <PackageReference Include="BeginCollectionItemCore" Version="1.1.0" />
+    <PackageReference Include="EntityFrameworkCore.Exceptions.SqlServer" Version="3.1.4" />
+    <PackageReference Include="EPPlus" Version="5.8.5" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.7.23" />
+    <PackageReference Include="Hangfire.Core" Version="1.7.23" />
+    <PackageReference Include="Hangfire.MemoryStorage" Version="1.7.0" />
+    <PackageReference Include="Hangfire.SqlServer" Version="1.7.23" />
+    <PackageReference Include="iTextSharp" Version="5.5.13.3" />
+    <PackageReference Include="jQuery.UI.Combined" Version="1.12.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="5.0.17" />
+    <PackageReference Include="Rotativa.AspNetCore" Version="1.2.0" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.2" />
+    <PackageReference Include="FluentValidation.AspNetCore" Version="9.3.0" />
+    <PackageReference Include="AspNetCoreHero.Extensions.Logging" Version="1.0.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="5.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="5.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="5.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="5.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="5.0.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="5.0.1">
+     
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="5.0.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Areas\Admin\Data\" />
+    <Folder Include="Areas\Catalog\Data\" />
+    <Folder Include="Areas\Clients\Data\" />
+    <Folder Include="Areas\Commons\Data\" />
+    <Folder Include="Areas\Lists\Data\" />
+    <Folder Include="Areas\Logistics\Data\" />
+    <Folder Include="Areas\Production\Validators\" />
+    <Folder Include="Areas\ProductMod\Data\" />
+    <Folder Include="Areas\Dashboard\Data\" />
+    <Folder Include="Areas\Dashboard\Models\" />
+    <Folder Include="Areas\Purchases\Data\" />
+    <Folder Include="Areas\Sales\Data\" />
+    <Folder Include="Areas\Settings\Data\" />
+    <Folder Include="Areas\Settings\Models\" />
+    <Folder Include="Areas\Settings\Views\" />
+    <Folder Include="Log\" />
+    <Folder Include="Views\Shared\Components\Menu\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ERP.Application\ERP.Application.csproj" />
+    <ProjectReference Include="..\ERP.Infrastructure.Shared\ERP.Shared.csproj" />
+    <ProjectReference Include="..\ERP.Infrastructure\ERP.Infrastructure.csproj" />
+    <ProjectReference Include="..\ERP.Language\ERP.Language.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Update="Areas\ProductMod\Views\Product\_CreateOrEdit.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+    <Content Update="wwwroot\images\account-deactivated.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\images\bg-login.jpg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\images\default-user.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\images\logo-transparent.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="Extensions\Reports\wkhtmltoimage.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="Extensions\Reports\wkhtmltopdf.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

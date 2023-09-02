@@ -1,0 +1,226 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Purchases.Models.Providers
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model RelProviderStationViewModel
+
+<form id="create-form" method="post" asp-controller="Provider" asp-action="OnPostCreateOrEditProviderStation" asp-route-id="@Model.Id" onsubmit="return jQueryModalPost(this);" enctype="multipart/form-data">
+
+    <div class="form-row">
+        <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+
+        <input type="hidden" asp-for="ProviderId" name="ProviderId" class="form-control">
+
+        <div class="col-md-12 mb-3">
+            <label asp-for="StationId" class="control-label">@localizer["Work Station"]</label>
+            <select name="StationId" class="form-control select2bs4" id="Stations" asp-for="StationId" asp-items="@Model.Stations">
+                <option value="-1">@localizer["Select work station"]</option>
+            </select>
+            <span asp-validation-for="StationId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-12 mt-3">
+            <label class="font-weight-normal">@localizer["Price per:"]</label>
+            <div class="form-row">
+
+                <div class="col-md-4 mb-3">
+                    <label asp-for="PriceUnitMeasureId" class="control-label">@localizer["Quotation unit measure"]</label>
+                    <select name="PriceUnitMeasureId" class="form-control select2bs4" id="PriceUnitMeasures" asp-for="PriceUnitMeasureId" asp-items="@Model.UnitsMeasure.Where(u => u.Value == "1" || u.Value == "2" || u.Value == "16" || u.Value == "17" || u.Value == "18" || u.Value == "23" || u.Value == "22" || u.Value == "31" || u.Value == "32" || u.Value == "33" || u.Value == "36" || u.Value == "37" || u.Value == "19" || u.Value == "38")">
+                    </select>
+                    <span asp-validation-for="PriceUnitMeasureId" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-2 mb-3">
+                    <label asp-for="PesosPrice" class="control-label">@localizer["Pesos price"]</label>
+                    <input id="PesosPrice" type="text" name="PesosPrice" asp-for="PesosPrice" class="form-control" onkeypress="return validateIsNumber(event);" />
+                    <span asp-validation-for="PesosPrice" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-2 mb-3">
+                    <label asp-for="DollarPrice" class="control-label">@localizer["Dollar price"]</label>
+                    <input id="DollarPrice" type="text" name="DollarPrice" asp-for="DollarPrice" class="form-control" onkeypress="return validateIsNumber(event);" />
+                    <span asp-validation-for="DollarPrice" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label hidden id="lblActualizacionDolar" class="control-label">@localizer["Update schedule 4:00 p.m."]</label>
+                    <div id="divTableDollarExchange" class="table-sm mt-1 ml-1">
+                        <table id="DollarExchangeTable" class="w-100">
+                            <thead class="bg-thead">
+                                <tr>
+                                    <th></th>
+                                    <th></th>
+                                    <th>@localizer["Purchase"]</th>
+                                    <th>@localizer["Sale"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td id="date" class="w-auto"></td>
+                                    <td class="w-auto">@localizer["Dollar"]</td>
+                                    <td id="purchasePrice" class="w-auto"></td>
+                                    <td id="salePrice" class="w-auto"></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+        <button type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+    </div>
+
+</form>
+
+<script src="~/js/site.js"></script>
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        /* Format decimals */
+        const decimalInputsIds = ['PesosPrice', 'DollarPrice'];
+
+        let pesosPrice = document.getElementById('PesosPrice');
+        let dollarPrice = document.getElementById('DollarPrice');
+        let purchasePrice = document.getElementById('purchasePrice');
+        let salePrice = document.getElementById('salePrice');
+        let date = document.getElementById('date');
+
+        $('#Stations').select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        $('#PriceUnitMeasures').select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select unit measure"]",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        if ((pesosPrice != null && $('#PesosPrice').val().trim() != "0,00") || (dollarPrice != null && $('#DollarPrice').val().trim() != "0,00")) {
+            $('#DollarExchangeTable').prop('hidden', false);
+            $('#lblActualizacionDolar').prop('hidden', false);
+
+            $.ajax({
+                url: '/purchases/providerproduct/GetDollarQuotation',
+                method: 'get',
+                dataType: 'json',
+                success: function (response) {
+
+                    date.innerHTML = "";
+                    date.innerHTML = response.date;
+
+                    purchasePrice.innerHTML = "";
+                    purchasePrice.innerHTML = format_number_to_decimal((response.purchasePrice), 2, ',', '.');
+                    salePrice.innerHTML = "";
+                    salePrice.innerHTML = format_number_to_decimal((response.salePrice), 2, ',', '.');
+                }
+            });
+
+        } else {
+            $('#DollarExchangeTable').prop('hidden', true);
+        }
+
+        if (@Model.Id != 0) {
+            getValueForPesosAndDollar();
+        }
+
+        $('#PesosPrice').change(function () {
+
+            let chars = { '.': '', ',': '.' };
+
+            if ($('#PesosPrice').val().trim() != 0) {
+
+                $.ajax({
+                    url: '/purchases/providerproduct/GetDollarQuotation',
+                    method: 'get',
+                    data: { pesosInput: pesosPrice.value.replace(/[.,]/g, c => chars[c]), dollarInput: 0 },
+                    dataType: 'json',
+                    success: function (response) {
+                        dollarPrice.value = format_number_to_decimal((response.pesosToDollar), 2, ',', '.');
+
+                        if (response.salePrice == 0 && response.purchasePrice == 0) {
+                            $('#DollarExchangeTable').prop('hidden', true);
+                            $('#lblActualizacionDolar').prop('hidden', true);
+                        } else {
+                            $('#DollarExchangeTable').prop('hidden', false);
+                            $('#lblActualizacionDolar').prop('hidden', false);
+                        }
+
+                        date.innerHTML = "";
+                        date.innerHTML = response.date;
+
+                        purchasePrice.innerHTML = "";
+                        purchasePrice.innerHTML = format_number_to_decimal((response.purchasePrice), 2, ',', '.');
+                        salePrice.innerHTML = "";
+                        salePrice.innerHTML = format_number_to_decimal((response.salePrice), 2, ',', '.');
+                    }
+                });
+
+            }
+        });
+
+        $('#DollarPrice').change(function () {
+
+            let chars = { '.': '', ',': '.' };
+
+            if ($('#DollarPrice').val().trim() != 0) {
+
+                $.ajax({
+                    url: '/purchases/providerproduct/GetDollarQuotation',
+                    method: 'get',
+                    data: { pesosInput: 0, dollarInput: dollarPrice.value.replace(/[.,]/g, c => chars[c]) },
+                    dataType: 'json',
+                    success: function (response) {
+
+                        pesosPrice.value = format_number_to_decimal((response.dollarToPesos), 2, ',', '.');
+
+                        if (response.salePrice == 0 && response.purchasePrice == 0) {
+                            $('#DollarExchangeTable').prop('hidden', true);
+                            $('#lblActualizacionDolar').prop('hidden', true);
+                        } else {
+                            $('#DollarExchangeTable').prop('hidden', false);
+                            $('#lblActualizacionDolar').prop('hidden', false);
+                        }
+
+                        date.innerHTML = "";
+                        date.innerHTML = response.date;
+
+                        purchasePrice.innerHTML = "";
+                        purchasePrice.innerHTML = format_number_to_decimal((response.purchasePrice), 2, ',', '.');
+                        salePrice.innerHTML = "";
+                        salePrice.innerHTML = format_number_to_decimal((response.salePrice), 2, ',', '.');
+                    }
+                });
+
+            }
+        });
+
+        validateDecimalsNumbersOnInput(decimalInputsIds);
+
+    });
+
+    function getValueForPesosAndDollar() {
+        let chars = { '.': '', ',': '.' };
+        if ($('#DollarPrice').val().trim() != 0) {
+            $.ajax({
+                url: '/purchases/providerproduct/GetDollarQuotation',
+                method: 'get',
+                data: { pesosInput: 0, dollarInput: $('#DollarPrice').val().replace(/[.,]/g, c => chars[c]) },
+                dataType: 'json',
+                success: function (response) {
+                    $('#PesosPrice').val(format_number_to_decimal((response.dollarToPesos), 2, ',', '.'));
+                }
+            });
+        }
+    }
+</script>

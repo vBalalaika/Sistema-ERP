@@ -1,0 +1,59 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Lists.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model CityViewModel
+
+<form id="create-form" method="post" asp-controller="CityState" asp-action="OnPostCreateOrEditCity" asp-route-id="@Model.Id" onsubmit="return jQueryModalPost(this);" enctype="multipart/form-data">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group row">
+                <div class="col-md-9">
+                    <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label"> @localizer["States"]</label>
+                <div class="col-md-9">
+                    <div class="input-group">
+                        <select name="StateId" class="form-control select2bs4" id="StateId" asp-for="StateId" asp-items="@Model.States">
+                            <option value="-1">@localizer["Select state"]</option>
+                        </select>
+                    </div>
+                    <span asp-validation-for="StateId" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">@localizer["City name"]</label>
+                <div class="col-md-9">
+                    <input type="text" asp-for="Name" name="Name" class="form-control">
+                    <span asp-validation-for="Name" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">@localizer["Postal code"]</label>
+                <div class="col-md-9">
+                    <input type="text" asp-for="ZipCode" name="ZipCode" class="form-control">
+                    <span asp-validation-for="ZipCode" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+        <button type="submit" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+    </div>
+</form>
+
+<script type="text/javascript" language=javascript>
+
+    $("#StateId").select2({
+        placeholder: "@localizer["Select state"]",
+        theme: "bootstrap4",
+        escapeMarkup: function (m) {
+            return m;
+        },
+        sorter: data => data.sort((a, b) => a.text.localeCompare(b.text))
+    });
+
+</script>

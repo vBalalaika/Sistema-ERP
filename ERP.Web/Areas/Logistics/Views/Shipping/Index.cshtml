@@ -1,0 +1,583 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Production.Models
+@using ERP.Application.Enums
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    if (ViewData["Title"] != null)
+    {
+        ViewData["Title"] = ViewData["Title"].ToString();
+    }
+}
+@model WorkActivityViewModel
+
+@{
+    static string RemoveAccents(string text)
+    {
+        var normalizedString = text.Normalize(System.Text.NormalizationForm.FormD);
+        var stringBuilder = new System.Text.StringBuilder();
+
+        foreach (var c in normalizedString)
+        {
+            var unicodeCategory = System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c);
+            if (unicodeCategory != System.Globalization.UnicodeCategory.NonSpacingMark)
+            {
+                stringBuilder.Append(c);
+            }
+        }
+
+        return stringBuilder.ToString().Normalize(System.Text.NormalizationForm.FormC);
+    }
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/Logistics/Shipping/shipping.css" />
+</head>
+
+<div class="row ml-4 mt-2">
+    <h5> @localizer["User"]: @Model.currentUser.FirstAndLastName</h5>
+    @if (User.IsInRole(Roles.SuperAdmin.ToString()))
+    {<div class="ml-2"> <span class="badge bg-success text-white">@localizer["Administrador"]</span></div>}
+</div>
+
+<div class="sticky-top-shipping bg-filter-custom p-2">
+
+@*    <div class="form-row p-1">
+        <div class="col-md-2">
+            <h6 class="mb-3 mt-1"><b>@localizer["User"]:</b> @Model.currentUser.FirstAndLastName </h6>
+        </div>
+        <div class="col-md-3">
+            @if (User.IsInRole(Roles.SuperAdmin.ToString()))
+            {
+                <span class="badge bg-success text-white">@localizer["Administrador"]</span>
+            }
+        </div>
+    </div>*@
+
+    <div class="form-row p-1 ml-2">
+        <div class="col-md-2 mt-1">
+            <h6><b>@localizer["Date"]:</b> <input id="daterange" type="text" name="daterange" class="pr-4 border-0" /> </h6>
+        </div>
+
+        <div class="col-md-1">
+             <h6 class="pr-4 mt-1"><b>@localizer["Search by"]:</b> </h6>
+        </div>
+       
+        <div class="col-md-2">
+            <label class="font-weight-normal" for="inputCode">@localizer["Code"]</label>
+            <input id="inputCode" name="inputCode" type="text" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="font-weight-normal" for="inputDeliveryNote">@localizer["Nº remito"]</label>
+            <input id="inputDeliveryNote" name="inputDeliveryNote" type="text" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="font-weight-normal" for="inputProvider">@localizer["Provider"]</label>
+            <input id="inputProvider" name="inputProvider" type="text" class="form-control" />
+        </div>
+        <div class="col-md-2">
+            <label class="font-weight-normal" for="inputTransport">@localizer["Transport"]</label>
+            <input id="inputTransport" name="inputTransport" type="text" class="form-control" />
+        </div>
+
+    </div>
+
+</div>
+
+<div class="card mt-3">
+    <div id="viewAll" class="card-body table-responsive">
+
+        <div id="div-export-buttons" class="mb-3">
+            <div class="btn-group">
+
+            </div>
+        </div>
+
+        <table id="shipmentsTable" class="table table-striped-blue table-hover w-100 nowrap">
+            <thead class="bg-thead">
+                <tr>
+                    <th hidden>@localizer["Id"]</th>
+                    <th class="text-center">@localizer["Actions"]</th>
+                    <th class="text-center">@localizer["Nº OT"]</th>
+                    <th>Nº @localizer["Product"]</th>
+                    <th>@localizer["Product"]</th>
+                    <th>@localizer["Configuration"]</th>
+                    <th>@localizer["Work Station"]</th>
+                    <th>@localizer["State"]</th>
+                    <th>@localizer["Percentage of completion"]</th>
+                    <th>@localizer["Created"]</th>
+                    <th class="text-center">@localizer["Start"]</th>
+                    <th class="text-center">@localizer["End"]</th>
+                    <th class="text-center">@localizer["Total time"]</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th hidden>@localizer["Id"]</th>
+                    <th class="text-center">@localizer["Actions"]</th>
+                    <th class="text-center">@localizer["Nº OT"]</th>
+                    <th>Nº @localizer["Product"]</th>
+                    <th>@localizer["Product"]</th>
+                    <th>@localizer["Configuration"]</th>
+                    <th>@localizer["Work Station"]</th>
+                    <th>@localizer["State"]</th>
+                    <th>@localizer["Percentage of completion"]</th>
+                    <th>@localizer["Created"]</th>
+                    <th class="text-center">@localizer["Start"]</th>
+                    <th class="text-center">@localizer["End"]</th>
+                    <th class="text-center">@localizer["Total time"]</th>
+                </tr>
+            </tfoot>
+        </table>
+
+    </div>
+</div>
+
+@section Scripts
+{
+    <script src="~/js/site.js"></script>
+    <script>
+
+        $(document).ready(function () {
+
+            let start = moment().subtract(5, 'months');
+            let end = moment();
+            let dateFromFilterValue = start.format('DD/MM/YYYY');
+            let dateToFilterValue = end.format('DD/MM/YYYY');
+
+            let productItemCode = "";
+            let deliveryNoteNumber = "";
+            let provider = "";
+            let transportProvider = "";
+
+            $('#inputCode').val("");
+            $('#inputDeliveryNote').val("");
+            $('#inputProvider').val("");
+            $('#inputTransport').val("");
+
+            // To search by date range
+            $('input[name="daterange"]').daterangepicker({
+                "locale": {
+                    "format": "DD/MM/YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Aceptar",
+                    "cancelLabel": "Cancelar",
+                    "fromLabel": "Desde",
+                    "toLabel": "Hasta",
+                    "daysOfWeek": [
+                        "Do",
+                        "Lu",
+                        "Ma",
+                        "Mi",
+                        "Ju",
+                        "Vi",
+                        "Sa"
+                    ],
+                    "monthNames": [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre"
+                    ],
+                    "firstDay": 1
+                },
+                "autoApply": true,
+                "showDropdowns": true,
+                "opens": "right",
+                "buttonClasses": "btn btn-sm",
+                "applyClass": "btn-primary",
+                "startDate": start,
+                "endDate": end,
+                "minYear": 1995
+            }, cb);
+
+            function cb(start, end) {
+                $('#daterange span').html(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+                dateFromFilterValue = start.format('DD/MM/YYYY');
+                dateToFilterValue = end.format('DD/MM/YYYY');
+                refreshTable();
+            }
+
+            $('#daterange').on('apply.daterangepicker', function (ev, picker) {
+                dateFromFilterValue = picker.startDate.format('DD/MM/YYYY');
+                dateToFilterValue = picker.endDate.format('DD/MM/YYYY');
+                refreshTable();
+            });
+
+            $('#shipmentsTable tfoot th').each(function (i) {
+                let title = $(this).text();
+                if (title != '@localizer["Actions"]') {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let shipmentsTable = $('#shipmentsTable').DataTable({
+                "scrollY": '55vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "scroller": true,
+                "oLanguage": @localizer["LanguageDataTable"],
+                "sAjaxSource": "/Logistics/Shipping/_LoadAll",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "dateFromFilterValue", "value": dateFromFilterValue },
+                        { "name": "dateToFilterValue", "value": dateToFilterValue },
+                        { "name": "productItemCode", "value": productItemCode },
+                        { "name": "deliveryNoteNumber", "value": deliveryNoteNumber },
+                        { "name": "provider", "value": provider },
+                        { "name": "transportProvider", "value": transportProvider }
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "sDom": 'Brtip',
+                "order": [[2, "desc"]],
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+
+                "columns": [
+                    {
+                        "data": "workOrderId",
+                        "searchable": false,
+                        "visible": false
+
+                    },
+                    {
+                        "searchable": false,
+                        "data": "stationId",
+                        "render": function (data, type, row, meta) {
+
+                            let isWorkOrderFinished = row.activitiesState == "Finalizado";
+
+                            let notFinished = false;
+                            for(let i = 0; i < row.activities.length; i++){
+                                if(row.activities[i].getState != "Finalizado"){
+                                    notFinished = true;
+                                }
+                            }
+
+                            if(notFinished)
+                            {
+                                isWorkOrderFinished = false;
+                            }
+                            else
+                            {
+                                isWorkOrderFinished = true;
+                            }
+
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+
+                            // Icono ver
+                            html += '<a class="btn action-btn" title="Ver puesto" onclick="navigateToWorkActivitiesByWorkOrderAndStation(' + "'" + row.workOrderIds + "'" + ', ' + row.stationId + ')"><img class="action-img-icon" src="../../../images/Ver.svg" width="25" height="25" /></a>';
+
+                            if (!isWorkOrderFinished) 
+                            {
+                                // Icono Stop
+                                html += '<a class="btn action-btn" onclick="stopWorkActivitiesByWorkOrderAndStation(' + row.workOrderHeaderNumber + ',' + row.stationId + ')"><img class="action-img-icon" src="../../../images/stop.svg" width="20" height="20" /></a>';
+                            } 
+                            else 
+                            {
+                                // Icono Stop
+                                html += '<a class="btn action-btn disabled" onclick="stopWorkActivitiesByWorkOrderAndStation(' + row.workOrderHeaderNumber + ',' + row.stationId + ')"><img class="action-img-icon" src="../../../images/stop.svg" width="20" height="20" /></a>';
+                            }
+
+                            // Icono OT
+                            html += '<a class="btn action-btn" title="@localizer["Work order"]"  onclick="navigateToWorkOrderHeader(' + row.workOrderId + ')"><img class="action-img-icon" src="../../../images/OT_letra_blanca.png" width="20" height="20" /></a>';
+
+                            html += '</div></div>';
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "workOrderHeaderNumber",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "productNumber",
+                        "render": function (data, type, row, meta) {
+                            if (row.workOrderIds.length > 1) {
+                                for (var i = 0; i < row.productNumbers.length; i++) {
+                                    if (row.productNumbers[i].toString().slice(0, 2) == "03" || row.productNumbers[i].toString().slice(0, 2) == "13" || row.productNumbers[i].toString().slice(0, 2) == "04") {
+                                        return 'Varios';
+                                    }
+                                    else {
+                                        return data;
+                                    }
+                                }
+                            } else {
+                                return data;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productDescription",
+                        "render": function (data, type, row, meta) {
+                            if (row.workOrderIds.length > 1) {
+
+                                if ((jQuery.grep(row.productNumbers, function (value, y) { return value.indexOf("03-") != -1 }).length > 0 && jQuery.grep(row.productNumbers, function (value, y) { return value.indexOf("04-") != -1 }).length > 0) || (jQuery.grep(row.productNumbers, function (value, y) { return value.indexOf("13-") != -1 }).length > 0 && jQuery.grep(row.productNumbers, function (value, y) { return value.indexOf("04-") != -1 }).length > 0)) {
+                                    return 'Repuestos y stock';
+                                } else {
+                                    for (var i = 0; i < row.productNumbers.length; i++) {
+
+                                        if (row.productNumbers[i].toString().slice(0, 2) == "03" || row.productNumbers[i].toString().slice(0, 2) == "13") {
+                                            return 'Repuestos';
+                                        }
+                                        else if (row.productNumbers[i].toString().slice(0, 2) == "04") {
+                                            return 'Stock';
+                                        }
+                                        else {
+                                            return data;
+                                        }
+
+                                    }
+                                }
+
+                            } else {
+                                return data;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "structureDescription",
+                        "render": function (data, type, row, meta) {
+                            if (row.workOrderIds.length > 1) {
+                                return '';
+                            } else {
+                                return data;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "stationDescription",
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "activitiesState",
+                        "render": function (data, type, row, meta) {
+
+                            let isFinished = row.activities.every(act => act.getState === "Finalizado");
+                            let inProcess = row.activities.some(act => act.startDate != null);
+
+                            if(isFinished)
+                            {
+                                return "Finalizado";
+                            }
+                            else if(inProcess)
+                            {
+                                return "En proceso";
+                            }
+                            else
+                            {
+                                return "Pendiente";
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "shipmentsTotalAdvance",
+                        "searchable": false,
+                        "render": function (value) {
+                            var background_color = value == '' ? '' : (value == 100 ? 'bg-success' : 'bg-warning')
+                            return `<div class="progress-bar-custom progress"> <div class="progress-bar ${background_color}" role="progressbar" style="width:${value}%" aria-valuenow="${value}" aria-valuemin="0" aria-valuemax="100">${value}%</div></div>`;
+                        },
+                        "autoWidth": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "dateToProduction",
+                        "render": function (value) {
+                            if (value == null) {
+                                return "";
+                            }
+                            return value;
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    //{
+                    //    "data": "startDateGroup",
+                    //    "render": function (value) {
+                    //        if (value == null) {
+                    //            return "";
+                    //        }
+                    //        return value;
+                    //    },
+                    //    "autoWidth": true,
+                    //    "searchable": true
+                    //},
+                    {
+                        "data": "startDate",
+                        "render": function (data, type, row, meta) {
+                            if(row.startDate != null){
+                                return row.startDate;
+                            }
+                            else{
+                                return '';
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "endDate",
+                        "render": function (data, type, row, meta) {
+                            if(row.endDateGroup != null){
+                                return row.endDateGroup;
+                            }
+                            else if (row.endDate != null) {
+                                return row.endDate;
+                            }
+                            else{
+                                return '';
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "totalTimeGrouped",
+                        "autoWidth": true,
+                        "searchable": false
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                },
+                "buttons": [
+                    {
+                        className: 'rounded-lg',
+                        extend: 'excelHtml5',
+                        text: '<img src="../../../images/Excel.svg" width="30" height="30" />',
+                        titleAttr: 'Exportar archivo Excel',
+                        title: "@RemoveAccents(ViewData["Title"].ToString())",
+                        exportOptions: {
+                            columns: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+                        }
+                    }
+                ],
+            });
+
+            shipmentsTable.buttons().container().appendTo('#div-export-buttons .btn-group');
+
+            $('#inputCode').on({
+                focus: function (event) {
+                    $(event.target).select();
+                },
+                keyup: function (event) {
+                    productItemCode = this.value;
+                    refreshTable();
+                },
+            });
+
+            $('#inputDeliveryNote').on({
+                focus: function (event) {
+                    $(event.target).select();
+                },
+                keyup: function (event) {
+                    deliveryNoteNumber = this.value;
+                    refreshTable();
+                },
+            });
+
+            $('#inputProvider').on({
+                focus: function (event) {
+                    $(event.target).select();
+                },
+                keyup: function (event) {
+                    provider = this.value;
+                    refreshTable();
+                },
+            });
+
+            $('#inputTransport').on({
+                focus: function (event) {
+                    $(event.target).select();
+                },
+                keyup: function (event) {
+                    transportProvider = this.value;
+                    refreshTable();
+                },
+            });
+
+        });
+
+        function navigateToWorkActivitiesByWorkOrderAndStation(workOrderId, stationId) {
+            url = "/logistics/shipping/IndexByWorkOrderAndStation?workOrderIds=" + workOrderId + "" + "&stationId=" + stationId + "";
+            window.location.href = url;
+        }
+
+        function navigateToWorkOrderHeader(workOrderId) {
+            url = "/production/workorderheader/OnGetWorkOrderHeader?idWorkOrder=" + workOrderId;
+            jQueryModalGet(url, '@localizer["View work order"]');
+        }
+
+        function refreshTable() {
+            $('#shipmentsTable').DataTable().clear();
+            $('#shipmentsTable').DataTable().ajax.reload();
+        }
+
+        function stopWorkActivitiesByWorkOrderAndStation(workOrderHeaderNumber, stationId) {
+
+            if (confirm('Se dará por finalizada la orden de trabajo. Desea continuar?')) {
+
+                //setPageScrollPos($('.dataTables_scrollBody').scrollTop());
+
+                let url = '/production/workactivity/stopActivities?workOrderHeaderId=' + workOrderHeaderNumber + '&stationId=' + stationId + '&fromShipments=' + true;
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: {
+                        workOrderHeaderNumber,
+                        stationId
+                    },
+                    success: function (response) {
+                        if (response.isValid) {
+                            //refreshTable();
+                            refreshDatatableKeepingScrollPosition($('#shipmentsTable').DataTable());
+                        }
+                    }
+
+                });
+            }
+        }
+
+    </script>
+
+}

@@ -1,0 +1,1013 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    if (ViewData["IncomesTitle"] != null)
+    {
+        ViewData["Title"] = ViewData["IncomesTitle"].ToString();
+    }
+}
+@using ERP.Web.Areas.Logistics.Models
+@model IncomeDetailViewModel
+@{
+    string deletePermission = "disabled";
+    string editPermission = "disabled";
+    if ((AuthorizationService.AuthorizeAsync(User, Permissions.Logistic.Edit)).Result.Succeeded){
+        editPermission = "";
+    }
+    if ((AuthorizationService.AuthorizeAsync(User, Permissions.Logistic.Delete)).Result.Succeeded){
+        deletePermission = "";
+    }
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/Logistics/Incomes/incomes.css" />
+</head>
+
+<body>
+
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+
+            <div id="div-export-buttons">
+                <div class="btn-group">
+
+                    <div class="form-check form-check-inline w-75">
+                        <div class="custom-control custom-checkbox small">
+                            <input class="custom-control-input" type="checkbox" id="checkSelectAll">
+                            <label class="custom-control-label pt-1" for="checkSelectAll">@localizer["Select all"]</label>
+                        </div>
+                    </div>
+
+                    <div class="input-group pr-3 mt-1">
+                        <input id="daterange" type="text" name="daterange" class="form-control pr-4" placeholder="@localizer["Filter by date"]" />
+                    </div>
+
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Logistic.Create)).Result.Succeeded)
+                    {
+                        <a id="btn-create" class="btn btn-secondary text-white rounded-left" title="@localizer["New income"]">
+                            <img class="tables-img-icon" src="~/images/Ingresar.svg" width="30" height="30" />
+                        </a>
+                    }
+                    else
+                    {
+                        <a id="btn-create" class="btn btn-secondary text-white rounded-left" title="@localizer["New income"]" disabled>
+                            <img class="tables-img-icon" src="~/images/Ingresar.svg" width="30" height="30" />
+                        </a>
+                    }
+
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Logistic.Edit)).Result.Succeeded)
+                    {
+                        <a id="btn-stop" class="btn btn-secondary text-white" title="@localizer["Stop"]">
+                            <img class="white-img-icon" src="~/images/stop.svg" width="30" height="30" />
+                        </a>                        
+                    }
+
+                    <a id="btn-export-excel" class="btn btn-secondary text-white h-100" title="@localizer["Export all"]">
+                        <img class="tables-img-icon" src="~/images/Excel.svg" width="30" height="30" />
+                    </a>
+
+                </div>
+            </div>
+
+            <table id="incomesTable" class="table table-striped-blue table-hover w-100 nowrap">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Income date"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th>@localizer["Quantity"]</th>
+                        <th>@localizer["Unit"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th>@localizer["Transport"]</th>
+                        <th>Nº Remito</th>
+                        <th>@localizer["Batch"]</th>
+                        <th>@localizer["Reception"]</th>
+                        <th>@localizer["Next station"]</th>
+                        <th>@localizer["State"]</th>
+                        <th>Nº OC</th>    
+                        <th>Nº @localizer["Invoice"]</th>
+                        <th>Nº OT</th>
+                        <th>Nº @localizer["Product"]</th>
+                        <th>@localizer["Product"]</th>
+                        <th>@localizer["Configuration"]</th>
+                        <th>@localizer["External process"]</th>
+                        <th>@localizer["Shipping date"]</th>
+                        <th>@localizer["Total time"]</th>
+                        <th>@localizer["Weight"]</th>
+                        <th>@localizer["User"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Income date"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th>@localizer["Quantity"]</th>
+                        <th>@localizer["Unit"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th>@localizer["Transport"]</th>
+                        <th>Nº Remito</th>
+                        <th>@localizer["Batch"]</th>
+                        <th>@localizer["Reception"]</th>
+                        <th>@localizer["Next station"]</th>
+                        <th>@localizer["State"]</th>
+                        <th>Nº OC</th>
+                        <th>Nº @localizer["Invoice"]</th>
+                        <th>Nº OT</th>
+                        <th>Nº @localizer["Product"]</th>
+                        <th>@localizer["Product"]</th>
+                        <th>@localizer["Configuration"]</th>
+                        <th>@localizer["External process"]</th>
+                        <th>@localizer["Shipping date"]</th>
+                        <th>@localizer["Total time"]</th>
+                        <th>@localizer["Weight"]</th>
+                        <th>@localizer["User"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+
+        </div>
+    </div>
+
+</body>
+
+@section Scripts {
+    <script type="text/javascript" src="~/js/site.js"></script>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            let incomeDetailsIds = new Set();
+            let start = moment().subtract(5, 'months');
+            let end = moment();
+            let dateFromFilterValue = start.format('DD/MM/YYYY');
+            let dateToFilterValue = end.format('DD/MM/YYYY');
+
+            /* Filter parameters for export to excel */
+            let columnFilter_2 = "";
+            let columnFilter_3 = "";
+            let columnFilter_4 = "";
+            let columnFilter_5 = "";
+            let columnFilter_6 = "";
+            let columnFilter_7 = "";
+            let columnFilter_8 = "";
+            let columnFilter_9 = "";
+            let columnFilter_10 = "";
+            let columnFilter_11 = "";
+            let columnFilter_12 = "";
+            let columnFilter_13 = "";
+            let columnFilter_14 = "";
+            let columnFilter_15 = "";
+            let columnFilter_16 = "";
+            let columnFilter_17 = "";
+            let columnFilter_18 = "";
+            let columnFilter_19 = "";
+            let columnFilter_20 = "";
+            let columnFilter_21 = "";
+            let columnFilter_22 = "";
+            let columnFilter_23 = "";
+            let columnFilter_24 = "";
+            let colIndexOrder = 0;
+            let colOrderDirection = "";
+
+            function cb(start, end) {
+                $('#daterange span').html(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+                dateFromFilterValue = start.format('DD/MM/YYYY');
+                dateToFilterValue = end.format('DD/MM/YYYY');
+                refreshTable();
+            }
+
+            $('input[name="daterange"]').daterangepicker({
+                "locale": {
+                    "format": "DD/MM/YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Aceptar",
+                    "cancelLabel": "Cancelar",
+                    "fromLabel": "Desde",
+                    "toLabel": "Hasta",
+                    "daysOfWeek": [
+                        "Do",
+                        "Lu",
+                        "Ma",
+                        "Mi",
+                        "Ju",
+                        "Vi",
+                        "Sa"
+                    ],
+                    "monthNames": [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre"
+                    ],
+                    "firstDay": 1
+                },
+                "autoApply": true,
+                "showDropdowns": true,
+                "opens": "right",
+                "buttonClasses": "btn btn-sm",
+                "applyClass": "btn-primary",
+                "startDate": start,
+                "endDate": end,
+                "minYear": 1995
+            }, cb);
+
+            $('#daterange').on('apply.daterangepicker', function (ev, picker) {
+                dateFromFilterValue = picker.startDate.format('DD/MM/YYYY');
+                dateToFilterValue = picker.endDate.format('DD/MM/YYYY');
+                refreshTable();
+            });
+
+            $('#btn-create').on('click', function () {
+                jQueryModalGet('/Logistics/Income/OnGetCreateOrEdit', '@localizer["New income"]');
+            });
+            
+            let incomesTable = $('#incomesTable').DataTable({
+                "scrollY": '55vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "scroller": true,
+                "oLanguage": @localizer["LanguageDataTable"],
+                "sAjaxSource": "/Logistics/Income/LoadAllIncomes",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "dateFromFilterValue", "value": dateFromFilterValue },
+                        { "name": "dateToFilterValue", "value": dateToFilterValue }
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "order": [
+                    [2, "desc"]
+                ],
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false
+                    },
+                    {
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+
+                            let iconSize = 22;
+
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+
+                            if(row.incomeStateId == 1)
+                            {
+                                // Icono check: "Pendiente"
+                                html += '<a class="btn action-btn @editPermission"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow checkSelectedRow_' + row.id + ' custom-control-input" type="checkbox" id="checkSelectedRow_' + row.id + '"><label class="custom-control-label" for="checkSelectedRow_' + row.id + '"></label></div></a>';
+                            }
+                            else if(row.incomeStateId == 2)
+                            {
+                                // Icono check: "Recibido"
+                                html += '<a class="btn action-btn disabled"><div class="custom-control custom-checkbox small"><input disabled class="checkSelectedRow checkSelectedRow_' + row.id + ' custom-control-input-inprocess" type="checkbox" id="checkSelectedRow_' + row.id + '"><label class="custom-control-label" for="checkSelectedRow_' + row.id + '"></label></div></a>';
+                            }
+                            else if(row.incomeStateId == 3)
+                            {
+                                 // Icono check: "Finalizado"
+                                html += '<a class="btn action-btn disabled"><div class="custom-control custom-checkbox small"><input disabled class="checkSelectedRow checkSelectedRow_' + row.id + ' custom-control-input-finish" type="checkbox" id="checkSelectedRow_' + row.id + '"><label class="custom-control-label" for="checkSelectedRow_' + row.id + '"></label></div></a>';
+                            }
+                            else
+                            {
+                                // Icono check
+                                html += '<a class="btn action-btn disabled"><div class="custom-control custom-checkbox small"><input disabled class="checkSelectedRow checkSelectedRow_' + row.id + ' custom-control-input" type="checkbox" id="checkSelectedRow_' + row.id + '"><label class="custom-control-label" for="checkSelectedRow_' + row.id + '"></label></div></a>';
+                            }
+
+                            if(row.incomeStateId == 1)
+                            {
+                                // Icono Stop
+                                html += '<a class="btn action-btn" onclick="stopIncomeDetail(' + row.id + ')"><img class="action-img-icon" src="../../../images/stop.svg" width="20" height="20" /></a>';
+                                // Icono editar.
+                                html += '<a class="btn action-btn @editPermission" title="@localizer["Edit income"]" onclick="editIncome(' + row.incomeHeader.id + ')"><img class="action-img-icon" src="../../../images/Editar.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                            }
+                            else
+                            {
+                                // Icono Stop
+                                html += '<a class="btn action-btn disabled" onclick="stopIncomeDetail(' + row.id + ')"><img class="action-img-icon" src="../../../images/stop.svg" width="20" height="20" /></a>';
+                                // Icono editar.
+                                html += '<a class="btn action-btn disabled @editPermission" title="@localizer["Edit income"]" onclick="editIncome(' + row.incomeHeader.id + ')"><img class="action-img-icon" src="../../../images/Editar.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                            }
+
+                            if (row.incomeProduct.archives.length > 0) {
+                                let path = "jQueryModalGet('/productmod/product/GetFilesByProduct?id=" + row.incomeProduct.id + "'" + ',' + "'" + row.incomeProduct.codeAndDescription + "'" + ")";
+                                html += '<a title="@localizer["Files"]" class="btn action-btn @editPermission" onclick="' + path + '"><img class="action-img-icon" src="../../../images/Archivos.svg" width="20" height="20"/></a>';
+                            }
+                            else{
+                                html += '<a title="@localizer["Files"]" class="btn action-btn disabled"><img class="action-img-icon" src="../../../images/Archivos.svg" width="20" height="20"/></a>';
+                            }
+
+                            html += '</div></div>';
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                        "searchable": false
+                    },
+                    // Fecha de ingreso
+                    {
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+                            if(row.incomeDate != null)
+                            {
+                                 return moment(row.incomeDate).format('DD/MM/YYYY');
+                            }
+                            else
+                            {
+                                return moment(row.incomeHeader.incomeDate).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "incomeProduct",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.code;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "incomeProduct",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "quantity",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center",
+                        "render": $.fn.dataTable.render.number('.', ',', 2)
+                    },
+                    {
+                        "data": "unit",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "className": "pr-5",
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "incomeHeader",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                if (value.provider === null) {
+                                    return "";
+                                } else {
+                                    return value.provider.businessName;
+                                }
+                            }
+                        },
+                        "className": "pr-5",
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "incomeHeader",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                if (value.transportProvider === null) {
+                                    return "";
+                                } else {
+                                    return value.transportProvider.businessName;
+                                }
+                            }
+                        },
+                        "className": "pr-5",
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "incomeHeader",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.deliveryNoteNumber;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "batchNumber",
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    // Recepción
+                    {
+                        "data": "reception",
+                        "render": function (data, type, row, meta) {
+                            if (row.reception != null)
+                            {
+                                return row.reception.split("-")[0];
+                            }
+                            else
+                            {
+                                return "";
+                            }                                          
+                        },
+                        "className": "pr-5",
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    // Puesto siguiente
+                    {
+                        "data": "nextStation",
+                        "render": function (data, type, row, meta) {
+                            if (row.nextStation != null)
+                            {
+                                return row.nextStation.split("-")[0].trim().replace(/,\s*$/, "");
+                            }
+                            else
+                            {
+                                return "";
+                            }
+                        },
+                        "className": "pr-5",
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "incomeState",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                if(value.id == 1){
+                                    return '<span class="badge badge-secondary">'+ value.description +'</span>';
+                                }
+                                else if (value.id == 2){
+                                    return '<span class="badge badge-warning">' + value.description + '</span>';
+                                }
+                                else if (value.id == 3) {
+                                    return '<span class="badge badge-success">' + value.description + '</span>';
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "ocNumber",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "incomeHeader",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.invoiceNumber;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "otNumber",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+
+                    {
+                        "data": "productNumber",
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "fatherProduct",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.codeAndDescription;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "fatherStructure",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "incomeHeader",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                if (value.externalProcessStation === null) {
+                                    return "";
+                                } else {
+                                    return value.externalProcessStation.abreviationDescription;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    // Fecha envío
+                    {
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+                            return moment(row.incomeHeader.incomeDate).format('DD/MM/YYYY');
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    // Tiempo total
+                    {
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+                            if(row.incomeDate != null)
+                            {
+                                let incomeHeaderDateAux = moment(row.incomeHeader.incomeDate).format('YYYY-MM-DD');
+                                let incomeDetailDateAux = moment(row.incomeDate).format('YYYY-MM-DD');
+
+                                let incomeHeaderDate = moment(incomeHeaderDateAux);
+                                let incomeDetailDate = moment(incomeDetailDateAux);
+
+                                if(incomeDetailDate.diff(incomeHeaderDate, 'days') < 0)
+                                {
+                                     return '';
+                                }
+                                else if(incomeDetailDate.diff(incomeHeaderDate, 'days') == 0)
+                                {
+                                     return '0 días';
+                                }
+                                else if(incomeDetailDate.diff(incomeHeaderDate, 'days') == 1)
+                                {
+                                    return incomeDetailDate.diff(incomeHeaderDate, 'days') + ' día';
+                                }
+                                else
+                                {
+                                    return incomeDetailDate.diff(incomeHeaderDate, 'days') + ' días';
+                                }
+                            }
+                            else
+                            {
+                                return '0 días';
+                            }
+                        },
+                        "className": "text-center",
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "weight",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "createdBy",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    }
+                ],
+                initComplete: function () {
+
+                    //$('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+
+                    // Obtengo todos los checks con la clase checkSelectedRow
+                    document.querySelectorAll('.checkSelectedRow').forEach(function (item) {
+                        item.addEventListener('change', function () {
+
+                            let incomeDetailId = item.getAttribute('id').slice(17);
+
+                            if ($('#' + item.getAttribute('id')).prop('checked')) {
+                                $(item).prop('checked', true);
+                                incomeDetailsIds.add(incomeDetailId);
+                            }
+                            else {
+                                $(item).prop('checked', false);
+                                incomeDetailsIds.delete(incomeDetailId);
+                            }
+
+                            //let repeatedClass = item.getAttribute('id').slice(0, item.getAttribute('id').lastIndexOf('_'));
+
+                            //if ($('#' + item.getAttribute('id')).prop('checked')) {
+                            //    $('.' + repeatedClass).each(function (i, obj) {
+                            //        $(obj).prop('checked', true);
+                            //    });
+                            //}
+                            //else
+                            //{
+                            //    $('.' + repeatedClass).each(function (i, obj) {
+                            //        $(obj).prop('checked', false);
+                            //    });
+                            //}
+
+                        });
+                    });
+                },
+                "drawCallback": function(){
+
+                    //$('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+
+                    // Obtengo todos los checks con la clase checkSelectedRow
+                    document.querySelectorAll('.checkSelectedRow').forEach(function (item) {
+                        item.addEventListener('change', function () {
+
+                            let incomeDetailId = item.getAttribute('id').slice(17);
+
+                            if ($('#' + item.getAttribute('id')).prop('checked')) {
+                                $(item).prop('checked', true);
+                                incomeDetailsIds.add(incomeDetailId);
+                            }
+                            else {
+                                $(item).prop('checked', false);
+                                incomeDetailsIds.delete(incomeDetailId);
+                            }
+
+                            //let repeatedClass = item.getAttribute('id').slice(0, item.getAttribute('id').lastIndexOf('_'));
+
+                            //if ($('#' + item.getAttribute('id')).prop('checked')) {
+                            //    $('.' + repeatedClass).each(function (i, obj) {
+                            //        $(obj).prop('checked', true);
+                            //    });
+                            //}
+                            //else {
+                            //    $('.' + repeatedClass).each(function (i, obj) {
+                            //        $(obj).prop('checked', false);
+                            //    });
+                            //}
+
+                        });
+                    });
+                }
+            });
+
+            $('.table tfoot th').each(function (i) {
+                let title = $(this).text();
+                if (title != '@localizer["Actions"]') {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            colIndexOrder = incomesTable.order()[0][0];
+            colOrderDirection = incomesTable.order()[0][1];
+
+            // Get order index and direction for table
+            $('div.dataTables_scrollHeadInner thead').on('click', 'th', function () {
+
+                if ($(this).hasClass("sorting") && !$(this).hasClass("sorting_asc") && !$(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+                else if ($(this).hasClass("sorting_asc")) {
+                    colOrderDirection = "desc";
+                }
+                else if ($(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+
+                switch (incomesTable.column(this).index()) {
+                    case 2:
+                        colIndexOrder = 2;
+                        break;
+                    case 3:
+                        colIndexOrder = 3;
+                        break;
+                    case 4:
+                        colIndexOrder = 4;
+                        break;
+                    case 5:
+                        colIndexOrder = 5;
+                        break;
+                    case 6:
+                        colIndexOrder = 6;
+                        break;
+                    case 7:
+                        colIndexOrder = 7;
+                        break;
+                    case 8:
+                        colIndexOrder = 8;
+                        break;
+                    case 9:
+                        colIndexOrder = 9;
+                        break;
+                    case 10:
+                        colIndexOrder = 10;
+                        break;
+                    case 11:
+                        colIndexOrder = 11;
+                        break;
+                    case 12:
+                        colIndexOrder = 12;
+                        break;
+                    case 13:
+                        colIndexOrder = 13;
+                        break;
+                    case 14:
+                        colIndexOrder = 14;
+                        break;
+                    case 15:
+                        colIndexOrder = 15;
+                        break;
+                    case 16:
+                        colIndexOrder = 16;
+                        break;
+                    case 17:
+                        colIndexOrder = 17;
+                        break;
+                    case 18:
+                        colIndexOrder = 18;
+                        break;
+                    case 19:
+                        colIndexOrder = 19;
+                        break;
+                    case 20:
+                        colIndexOrder = 20;
+                        break;
+                    case 21:
+                        colIndexOrder = 21;
+                        break;
+                    case 22:
+                        colIndexOrder = 22;
+                        break;
+                    case 23:
+                        colIndexOrder = 23;
+                        break;
+                    case 24:
+                        colIndexOrder = 24;
+                        break;
+                }
+            });
+
+            // Btn click export excel
+            $('#btn-export-excel').on('click', function () {
+
+                window.location.href = "/Logistics/Income/ExportToExcel" +
+                    "?columnFilter_2=" + columnFilter_2 +
+                    "&columnFilter_3=" + columnFilter_3 +
+                    "&columnFilter_4=" + columnFilter_4 +
+                    "&columnFilter_5=" + columnFilter_5 +
+                    "&columnFilter_6=" + columnFilter_6 +
+                    "&columnFilter_7=" + columnFilter_7 +
+                    "&columnFilter_8=" + columnFilter_8 +
+                    "&columnFilter_9=" + columnFilter_9 +
+                    "&columnFilter_10=" + columnFilter_10 +
+                    "&columnFilter_11=" + columnFilter_11 +
+                    "&columnFilter_12=" + columnFilter_12 +
+                    "&columnFilter_13=" + columnFilter_13 +
+                    "&columnFilter_14=" + columnFilter_14 +
+                    "&columnFilter_15=" + columnFilter_15 +
+                    "&columnFilter_16=" + columnFilter_16 +
+                    "&columnFilter_17=" + columnFilter_17 +
+                    "&columnFilter_18=" + columnFilter_18 +
+                    "&columnFilter_19=" + columnFilter_19 +
+                    "&columnFilter_20=" + columnFilter_20 +
+                    "&columnFilter_21=" + columnFilter_21 +
+                    "&columnFilter_22=" + columnFilter_22 +
+                    "&columnFilter_23=" + columnFilter_23 +
+                    "&columnFilter_24=" + columnFilter_24 +
+                    "&colIndexOrder=" + colIndexOrder +
+                    "&colOrderDirection=" + colOrderDirection +
+                    "&dateFromFilterValue=" + dateFromFilterValue +
+                    "&dateToFilterValue=" + dateToFilterValue;
+
+            });
+
+            // For export to excel, setting filters to send to the server
+            $('.search-control').keyup(function (e) {
+                let colIndex = $(this).attr("data-index");
+                let valueOfInput = $(this).val();
+
+                colIndex++;
+
+                if (colIndex == 2) {
+                    columnFilter_2 = valueOfInput;
+                }
+                else if (colIndex == 3) {
+                    columnFilter_3 = valueOfInput;
+                }
+                else if (colIndex == 4) {
+                    columnFilter_4 = valueOfInput;
+                }
+                else if (colIndex == 5) {
+                    columnFilter_5 = valueOfInput;
+                }
+                else if (colIndex == 6) {
+                    columnFilter_6 = valueOfInput;
+                }
+                else if (colIndex == 7) {
+                    columnFilter_7 = valueOfInput;
+                }
+                else if (colIndex == 8) {
+                    columnFilter_8 = valueOfInput;
+                }
+                else if (colIndex == 9) {
+                    columnFilter_9 = valueOfInput;
+                }
+                else if (colIndex == 10) {
+                    columnFilter_10 = valueOfInput;
+                }
+                else if (colIndex == 11) {
+                    columnFilter_11 = valueOfInput;
+                }
+                else if (colIndex == 12) {
+                    columnFilter_12 = valueOfInput;
+                }
+                else if (colIndex == 13) {
+                    columnFilter_13 = valueOfInput;
+                }
+                else if (colIndex == 14) {
+                    columnFilter_14 = valueOfInput;
+                }
+                else if (colIndex == 15) {
+                    columnFilter_15 = valueOfInput;
+                }
+                else if (colIndex == 16) {
+                    columnFilter_16 = valueOfInput;
+                }
+                else if (colIndex == 17) {
+                    columnFilter_17 = valueOfInput;
+                }
+                else if (colIndex == 18) {
+                    columnFilter_18 = valueOfInput;
+                }
+                else if (colIndex == 19) {
+                    columnFilter_19 = valueOfInput;
+                }
+                else if (colIndex == 20) {
+                    columnFilter_20 = valueOfInput;
+                }
+                else if (colIndex == 21) {
+                    columnFilter_21 = valueOfInput;
+                }
+                else if (colIndex == 22) {
+                    columnFilter_22 = valueOfInput;
+                }
+                else if (colIndex == 23) {
+                    columnFilter_23 = valueOfInput;
+                }
+                else if (colIndex == 24) {
+                    columnFilter_24 = valueOfInput;
+                }
+
+            }).keyup();
+
+            $('#checkSelectAll').change(function () {
+                if (this.checked) {
+                    $('.checkSelectedRow:not(:disabled)').prop('checked', true);
+
+                    incomeDetailsIds = new Set();
+                    document.querySelectorAll('.checkSelectedRow:not(:disabled)').forEach(function (item) {
+                        incomeDetailsIds.add(item.getAttribute('id').slice(17));
+                    });
+                }
+                else {
+                    $('.checkSelectedRow:not(:disabled)').prop('checked', false);
+                
+                    incomeDetailsIds = new Set();
+                    document.querySelectorAll('.checkSelectedRow:not(:disabled)').forEach(function (item) {
+                        incomeDetailsIds.delete(item.getAttribute('id').slice(17));
+                    });
+                }
+            });
+
+            $('#btn-stop').on('click', function(){
+                // Se debe cambiar el estado del ingreso a "Recibido" y completar la fecha de ingreso con la fecha del momento.
+                if (incomeDetailsIds.size > 0) {
+                    $.ajax({
+                        url: "/logistics/income/stopIncomes",
+                        type: "POST",
+                        data: {
+                            incomeDetailsIds: Array.from(incomeDetailsIds)
+                        },
+                        dataType: "json",
+                        traditional: true,
+                        success: function (res) {
+                            if (res.isValid) {
+                                refreshDatatableKeepingScrollPosition($('#incomesTable').DataTable());
+                            }
+                        },
+                        complete: function () {
+                            incomeDetailsIds = new Set();
+                            document.querySelectorAll('.checkSelectedRow').forEach(function (item) {
+                                if ($('#' + item.getAttribute('id')).is(':checked') && !$('#' + item.getAttribute('id')).is(':disabled')) {
+                                    $('#' + item.getAttribute('id')).prop('checked', false);
+                                }
+                            });
+                            $('#checkSelectAll').prop('checked', false);
+                        }
+                    });
+                }
+                else {
+                    alert("Usted debe seleccionar algún ítem para finalizar el/los ingresos.");
+                }
+            });
+            
+        });
+
+        function refreshTable() {
+            $('#incomesTable').DataTable().clear();
+            $('#incomesTable').DataTable().ajax.reload(null, false);
+        }
+
+        function editIncome(id) {
+            jQueryModalGet('/Logistics/Income/OnGetCreateOrEdit?id=' + id, '@localizer["Edit income"]');
+        }
+
+        function stopIncomeDetail(incomeDetailId){
+
+            //setPageScrollPos($('.dataTables_scrollBody').scrollTop());
+
+            let incomeDetailIds = [incomeDetailId];
+            $.ajax({
+                url: "/logistics/income/stopIncomes",
+                type: "POST",
+                data: {
+                    incomeDetailsIds: incomeDetailIds
+                },
+                dataType: "json",
+                traditional: true,
+                success: function (res) {
+                    if (res.isValid) {
+                        refreshDatatableKeepingScrollPosition($('#incomesTable').DataTable());
+                    }
+                },
+                complete: function () {
+                    incomeDetailsIds = new Set();
+                    document.querySelectorAll('.checkSelectedRow').forEach(function (item) {
+                        if ($('#' + item.getAttribute('id')).is(':checked') && !$('#' + item.getAttribute('id')).is(':disabled')) {
+                            $('#' + item.getAttribute('id')).prop('checked', false);
+                        }
+                    });
+                    $('#checkSelectAll').prop('checked', false);
+                }
+            });
+        }
+
+    </script>
+}

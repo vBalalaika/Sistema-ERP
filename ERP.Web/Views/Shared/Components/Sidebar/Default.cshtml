@@ -1,0 +1,625 @@
+﻿@using ERP.Application.Enums
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Microsoft.AspNetCore.Authorization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@inject IAuthorizationService AuthorizationService
+<aside id="sideBar" class="main-sidebar sidebar-dark-primary">
+    <a href="/" class="brand-link">
+        <img src="~/images/logo-transparent.png" id="brand-logo" alt="logo" class="brand-image img-circle"
+             style="opacity: .8">
+        <span class="brand-text font-weight-light" style="font-size:0.8em!important">@localizer["Factory"]</span>
+    </a>
+    <div class="sidebar">
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                <li class="nav-item">
+                    <a href="/" class="nav-link">
+                        <i class="nav-icon fas fa-th"></i>
+                        <p>
+                            @localizer["Dashboard"]
+                        </p>
+                    </a>
+                </li>
+
+                <li class="nav-header">@localizer["Master"]</li>
+
+                <!-- Products menu -->
+                @if (User.IsInRole(Roles.SuperAdmin.ToString()) || (await AuthorizationService.AuthorizeAsync(User, "Permissions.Products.View")).Succeeded)
+                {
+                    <li is-active-route asp-area="Product" class="nav-item has-treeview">
+                        <a is-active-route asp-area="Product" class="nav-link">
+                            <img class="sidebar-img-icon" src="~/images/Productos.svg" />
+                            <p>
+                                @localizer["Products"]
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Products.Create")).Succeeded)
+                            {
+                                <li class="nav-item">
+                                    <a is-active-route asp-area="ProductMod" asp-controller="Product" asp-action="OnGetCreateOrEdit" asp-route-id="" class="nav-link">
+                                        <p>- @localizer["Create Product"]</p>
+                                    </a>
+                                </li>
+                            }
+
+                            <li is-active-route asp-area="Product" class="nav-item has-treeview">
+                                <a id="SimplemakNavLink" class="nav-link">
+                                    <p>
+                                        - @localizer["Factory"]
+                                        <i class="right fas fa-angle-left"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview" id="Simplemak">
+                                </ul>
+                            <li is-active-route asp-area="Product" class="nav-item has-treeview">
+                                <a id="ImportadosNavLink" class="nav-link">
+                                    <p>
+                                        - @localizer["Imported"]
+                                        <i class="right fas fa-angle-left"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview" id="Importados">
+                                </ul>
+                            </li>
+                            <li class="nav-item">
+                                <a is-active-route asp-area="ProductMod" asp-controller="Product" asp-action="Index" asp-route-categoryId="12" asp-route-categoryDescription="Desarrollos" class="nav-link">
+                                    <p>- @localizer["Developments"]</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a is-active-route asp-area="ProductMod" asp-controller="Product" asp-action="Index" asp-route-categoryId="11" asp-route-categoryDescription="Insumos para Oficina" class="nav-link">
+                                    <p>- @localizer["Insumos para Oficina"]</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a is-active-route asp-area="ProductMod" asp-controller="Product" asp-action="Index" asp-route-categoryId="5" asp-route-categoryDescription="Instrumentos para producción" class="nav-link">
+                                    <p>- @localizer["Instrumentos para producción"]</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a is-active-route asp-area="ProductMod" asp-controller="Product" asp-action="Index" class="nav-link">
+                                    <p>- @localizer["All products"]</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
+
+                <!-- Production menu -->
+                @if (User.IsInRole(Roles.SuperAdmin.ToString()) || User.IsInRole("Produccion")
+|| (await AuthorizationService.AuthorizeAsync(User, "Permissions.WorkOrders.View")).Succeeded || (await AuthorizationService.AuthorizeAsync(User, "Permissions.WorkOrderItems.View")).Succeeded
+|| (await AuthorizationService.AuthorizeAsync(User, "Permissions.WorkActivities.View")).Succeeded || (await AuthorizationService.AuthorizeAsync(User, "Permissions.WorkOrderHeaders.View")).Succeeded)
+                {
+                    <li is-active-route asp-area="Sales" class="nav-item has-treeview">
+                        <a is-active-route asp-area="Sales" class="nav-link">
+                            <img class="sidebar-img-icon" src="~/images/Producción.svg" />
+                            <p>
+                                @localizer["Production"]
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+
+                        @if (AuthorizationService.AuthorizeAsync(User, "Permissions.ProductionOrder.View").Result.Succeeded)
+                        {
+
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a is-active-route asp-area="Sales" asp-controller="Order" asp-action="Index" asp-route-sale="false" class="nav-link">
+                                        <p>- @localizer["Production orders"]</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        }
+
+                        @if ((AuthorizationService.AuthorizeAsync(User, "Permissions.WorkActivities.View")).Result.Succeeded
+|| (AuthorizationService.AuthorizeAsync(User, "Permissions.WorkActivities.Edit")).Result.Succeeded)
+                        {
+                            <ul class="nav nav-treeview">
+                                <li class="nav-item">
+                                    <a is-active-route asp-area="Production" asp-controller="WorkActivity" asp-action="IndexGrouped" class="nav-link">
+                                        <p>- @localizer["Work orders"]</p>
+                                    </a>
+                                </li>
+                            </ul>
+                        }
+                    </li>
+                }
+
+                <!-- Logistics menu -->
+                @if (User.IsInRole(Roles.SuperAdmin.ToString()) || User.IsInRole("Logistica") || AuthorizationService.AuthorizeAsync(User, "Permissions.Logistic.View").Result.Succeeded)
+                {
+            <li is-active-route asp-area="Logistics" class="nav-item has-treeview">
+                <a is-active-route asp-area="Logistics" class="nav-link">
+                    <img class="sidebar-img-icon" src="~/images/Logística.svg" />
+                    <p>
+                        @localizer["Logistic"]
+                        <i class="right fas fa-angle-left"></i>
+                    </p>
+                </a>
+
+                <ul class="nav nav-treeview">
+                    <li class="nav-item">
+                        <a is-active-route asp-area="Logistics" asp-controller="Stock" asp-action="_ExistencesIndex" class="nav-link">
+                            <p>- @localizer["Catalog"]</p>
+                        </a>
+                    </li>
+                </ul>
+                        
+                <ul class="nav nav-treeview">                          
+                    <li class="nav-item">                             
+                        <a is-active-route asp-area="Logistics" asp-controller="Shipping" asp-action="Index" class="nav-link">                               
+                            <p>- @localizer["Shipments"]</p>                              
+                        </a>                         
+                    </li>                    
+                </ul>
+
+                <ul class="nav nav-treeview">
+                    <li class="nav-item">
+                        <a is-active-route asp-area="Logistics" asp-controller="Income" asp-action="Index" class="nav-link">
+                            <p>- @localizer["Incomes"]</p>
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="nav nav-treeview">
+                    <li class="nav-item disabled">
+                        <a is-active-route asp-area="Logistics" class="nav-link disabled">
+                            <p>- @localizer["Supplies"]</p>
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="nav nav-treeview">
+                    <li class="nav-item disabled">
+                        <a is-active-route asp-area="Logistics" class="nav-link disabled">
+                            <p>- @localizer["Deliveries"]</p>
+                        </a>
+                    </li>
+                </ul>
+
+            </li>
+                }
+
+                <!-- Purchases menu -->
+                @if (User.IsInRole(Roles.SuperAdmin.ToString()) || (await AuthorizationService.AuthorizeAsync(User, "Permissions.MissingProducts.View")).Succeeded ||
+                (await AuthorizationService.AuthorizeAsync(User, "Permissions.PurchaseOrder.View")).Succeeded ||
+                (await AuthorizationService.AuthorizeAsync(User, "Permissions.QuoteRequest.View")).Succeeded ||
+                (await AuthorizationService.AuthorizeAsync(User, "Permissions.Providers.View")).Succeeded ||
+                (await AuthorizationService.AuthorizeAsync(User, "Permissions.Products.View")).Succeeded)
+                {
+                    <li is-active-route asp-area="Purchases" class="nav-item has-treeview">
+                        <a class="nav-link">
+                            <img class="sidebar-img-icon" src="~/images/Compras.svg" />
+                            <p>
+                                @localizer["Purchases"]
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.MissingProducts.View")).Succeeded)
+                            {
+                                <li class="nav-item">
+                                    <a is-active-route asp-area="Purchases" asp-controller="MissingProduct" asp-action="_Index" class="nav-link">
+                                        <p>- @localizer["Missing products"]</p>
+                                    </a>
+                                </li>
+                            }
+
+                            <li is-active-route asp-area="Purchases" class="nav-item has-treeview">
+                                <a class="nav-link">
+                                    <p>
+                                        - @localizer["Purchases"]
+                                        <i class="right fas fa-angle-left"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.PurchaseOrder.View")).Succeeded)
+                                    {
+                                        <li class="nav-item">
+                                            <a is-active-route asp-area="Purchases" asp-controller="PurchaseOrder" asp-action="_Index" class="nav-link">
+                                                <p>@localizer["Products"]</p>
+                                            </a>
+                                        </li>
+                                    }
+
+                                    <li class="nav-item">
+                                        <a is-active-route asp-area="Purchases" asp-controller="ServicePO" asp-action="Index" class="nav-link">
+                                            <p>@localizer["Services"]</p>
+                                        </a>
+                                    </li>
+
+                                </ul>
+                            </li>
+
+                            <li is-active-route asp-area="Purchases" class="nav-item has-treeview">
+                                <a class="nav-link">
+                                    <p>
+                                        - @localizer["Quotations"]
+                                        <i class="right fas fa-angle-left"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.QuoteRequest.View")).Succeeded)
+                                    {
+                                        <li class="nav-item">
+                                            <a is-active-route asp-area="Purchases" asp-controller="QuoteRequest" asp-action="_Index" class="nav-link">
+                                                <p>@localizer["Quote requests"]</p>
+                                            </a>
+                                        </li>
+                                    }
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.QuoteRequest.View")).Succeeded)
+                                    {
+                                        <li class="nav-item">
+                                            <a is-active-route asp-area="Purchases" asp-controller="QuoteRequest" asp-action="_IndexQuoteRequestResponse" class="nav-link">
+                                                <p>@localizer["List of quotations"]</p>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+
+                            <li is-active-route asp-area="Purchases" class="nav-item has-treeview">
+                                <a class="nav-link">
+                                    <p>
+                                        - @localizer["Providers"]
+                                        <i class="right fas fa-angle-left"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Providers.View")).Succeeded)
+                                    {
+                                        <li class="nav-item">
+                                            <a is-active-route asp-area="Purchases" asp-controller="Provider" asp-action="Index" class="nav-link">
+                                                <p>@localizer["List of providers"]</p>
+                                            </a>
+                                        </li>
+                                    }
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Products.View")).Succeeded)
+                                    {
+                                        <li class="nav-item">
+                                            <a is-active-route asp-area="Purchases" asp-controller="ProviderProduct" asp-action="SearchIndex" class="nav-link">
+                                                <p>@localizer["Products by provider"]</p>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                }
+
+                <!-- Clients menu -->
+                @if (User.IsInRole(Roles.SuperAdmin.ToString()) || (await AuthorizationService.AuthorizeAsync(User, "Permissions.Clients.View")).Succeeded)
+                {
+                    <li is-active-route asp-area="Clients" class="nav-item has-treeview">
+                        <a is-active-route asp-area="Clients" class="nav-link">
+                            <img class="sidebar-img-icon" src="~/images/Clientes.svg" />
+                            <p>
+                                @localizer["Clients"]
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a is-active-route asp-area="Clients" asp-controller="Client" asp-action="Index" class="nav-link">
+                                    <p>- @localizer["List of clients"]</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a is-active-route asp-area="Clients" asp-controller="Client" asp-action="IndexAllCommunications" asp-route-postSale="false" class="nav-link">
+                                    <p>- @localizer["List of communications"]</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a is-active-route asp-area="Clients" asp-controller="Client" asp-action="IndexAllReminders" class="nav-link">
+                                    <p>- @localizer["List of reminders"]</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a is-active-route asp-area="Clients" asp-controller="Client" asp-action="IndexAllSalesOperations" class="nav-link">
+                                    <p>- @localizer["List of sale operations"]</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
+
+                <!-- Sales menu -->
+                @if (User.IsInRole(Roles.SuperAdmin.ToString()) || (await AuthorizationService.AuthorizeAsync(User, "Permissions.SaleOrder.View")).Succeeded || User.IsInRole("Ventas"))
+                {
+                    <li is-active-route asp-area="Sales" class="nav-item has-treeview">
+                        <a is-active-route asp-area="Sales" class="nav-link">
+                            <img class="sidebar-img-icon" src="~/images/Ventas.svg" />
+                            <p>
+                                @localizer["Sales"]
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a is-active-route asp-area="Sales" asp-controller="Order" asp-action="Index" asp-route-sale="true" class="nav-link">
+                                    <p>- @localizer["Sale orders"]</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a is-active-route asp-area="Sales" asp-controller="Price" asp-action="Index" asp-route-spares="false" class="nav-link">
+                                    <p>- @localizer["Products prices"]</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
+                <!-- Technical service menu -->
+                @if (User.IsInRole(Roles.SuperAdmin.ToString()) || (await AuthorizationService.AuthorizeAsync(User, "Permissions.SaleOrder.View")).Succeeded || User.IsInRole("Ventas"))
+                {
+                    <li is-active-route asp-area="Sales" class="nav-item has-treeview">
+                        <a is-active-route asp-area="Sales" class="nav-link">
+                            <img class="sidebar-img-icon" src="~/images/Soporte-tecnico.svg" />
+                            <p>
+                                @localizer["Technical service"]
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a is-active-route asp-area="Sales" asp-controller="Order" asp-action="Index" class="nav-link">
+                                    <p>- @localizer["Spares"]</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a is-active-route asp-area="Sales" asp-controller="Price" asp-action="Index" asp-route-spares="true" class="nav-link">
+                                    <p>- @localizer["Spares prices"]</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
+
+                <!-- Quality menu -->
+                @if (User.IsInRole(Roles.SuperAdmin.ToString()) || AuthorizationService.AuthorizeAsync(User, "Permissions.Quality.View").Result.Succeeded)
+                {
+                    <li is-active-route class="nav-item has-treeview">
+                        <a is-active-route class="nav-link">
+                            <img class="sidebar-img-icon" src="~/images/QTY.svg" />
+                            <p>
+                                @localizer["Quality area"]
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                    </li>
+                }
+
+                <!-- Lists menu -->
+                <li is-active-route asp-area="Commons" class="nav-item has-treeview">
+                    <a class="nav-link">
+                        <img class="sidebar-img-icon" src="~/images/Registro.svg" />
+                        <p>
+                            @localizer["Lists"]
+                            <i class="right fas fa-angle-left"></i>
+                        </p>
+                    </a>
+                    <ul class="nav nav-treeview">
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Cities.View")).Succeeded
+                        || (await AuthorizationService.AuthorizeAsync(User, "Permissions.States.View")).Succeeded)
+                        {
+                            <li is-active-route asp-area="Lists" class="nav-item has-treeview">
+                                <a class="nav-link">
+                                    <p>
+                                        - @localizer["Addresses"]
+                                        <i class="right fas fa-angle-left"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Cities.View")).Succeeded && (await AuthorizationService.AuthorizeAsync(User, "Permissions.States.View")).Succeeded)
+                                    {
+                                        <li class="nav-item">
+                                            <a is-active-route asp-area="Lists" asp-controller="CityState" asp-action="Index" class="nav-link">
+                                                <p>@localizer["Cities and states"]</p>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Categories.View")).Succeeded
+                        || (await AuthorizationService.AuthorizeAsync(User, "Permissions.SubCategories.View")).Succeeded)
+                        {
+                            <li is-active-route asp-area="ProductMod" class="nav-item has-treeview">
+                                <a class="nav-link">
+                                    <p>
+                                        - @localizer["Products"]
+                                        <i class="right fas fa-angle-left"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Categories.View")).Succeeded)
+                                    {
+                                        <li class="nav-item">
+                                            <a is-active-route asp-area="ProductMod" asp-controller="Category" asp-action="Index" class="nav-link">
+                                                <p>@localizer["Categories"]</p>
+                                            </a>
+                                        </li>
+                                    }
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.SubCategories.View")).Succeeded)
+                                    {
+                                        <li class="nav-item">
+                                            <a is-active-route asp-area="ProductMod" asp-controller="SubCategory" asp-action="Index" class="nav-link">
+                                                <p>@localizer["Sub Categories"]</p>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+
+
+                        @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.FunctionalArea.View")).Succeeded
+                        || (await AuthorizationService.AuthorizeAsync(User, "Permissions.Stations.View")).Succeeded)
+                        {
+                            <li is-active-route asp-area="ProductMod" class="nav-item has-treeview">
+                                <a class="nav-link">
+                                    <p>
+                                        - @localizer["Processes"]
+                                        <i class="right fas fa-angle-left"></i>
+                                    </p>
+                                </a>
+                                <ul class="nav nav-treeview">
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.FunctionalArea.View")).Succeeded)
+                                    {
+                                        <li class="nav-item">
+                                            <a is-active-route asp-area="ProductMod" asp-controller="FunctionalArea" asp-action="Index" class="nav-link">
+                                                <p>@localizer["Functional area"]</p>
+                                            </a>
+                                        </li>
+                                    }
+                                    @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Stations.View")).Succeeded)
+                                    {
+                                        <li class="nav-item">
+                                            <a is-active-route asp-area="ProductMod" asp-controller="Station" asp-action="Index" class="nav-link">
+                                                <p>@localizer["Work Station"]</p>
+                                            </a>
+                                        </li>
+                                    }
+                                </ul>
+                            </li>
+                        }
+                    </ul>
+                </li>
+
+                <!-- Configurations menu - Hide when user is not superadmin -->
+                @if (User.IsInRole(Roles.SuperAdmin.ToString()))
+                {
+                    <li class="nav-header">@localizer["Admin"]</li>
+                    <li is-active-route asp-area="Admin" class="nav-item has-treeview">
+                        <a is-active-route asp-area="Admin" class="nav-link">
+                            <img class="sidebar-img-icon" src="~/images/Configuración.svg" />
+                            <p>
+                                @localizer["Admin Settings"]
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            <li class="nav-item">
+                                <a is-active-route asp-area="Admin" asp-controller="User" asp-action="Index" class="nav-link">
+                                    <i class="far fa-user-circle nav-icon"></i>
+                                    <p>@localizer["Users"]</p>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a is-active-route asp-area="Admin" asp-controller="Role" asp-action="Index" class="nav-link">
+                                    <i class="far fa-user-circle nav-icon"></i>
+                                    <p>@localizer["Roles"]</p>
+                                </a>
+                            </li>
+                        </ul>
+                    </li>
+                }
+
+                <!-- Lists menu -->
+                @*@if (User.IsInRole(Roles.SuperAdmin.ToString()) || User.IsInRole("Diseño") || User.IsInRole("Ventas"))
+                {
+                    <li is-active-route asp-area="Commons" class="nav-item has-treeview">
+                        <a class="nav-link">
+                            <img class="sidebar-img-icon" src="~/images/Registro.svg" />
+                            <p>
+                                @localizer["Lists"]
+                                <i class="right fas fa-angle-left"></i>
+                            </p>
+                        </a>
+                        <ul class="nav nav-treeview">
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Cities.View")).Succeeded
+                            || (await AuthorizationService.AuthorizeAsync(User, "Permissions.States.View")).Succeeded)
+                            {
+                                <li is-active-route asp-area="Lists" class="nav-item has-treeview">
+                                    <a class="nav-link">
+                                        <p>
+                                            - @localizer["Addresses"]
+                                            <i class="right fas fa-angle-left"></i>
+                                        </p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Cities.View")).Succeeded && (await AuthorizationService.AuthorizeAsync(User, "Permissions.States.View")).Succeeded)
+                                        {
+                                            <li class="nav-item">
+                                                <a is-active-route asp-area="Lists" asp-controller="CityState" asp-action="Index" class="nav-link">
+                                                    <p>@localizer["Cities and states"]</p>
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Categories.View")).Succeeded
+                            || (await AuthorizationService.AuthorizeAsync(User, "Permissions.SubCategories.View")).Succeeded)
+                            {
+                                <li is-active-route asp-area="ProductMod" class="nav-item has-treeview">
+                                    <a class="nav-link">
+                                        <p>
+                                            - @localizer["Products"]
+                                            <i class="right fas fa-angle-left"></i>
+                                        </p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Categories.View")).Succeeded)
+                                        {
+                                            <li class="nav-item">
+                                                <a is-active-route asp-area="ProductMod" asp-controller="Category" asp-action="Index" class="nav-link">
+                                                    <p>@localizer["Categories"]</p>
+                                                </a>
+                                            </li>
+                                        }
+                                        @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.SubCategories.View")).Succeeded)
+                                        {
+                                            <li class="nav-item">
+                                                <a is-active-route asp-area="ProductMod" asp-controller="SubCategory" asp-action="Index" class="nav-link">
+                                                    <p>@localizer["SubCategory"]</p>
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+
+
+                            @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.FunctionalArea.View")).Succeeded
+                            || (await AuthorizationService.AuthorizeAsync(User, "Permissions.Stations.View")).Succeeded)
+                            {
+                                <li is-active-route asp-area="ProductMod" class="nav-item has-treeview">
+                                    <a class="nav-link">
+                                        <p>
+                                            - @localizer["Processes"]
+                                            <i class="right fas fa-angle-left"></i>
+                                        </p>
+                                    </a>
+                                    <ul class="nav nav-treeview">
+                                        @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.FunctionalArea.View")).Succeeded)
+                                        {
+                                            <li class="nav-item">
+                                                <a is-active-route asp-area="ProductMod" asp-controller="FunctionalArea" asp-action="Index" class="nav-link">
+                                                    <p>@localizer["Functional area"]</p>
+                                                </a>
+                                            </li>
+                                        }
+                                        @if ((await AuthorizationService.AuthorizeAsync(User, "Permissions.Stations.View")).Succeeded)
+                                        {
+                                            <li class="nav-item">
+                                                <a is-active-route asp-area="ProductMod" asp-controller="Station" asp-action="Index" class="nav-link">
+                                                    <p>@localizer["Work Station"]</p>
+                                                </a>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                            }
+                        </ul>
+                    </li>
+                }*@
+
+            </ul>
+        </nav>
+    </div>
+</aside>

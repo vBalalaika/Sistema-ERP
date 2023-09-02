@@ -1,0 +1,44 @@
+﻿@using ERP.Web.Views.Shared.Components.Footer;
+@using ERP.Web.Views.Shared.Components.Title;
+@using ERP.Web.Views.Shared.Components.Sidebar;
+@using ERP.Web.Views.Shared.Components.Header;
+@using ERP.Web.Views.Shared.Components.Logout;
+@using ERP.Web.Views.Shared.Components.FormModal;
+@using ERP.Web.Views.Shared.Components.ImageModal;
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <title>Simplemak</title>
+    <partial name="_Styles" />
+</head>
+<body id="layout_main_body" class="hold-transition sidebar-mini overflow-hidden sidebar-collapse">
+    <div id="loader-wrapper">
+        <div id="loader"></div>
+        <div class="loader-section"></div>
+    </div>
+    <div class="wrapper">
+        @(await Component.InvokeAsync<HeaderViewComponent>())
+        @(await Component.InvokeAsync<SidebarViewComponent>())
+        <div class="content-wrapper" id="contentWrapper">
+            <div class="content overflow-auto" style="max-height:85vh">
+                <div class="container-fluid">
+                    @(await Component.InvokeAsync<TitleViewComponent>())
+                    @RenderBody()
+                </div>
+            </div>
+        </div>
+        @(await Component.InvokeAsync<FooterViewComponent>())
+        @(await Component.InvokeAsync<LogoutViewComponent>())
+        @(await Component.InvokeAsync<FormModalViewComponent>())
+        @(await Component.InvokeAsync<ImageModalViewComponent>())
+
+    </div>
+    <partial name="_Scripts" />
+    @await Component.InvokeAsync("Notyf")
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

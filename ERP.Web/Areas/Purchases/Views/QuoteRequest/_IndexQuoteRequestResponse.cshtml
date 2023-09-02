@@ -1,0 +1,780 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Application.Enums
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Quotes"];
+}
+@using ERP.Web.Areas.Purchases.Models.QuoteRequest
+@model QuoteRequestResponseHeaderViewModel
+@{
+    var isSuperAdmin = false;
+    if (User.IsInRole(Roles.SuperAdmin.ToString()))
+    {
+        isSuperAdmin = true;
+    }
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/Purchases/QuoteRequest/QuoteRequestStyle.css" />
+</head>
+<body>
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+            <div id="div-export-buttons" class="btn-toolbar justify-content-center" role="toolbar">
+                <div class="input-group pr-3 mt-1">
+                    <input id="daterange_input" type="text" name="daterange_input" class="form-control pr-4" placeholder="@localizer["Filter by date"]" />
+                </div>
+
+                <div class="btn-group mr-2 align-items-center" role="group">
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.PurchaseOrder.Create)).Result.Succeeded)
+                    {
+                        <a id="btn-create-purchaseOrder" class="btn bg-secondary pl-1 pr-1" title="@localizer["New purchase order"]">
+                            <img class="tables-img-icon" src="~/images/NewOC.svg" width="30" height="30" />
+                        </a>
+                    }
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.QuoteRequest.View)).Result.Succeeded)
+                    {
+                        <a id="btn-navigate-to-quoteRequests" class="btn bg-secondary pl-1 pr-1" title="@localizer["View quote requests"]">
+                            <img class="tables-img-icon" src="~/images/SC.svg" width="30" height="30" />
+                        </a>
+                    }
+                    <a id="btn-export-excel" class="btn bg-secondary pl-1 pr-1" title="@localizer["Export to Excel"]">
+                        <img class="tables-img-icon" src="~/images/Excel.svg" width="30" height="30" />
+                    </a>
+                </div>
+            </div>
+            <table id="quoteRequestResponseTable" class="table table-striped-blue table-hover nowrap" width="100%" cellspacing="0">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Number"]</th>
+                        <th>@localizer["Nº SC"]</th>
+                        <th>@localizer["Date"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th class="text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Provider unit measure"]</th>
+                        <th class="text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Price unit"]</th>
+                        <th>@localizer["Unit price"]</th>
+                        <th>@localizer["Bonus"]</th>
+                        <th>@localizer["Total"]</th>
+                        <th hidden>@localizer["Available"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Number"]</th>
+                        <th>@localizer["Nº SC"]</th>
+                        <th>@localizer["Date"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th class="text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Provider unit measure"]</th>
+                        <th class="text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Price unit"]</th>
+                        <th>@localizer["Unit price"]</th>
+                        <th>@localizer["Bonus"]</th>
+                        <th>@localizer["Total"]</th>
+                        <th hidden>@localizer["Available"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+
+@section Scripts
+    {
+    <script src="~/js/site.js"></script>
+    <script>
+
+        $(document).ready(function () {
+
+            $.fn.dataTable.moment('DD/MM/YYYY HH:mm:ss');
+
+            //#region Filter parameters for export to excel
+            let sSearch_2 = "";
+            let sSearch_3 = "";
+            let sSearch_4 = "";
+            let sSearch_5 = "";
+            let sSearch_6 = "";
+            let sSearch_7 = "";
+            let sSearch_8 = "";
+            let sSearch_9 = "";
+            let sSearch_10 = "";
+            let sSearch_11 = "";
+            let sSearch_12 = "";
+            let sSearch_13 = "";
+            let sSearch_14 = "";
+            let sSearch_15 = "";
+            let colIndexOrder = 0;
+            let colOrderDirection = "";
+            //#endregion
+
+            let start = moment().subtract(5, 'months');
+            let end = moment();
+            let dateFromFilterValue = start.format('DD/MM/YYYY');
+            let dateToFilterValue = end.format('DD/MM/YYYY');
+
+            let quoteRequestResponseHeaderIds = [];
+            let quoteRequestResponseDetailIds = [];
+            let providersIds = [];
+
+            $('input[name="daterange_input"]').daterangepicker({
+                "locale": {
+                    "format": "DD/MM/YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Aceptar",
+                    "cancelLabel": "Cancelar",
+                    "fromLabel": "Desde",
+                    "toLabel": "Hasta",
+                    "daysOfWeek": [
+                        "Do",
+                        "Lu",
+                        "Ma",
+                        "Mi",
+                        "Ju",
+                        "Vi",
+                        "Sa"
+                    ],
+                    "monthNames": [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre"
+                    ],
+                    "firstDay": 1
+                },
+                "autoApply": true,
+                "showDropdowns": true,
+                "opens": "right",
+                "buttonClasses": "btn btn-sm",
+                "applyClass": "btn-primary",
+                "startDate": start,
+                "endDate": end,
+                "minYear": 1995
+            }, cb);
+
+            function cb(start, end) {
+                $('#daterange_input span').html(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+                dateFromFilterValue = start.format('DD/MM/YYYY');
+                dateToFilterValue = end.format('DD/MM/YYYY');
+                refreshTable();
+            }
+
+            $('#daterange_input').on('apply.daterangepicker', function (ev, picker) {
+                dateFromFilterValue = picker.startDate.format('DD/MM/YYYY');
+                dateToFilterValue = picker.endDate.format('DD/MM/YYYY');
+                refreshTable();
+            });
+
+            $('#quoteRequestResponseTable tfoot th').each(function (i) {
+                var title = $(this).text();
+                if (title != "@localizer["Actions"]" && title != "") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let quoteRequestResponseTable = $("#quoteRequestResponseTable").DataTable({
+                "order": [[2, "desc"]],
+                "oLanguage": @localizer["LanguageDataTable"],
+                scrollY: '60vh',
+                scrollX: true,
+                scrollCollapse: true,
+                scroller: true,
+                scroller: {
+                    loadingIndicator: true
+                },
+                "sAjaxSource": "/purchases/quoterequest/_LoadAllQuoteRequestResponses",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "dateFromFilter", "value": dateFromFilterValue },
+                        { "name": "dateToFilter", "value": dateToFilterValue }
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false,
+                        "orderable": false
+                    },
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "render": function (data, type, row, meta) {
+
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+                            //let forGenerateOC = row.quoteRequestResponseHeader.quoteRequestHeader.responseDate == null || row.quoteRequestResponseHeader.quoteRequestHeader.purchaseStateId == 4 ? 'disabled' : '';
+                            let forGenerateOC = row.quoteRequestResponseHeader.quoteRequestHeader.responseDate == null ? 'disabled' : '';
+
+                            html += '<a class="btn btn-group"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input" type="checkbox" value="" id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>';
+
+                            if(row.missingProduct != null)
+                            {
+                                html += '<a class="btn action-btn" title="@localizer["Prices history"]" onclick="viewPrices('+ row.missingProduct.productId +')" ><img class="action-img-icon" src="../../../images/Historico.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            }
+                            else
+                            {
+                                html += '<a class="btn action-btn" title="@localizer["Prices history"]" onclick="viewPrices('+ row.alternativeProductId +')" ><img class="action-img-icon" src="../../../images/Historico.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            }
+                            
+                            //html += '<a class="btn action-btn ' + forGenerateOC + '" title="@localizer["Generate purchase order"]" onclick="generatePO(' + row.quoteRequestResponseHeaderId + ',' + row.quoteRequestResponseHeader.providerId + ')" ><img class="ocBlackForTableIcon" src="../../../images/OC.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                          
+                            html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editQRR(' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            if("@isSuperAdmin" == "True"){
+                                html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deleteQRR(' + row.id + ', ' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            }
+
+                            //switch (row.quoteRequestResponseHeader.quoteRequestHeader.purchaseStateId) {
+                            //    // Pendiente
+                            //    case 1:
+                            //        html += '<a class="btn action-btn" title="@localizer["Prices history"]" onclick="viewPrices('+ row.missingProduct.productId +')" ><img class="action-img-icon" src="../../../images/Historico.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        html += '<a class="btn action-btn ' + forGenerateOC + '" title="@localizer["Generate purchase order"]" onclick="generatePO(' + row.quoteRequestResponseHeader.quoteRequestHeaderId + ',' + row.quoteRequestResponseHeader.providerId + ')" ><img class="ocBlackForTableIcon" src="../../../images/OC.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editQRR(' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        if("@isSuperAdmin" == "True"){
+                            //            html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deleteQRR(' + row.id + ', ' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        }
+                            //        break;
+                            //    // A cotizar
+                            //    case 2:
+                            //        html += '<a class="btn action-btn" title="@localizer["Prices history"]" onclick="viewPrices(' + row.missingProduct.productId +')" ><img class="action-img-icon" src="../../../images/Historico.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        html += '<a class="btn action-btn ' + forGenerateOC + '" title="@localizer["Generate purchase order"]" onclick="generatePO(' + row.quoteRequestResponseHeader.quoteRequestHeaderId + ',' + row.quoteRequestResponseHeader.providerId + ')" ><img class="ocBlackForTableIcon" src="../../../images/OC.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editQRR(' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        if("@isSuperAdmin" == "True"){
+                            //            html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deleteQRR(' + row.id + ', ' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        }
+                            //        break;
+                            //    // Cotizado
+                            //    case 3:
+                            //        html += '<a class="btn action-btn" title="@localizer["Prices history"]" onclick="viewPrices(' + row.missingProduct.productId +')" ><img class="action-img-icon" src="../../../images/Historico.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        html += '<a class="btn action-btn ' + forGenerateOC + '" title="@localizer["Generate purchase order"]" onclick="generatePO(' + row.quoteRequestResponseHeader.quoteRequestHeaderId + ',' + row.quoteRequestResponseHeader.providerId + ')" ><img class="ocBlackForTableIcon" src="../../../images/OC.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editQRR(' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        if("@isSuperAdmin" == "True"){
+                            //            html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deleteQRR(' + row.id + ', ' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        }
+                            //        break;
+                            //    // Comprado
+                            //    case 4:
+                            //        html += '<a class="btn action-btn" title="@localizer["Prices history"]" onclick="viewPrices(' + row.missingProduct.productId + ')" ><img class="action-img-icon" src="../../../images/Historico.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        html += '<a class="btn action-btn ' + forGenerateOC + '" title="@localizer["Generate purchase order"]" onclick="generatePO(' + row.quoteRequestResponseHeader.quoteRequestHeaderId + ',' + row.quoteRequestResponseHeader.providerId + ')" ><img class="ocBlackForTableIcon" src="../../../images/OC.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editQRR(' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        if("@isSuperAdmin" == "True"){
+                            //            html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deleteQRR(' + row.id + ', ' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        }
+                            //        break;
+                            //    // Finalizado
+                            //    case 5:
+                            //        html += '<a class="btn action-btn" title="@localizer["Prices history"]" onclick="viewPrices(' + row.missingProduct.productId + ')" ><img class="action-img-icon" src="../../../images/Historico.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        html += '<a class="btn action-btn ' + forGenerateOC + '" title="@localizer["Generate purchase order"]" onclick="generatePO(' + row.quoteRequestResponseHeader.quoteRequestHeaderId + ',' + row.quoteRequestResponseHeader.providerId + ')" ><img class="action-img-icon ocBlackForTableIcon" src="../../../images/OC.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editQRR(' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        if("@isSuperAdmin" == "True"){
+                            //            html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deleteQRR(' + row.id + ', ' + row.quoteRequestResponseHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            //        }
+                            //        break;
+                            //}
+
+                            html += '</div></div>';
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                        "orderable": false
+                    },
+                    {
+                        "data": "quoteRequestResponseHeader.id",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "quoteRequestResponseHeader.quoteRequestHeaderId",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "quoteRequestResponseHeader.date",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return moment(value).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+                            if(row.missingProduct != null)
+                            {
+                                return row.missingProduct.product.code;
+                            }
+                            else if(row.alternativeProduct != null)
+                            {
+                                return row.alternativeProduct.code;
+                            }
+                            
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+                            if(row.missingProduct != null)
+                            {
+                                return row.missingProduct.product.description;
+                            }
+                            else if(row.alternativeProduct != null)
+                            {
+                                return row.alternativeProduct.description;
+                            }
+                            
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "quoteRequestResponseHeader",
+                        "render": function (quoteRequestResponseHeader) {
+                            return quoteRequestResponseHeader.provider.getBussinessNameOrName;
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "providerQuantity",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-right",
+                        "render": $.fn.dataTable.render.number('.', ',', 2)
+                    },
+                    {
+                        "data": "providerUnitMeasure",
+                        "render": function (providerUnitMeasure) {
+                            if (providerUnitMeasure === null) {
+                                return "";
+                            } else {
+                                return providerUnitMeasure.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceQuantity",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-right",
+                        "render": $.fn.dataTable.render.number('.', ',', 2)
+                    },
+                    {
+                        "data": "priceUnitMeasure",
+                        "render": function (priceUnitMeasure) {
+                            if (priceUnitMeasure === null) {
+                                return "";
+                            } else {
+                                return priceUnitMeasure.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "unitPrice",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center",
+                        "render": function (data, type, row, meta) {
+                            if (row.moneyType == 1) {
+                                return $.fn.dataTable.render.number('.', ',', 2, '', ' ARS').display(row.unitPrice);
+                            }
+                            else if (row.moneyType == 2) {
+                                return $.fn.dataTable.render.number('.', ',', 2, '', ' USD').display(row.unitPrice);
+                            }
+                        }
+                    },
+                    {
+                        "data": "bonus",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center",
+                        "render": $.fn.dataTable.render.number('.', ',', 2, '', ' %')
+                    },
+                    {
+                        "data": "total",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center",
+                        "render": $.fn.dataTable.render.number('.', ',', 2, '')
+                    },
+                    {
+                        "data": "available",
+                        "render": function (available) {
+                            if (available === true) {
+                                return "@localizer["Yes"]";
+                            }
+                            else{
+                                return "@localizer["No"]";
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "visible": false
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                },
+                "drawCallback": function () {
+                    //GetItemsChecked
+                    let rows = quoteRequestResponseTable.rows().data();
+                    for (let i = 0; i < rows.length; i++) {
+                        let checkSelectedRow = document.getElementById('checkSelectedRow_' + i);
+
+                        // Vuelvo a checkear los que estaban chequeados cuando se refresco la grilla.
+                        if (quoteRequestResponseDetailIds.length > 0) {
+
+                            for (let x = 0; x < quoteRequestResponseDetailIds.length; x++) {
+                                if (quoteRequestResponseDetailIds[x] == rows[i].id && !checkSelectedRow.hasAttribute('checked')) {
+                                    checkSelectedRow.setAttribute('checked', 'checked');
+                                }
+                            }
+                        }
+
+                        if (quoteRequestResponseHeaderIds.length > 0) {
+
+                            for (let x = 0; x < quoteRequestResponseHeaderIds.length; x++) {
+                                if (quoteRequestResponseHeaderIds[x] == rows[i].quoteRequestResponseHeader.id && !checkSelectedRow.hasAttribute('checked')) {
+                                    checkSelectedRow.setAttribute('checked', 'checked');
+                                }
+                            }
+                        }
+
+                        checkSelectedRow.addEventListener('change', function () {
+                            if (this.checked) {
+                                quoteRequestResponseHeaderIds.push(rows[i].quoteRequestResponseHeader.id);
+                                quoteRequestResponseDetailIds.push(rows[i].id);
+                                providersIds.push(rows[i].quoteRequestResponseHeader.providerId);
+                            } else {
+
+                                const indexHeader = quoteRequestResponseHeaderIds.indexOf(rows[i].quoteRequestResponseHeader.id);
+                                if (indexHeader > -1) {
+                                    quoteRequestResponseHeaderIds.splice(indexHeader, 1);
+                                }
+
+                                const indexDetail = quoteRequestResponseDetailIds.indexOf(rows[i].id);
+                                if (indexDetail > -1) {
+                                    quoteRequestResponseDetailIds.splice(indexDetail, 1);
+                                }
+
+                                const indexPv = providersIds.indexOf(rows[i].quoteRequestResponseHeader.providerId);
+                                if (indexPv > -1) {
+                                    providersIds.splice(indexPv, 1);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            //#region Index order and direction for export to excel
+            colIndexOrder = quoteRequestResponseTable.order()[0][0];
+            colOrderDirection = quoteRequestResponseTable.order()[0][1];
+
+            // Get order index and direction for table
+            $('div.dataTables_scrollHeadInner thead').on('click', 'th', function () {
+
+                if ($(this).hasClass("sorting") && !$(this).hasClass("sorting_asc") && !$(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+                else if ($(this).hasClass("sorting_asc")) {
+                    colOrderDirection = "desc";
+                }
+                else if ($(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+
+                switch (quoteRequestResponseTable.column(this).index()) {
+                    case 2:
+                        colIndexOrder = 2;
+                        break;
+                    case 3:
+                        colIndexOrder = 3;
+                        break;
+                    case 4:
+                        colIndexOrder = 4;
+                        break;
+                    case 5:
+                        colIndexOrder = 5;
+                        break;
+                    case 6:
+                        colIndexOrder = 6;
+                        break;
+                    case 7:
+                        colIndexOrder = 7;
+                        break;
+                    case 8:
+                        colIndexOrder = 8;
+                        break;
+                    case 9:
+                        colIndexOrder = 9;
+                        break;
+                    case 10:
+                        colIndexOrder = 10;
+                        break;
+                    case 11:
+                        colIndexOrder = 11;
+                        break;
+                    case 12:
+                        colIndexOrder = 12;
+                        break;
+                    case 13:
+                        colIndexOrder = 13;
+                        break;
+                    case 14:
+                        colIndexOrder = 14;
+                        break;                        
+                    case 15:
+                        colIndexOrder = 15;
+                        break;
+                }
+            });
+            //#endregion
+
+            $('#btn-navigate-to-quoteRequests').on('click', function () {
+                url = "/purchases/quoterequest/_index";
+                window.location.href = url;
+            });
+
+            $('#btn-export-excel').on('click', function () {
+                window.location.href = "/Purchases/QuoteRequest/ExportToExcelQRR" +
+                    "?sSearch_2=" + sSearch_2 +    
+                    "&sSearch_3=" + sSearch_3 +
+                    "&sSearch_4=" + sSearch_4 +
+                    "&sSearch_5=" + sSearch_5 +
+                    "&sSearch_6=" + sSearch_6 +
+                    "&sSearch_7=" + sSearch_7 +
+                    "&sSearch_8=" + sSearch_8 +
+                    "&sSearch_9=" + sSearch_9 +
+                    "&sSearch_10=" + sSearch_10 +
+                    "&sSearch_11=" + sSearch_11 +
+                    "&sSearch_12=" + sSearch_12 +
+                    "&sSearch_13=" + sSearch_13 +
+                    "&sSearch_14=" + sSearch_14 +
+                    "&sSearch_15=" + sSearch_15 +
+                    "&colIndexOrder=" + colIndexOrder +
+                    "&colOrderDirection=" + colOrderDirection +
+                    "&dateFromFilter=" + dateFromFilterValue +
+                    "&dateToFilter=" + dateToFilterValue;
+            });
+
+            //#region For export to excel, setting filters to send to the server
+            $('.search-control').keyup(function (e) {
+                let colIndex = $(this).attr("data-index");
+                let valueOfInput = $(this).val();
+
+                colIndex++;
+
+                if (colIndex == 3) {
+                    sSearch_2 = valueOfInput;
+                }
+                else if (colIndex == 4) {
+                    sSearch_3 = valueOfInput;
+                }
+                else if (colIndex == 5) {
+                    sSearch_4 = valueOfInput;
+                }
+                else if (colIndex == 6) {
+                    sSearch_5 = valueOfInput;
+                }
+                else if (colIndex == 7) {
+                    sSearch_6 = valueOfInput;
+                }
+                else if (colIndex == 8) {
+                    sSearch_7 = valueOfInput;
+                }
+                else if (colIndex == 9) {
+                    sSearch_8 = valueOfInput;
+                }
+                else if (colIndex == 10) {
+                    sSearch_9 = valueOfInput;
+                }
+                else if (colIndex == 11) {
+                    sSearch_10 = valueOfInput;
+                }
+                else if (colIndex == 12) {
+                    sSearch_11 = valueOfInput;
+                }
+                else if (colIndex == 13) {
+                    sSearch_12 = valueOfInput;
+                }
+                else if (colIndex == 14) {
+                    sSearch_13 = valueOfInput;
+                }
+                else if (colIndex == 15) {
+                    sSearch_14 = valueOfInput;
+                }
+                else if (colIndex == 16) {
+                    sSearch_15 = valueOfInput;
+                }
+
+            }).keyup();
+            //#endregion
+
+            $('#btn-create-purchaseOrder').on('click', function(){
+                if (quoteRequestResponseHeaderIds.length > 0 && quoteRequestResponseDetailIds.length > 0) 
+                {
+                    let providerIdsNotRepeated = removeDuplicates(providersIds);
+
+                    if(providerIdsNotRepeated.length > 1)
+                    {
+                        $.ajax({
+                            url: '/purchases/quoterequest/ShowAlerts',
+                            method: 'get',
+                            data: { inputDetail: "provider_repeated" },
+                            dataType: 'json',
+                            success: function (response) {
+                                // Reset checks
+                                quoteRequestResponseHeaderIds = [];
+                                quoteRequestResponseDetailIds = [];
+                                providersIds = [];
+                                refreshTable();
+                            }
+                        });
+                    }
+                    else
+                    {
+                        $.ajax({
+                            url: '/purchases/quoterequest/OnGetCreatePurchaseOrderByIds',
+                            method: 'post',
+                            data: { 
+                                quoteRequestResponseHeaderIds: quoteRequestResponseHeaderIds,
+                                quoteRequestResponseDetailIds: quoteRequestResponseDetailIds
+                            },
+                            success: function (response) {
+                                if (response.isValid) {
+
+                                    $('#form-modal .modal-header').html('<h5 class="modal-title">' + "@localizer["New purchase order"]" + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+                                    $('#form-modal .modal-body').html(response.html);
+                                    $('#form-modal').modal('show');
+
+                                    // Reset checks
+                                    quoteRequestResponseHeaderIds = [];
+                                    quoteRequestResponseDetailIds = [];
+                                    providersIds = [];
+                                    refreshTable();
+                                }
+                                else
+                                {
+                                    // Reset checks
+                                    quoteRequestResponseHeaderIds = [];
+                                    quoteRequestResponseDetailIds = [];
+                                    providersIds = [];
+                                    refreshTable();
+                                }
+                            },
+                            error: function (err) {
+                                console.log(err)
+                            }
+                        });
+                    }
+                } 
+                else 
+                {
+                    $.ajax({
+                        url: '/purchases/quoterequest/ShowAlerts',
+                        method: 'get',
+                        data: { inputDetail: "item_notSelected" },
+                        dataType: 'json',
+                        success: function (response) {
+                            // Reset checks
+                            quoteRequestResponseHeaderIds = [];
+                            quoteRequestResponseDetailIds = [];
+                            providersIds = [];
+                            refreshTable();
+                        }
+                    });
+                }
+            });
+
+        });
+
+        function refreshTable() {
+            $('#quoteRequestResponseTable').DataTable().clear();
+            $('#quoteRequestResponseTable').DataTable().ajax.reload();
+        }
+
+        function viewPrices(productId) {
+            url = "/purchases/quoterequest/_IndexPriceHistory?productId=" + productId;
+            window.location.href = url;
+        }
+
+        function generatePO(qrrhId, providerId) {
+            jQueryModalGet('/purchases/quoterequest/OnGetCreatePurchaseOrder?qrrhId=' + qrrhId + '&providerId=' + providerId, "@localizer["New purchase order"]");
+        }
+
+        function editQRR(qrrhId) {
+            jQueryModalGet('/purchases/quoterequest/OnGetCreateQuoteRequestResponse?id=' + qrrhId, "@localizer["Quote request response"]");
+        }
+
+        function deleteQRR(qrrdId, qrrhId) {
+            if (confirm('@localizer["Are you sure to delete this record?"]')) {
+                let url = "/purchases/quoterequest/OnPostDeleteQuoteRequestResponse?qrrdId=" + qrrdId + "&qrrhId=" + qrrhId;
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    success: function (response) {
+                        if (response.isValid) {
+                            refreshTable();
+                        }
+                    }
+                });
+            }
+        }
+
+        function removeDuplicates(arr) {
+            return arr.filter((item, index) => arr.indexOf(item) === index);
+        }
+
+    </script>
+}

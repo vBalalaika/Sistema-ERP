@@ -1,0 +1,160 @@
+﻿@using ERP.Web.Areas.Production.Models.WorkActivity
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model WorkActivityRelativeGroupViewModel
+
+<div class="col-12">
+    <div class="row align-items-center">
+        <h5>@Model.FathersCodes</h5>
+
+        @if (Model.CanMakeActions)
+        {
+            <div class="ml-3 mb-2">
+
+                <a class="btn @Model.FathersActivities.First().DisablePlay action-btn" title="@localizer["Play"]" onclick="NewAction('@Model.FathersActivities.First().Id', 'play')"><img class="action-img-icon" src="../../../images/play.svg" width="30" height="30" /></a>
+                <a class="btn @Model.FathersActivities.First().DisablePause action-btn" title="@localizer["Pause"]" onclick="NewAction('@Model.FathersActivities.First().Id', 'pause')"><img class="action-img-icon" src="../../../images/pausa.svg" width="30" height="30" /></a>
+                <a class="btn @Model.FathersActivities.First().DisableStop action-btn" title="@localizer["Stop"]" onclick="NewAction('@Model.FathersActivities.First().Id', 'stop')"><img class="action-img-icon" src="../../../images/stop.svg" width="30" height="30" /></a>
+
+            </div>
+        }
+        @if (!Model.isTorno)
+        {
+            <div class="ml-5 mb-2">
+                <a class="btn @Model.DisableBack action-btn" id="previous-button" title="@localizer["Previous"]" onclick="GoBack()"><img class="action-img-icon" src="../../../images/up-long-solid.svg" width="30" height="30" /></a>
+                <a class="btn @Model.DisableNext action-btn " id="next-button" title="@localizer["Next"]" onclick="GoNext()"><img class="action-img-icon" src="../../../images/arrow-down-short-wide-solid.svg" width="30" height="30" /></a>
+            </div>
+        }
+
+    </div>
+</div>
+<table id="activitiesGroupTable" class="table table-striped-blue w-100 nowrap " cellspacing="0">
+    <thead class="bg-thead">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Raw material description"]</th>
+            <th>@localizer["Width"]</th>
+            <th>@localizer["Length"]</th>
+            <th>@localizer["Archives"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var fatheractivity in Model.FathersActivities)
+        {
+            <tr>
+                <td hidden>
+                    @fatheractivity.Id
+                </td>
+                <td>
+                    @fatheractivity.WorkOrderItem.Product.Code
+                </td>
+
+                <td>
+                    @fatheractivity.WorkOrderItem.Product.Description
+                </td>
+                <td>
+                    @fatheractivity.WorkOrderItem.Quantity
+                </td>
+                <td>
+                    @fatheractivity.WorkOrderItem.Product.ProductFeature.RawMaterialDescription
+                </td>
+                <td>
+                    @fatheractivity.WorkOrderItem.Product.ProductFeature.ComponentWidhtPiece
+                </td>
+                <td>
+                    @fatheractivity.WorkOrderItem.Product.ProductFeature.ComponentLongPiece
+                </td>
+                <td class="text-center">
+                    <a class="btn action-btn" title="@localizer["Archives"]" onclick=""><img class="action-img-icon" src="../../../images/Archivos.svg" width="20" height="20" /></a>
+                </td>
+            </tr>
+            @foreach (var childactivity in fatheractivity.ChildsActivities)
+            {
+                <tr>
+                    <td hidden>
+                        @childactivity.Id
+                    </td>
+                    <td>
+                    </td>
+
+                    <td>
+                        @childactivity.WorkOrderItem.Product.CodeAndDescription
+                    </td>
+                    <td>
+                        @childactivity.WorkOrderItem.Quantity
+                    </td>
+                    <td>
+                        @childactivity.WorkOrderItem.Product.ProductFeature.RawMaterialDescription
+                    </td>
+                    <td>
+                        @childactivity.WorkOrderItem.Product.ProductFeature.ComponentWidhtPiece
+                    </td>
+                    <td>
+                        @childactivity.WorkOrderItem.Product.ProductFeature.ComponentLongPiece
+                    </td>
+                    <td class="text-center">
+                        <a class="btn action-btn" title="@localizer["Archives"]" onclick=""><img class="action-img-icon" src="../../../images/Archivos.svg" width="20" height="20" /></a>
+                    </td>
+                </tr>
+
+            }
+
+        }
+
+    </tbody>
+</table>
+
+<script>
+    $(document).ready(function () {
+
+        NewAction = (ids, action) => {
+            PostAction(ids, action);
+            if (action == "play") {
+                document.getElementById("play-button").classList.add("disabled");
+                document.getElementById("pause-button").classList.remove("disabled");
+                document.getElementById("stop-button").classList.remove("disabled");
+            }
+            if (action == "pause") {
+                document.getElementById("pause-button").classList.add("disabled");
+                document.getElementById("play-button").classList.remove("disabled");
+                document.getElementById("stop-button").classList.remove("disabled");
+            }
+            if (action == "stop") {
+                document.getElementById("play-button").classList.add("disabled");
+                document.getElementById("pause-button").classList.add("disabled");
+                document.getElementById("stop-button").classList.add("disabled");
+            }
+        }
+
+        GoNext = () => {
+            $('#form-modal').modal('hide');
+            setTimeout(function () { jQueryModalGet('/production/workactivity/GetActivitiesAndChilds?strFatherActivitiesIds=' + '@Model.UnfinishedChildsIds' + '&stationId=' +@Model.StationId+ '&initialFathersIds=' + '@Model.InitialFathersIds', '@localizer["Manage group activities"]'); }, 200);
+
+        }
+
+        GoBack = () => {
+            $('#form-modal').modal('hide');
+            setTimeout(function () { jQueryModalGet('/production/workactivity/GetActivitiesAndChilds?strFatherActivitiesIds=' + '@Model.InitialFathersIds' + '&stationId=' +@Model.StationId+'&initialFathersIds=' + '@Model.InitialFathersIds', '@localizer["Manage group activities"]'); }, 200);
+        }
+
+        let activitiesGroupTable = $("#activitiesGroupTable").DataTable({
+            "columnDefs": [{
+                "type": "chapter",
+                "targets": 0
+            }],
+            "bFilter": false,
+            "aaSorting": [],
+            "oLanguage": @localizer["LanguageDataTable"],
+            scrollY: '65vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+        });
+
+    });
+</script>

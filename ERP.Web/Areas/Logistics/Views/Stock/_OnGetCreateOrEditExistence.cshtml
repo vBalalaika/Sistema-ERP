@@ -1,0 +1,420 @@
+﻿@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@model ProductViewModel
+
+<form id="create-form" method="post" asp-controller="Stock" asp-action="_OnPostCreateOrEditExistence" enctype="multipart/form-data">
+
+    <div class="form-row">
+
+        @if (Model.Id == 0)
+        {
+            <div class="col-md-12 mb-3">
+                <div class="form-row border-bottom">
+                    <div class="col-md-12 mb-3">
+                        <label class="control-label">@localizer["Product"]</label>
+                        <select class="form-control select2bs4" id="Products">
+                            <option value="">@localizer["Select product"]</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <div class="col-md-3 border-bottom mb-3">
+            <label class="font-weight-normal">@localizer["Storage unit"]</label>
+            <div class="form-row">
+                <div class="col-md-2 d-none">
+                    <label asp-for="StorageQuantity" class="control-label">@localizer["Quantity"]</label>
+                    <input asp-for="StorageQuantity" id="StorageQuantity" type="text" name="StorageQuantity" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="1" value="1" />
+                </div>
+                <div class="col-md-12">
+                    <label asp-for="StorageUnitMeasureId" class="control-label">@localizer["Unit measure"]</label>
+                    <select asp-for="StorageUnitMeasureId" name="StorageUnitMeasureId" class="form-control select2bs4" id="StorageUnitMeasures" asp-items="@Model.UnitsMeasure">
+                        <option value="">@localizer["Select unit measure"]</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-9 border-bottom mb-3">
+            <label class="font-weight-normal">@localizer["Production equivalence"]</label>
+            <div class="form-row">
+
+                <div class="col-md-3 mb-3">
+                    <label asp-for="StockWidth">@localizer["Width"]</label>
+                    <input id="StockWidth" type="text" asp-for="StockWidth" name="StockWidth" class="form-control text-right" onkeypress="return validateIsNumber(event);">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label>@localizer["Unit measure"]</label>
+                    <div class="input-group">
+                        <select asp-for="StockWidthUnitMeasureId" name="StockWidthUnitMeasureId" class="form-control select2bs4" id="WidthUnitMeasures" asp-items="@Model.StockWidthUnitMeasures">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="StockQuantity">@localizer["Quantity"]</label>
+                    <input asp-for="StockQuantity" id="StockQuantity" type="text" name="StockQuantity" class="form-control text-right" onkeypress="return validateIsNumber(event);">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label>@localizer["Unit measure"]</label>
+                    <div class="input-group">
+                        <select asp-for="StockQuantityUnitMeasureId" name="StockQuantityUnitMeasureId" class="form-control select2bs4" id="StockQuantityUnitMeasures" asp-items="@Model.StockQuantityUnitMeasures">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="StockLength">@localizer["Lenght"]</label>
+                    <input id="StockLength" type="text" asp-for="StockLength" name="StockLength" class="form-control text-right" onkeypress="return validateIsNumber(event);">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label>@localizer["Unit measure"]</label>
+                    <div class="input-group">
+                        <select asp-for="StockLengthUnitMeasureId" name="StockLengthUnitMeasureId" class="form-control select2bs4" id="LenghtUnitMeasures" asp-items="@Model.StockLengthUnitMeasures">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="StockWeight">@localizer["Weight"]</label>
+                    <input id="StockWeight" type="text" asp-for="StockWeight" name="StockWeight" class="form-control text-right" onkeypress="return validateIsNumber(event);">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label>@localizer["Unit measure"]</label>
+                    <div class="input-group">
+                        <select asp-for="StockWeightUnitMeasureId" name="StockWeightUnitMeasureId" class="form-control select2bs4" id="WeightUnitMeasures" asp-items="@Model.StockWeightUnitMeasures">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label asp-for="StockHeight">@localizer["Height"]</label>
+                    <input id="StockHeight" type="text" asp-for="StockHeight" name="StockHeight" class="form-control text-right" onkeypress="return validateIsNumber(event);">
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label>@localizer["Unit measure"]</label>
+                    <div class="input-group">
+                        <select asp-for="StockHeightUnitMeasureId" name="StockHeightUnitMeasureId" class="form-control select2bs4" id="HeightUnitMeasures" asp-items="@Model.StockHeightUnitMeasures">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-12 border-bottom mb-3">
+            <label class="font-weight-normal">@localizer["Data for stock management"]</label>
+            <div class="form-row">
+                <div class="col-md-2 mb-3">
+                    <label asp-for="Existence">@localizer["Existence"]</label>
+                    <input id="Existence" type="text" asp-for="Existence" name="Existence" class="form-control text-right" onkeypress="return validateIsNumber(event);">
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label>@localizer["Unit measure"]</label>
+                    <div class="input-group">
+                        <select asp-for="ExistenceUnitMeasureId" name="ExistenceUnitMeasureId" class="form-control select2bs4" id="ExistenceUnitMeasures" asp-items="@Model.ExistenceUnitMeasures">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label asp-for="Minimum">@localizer["Point of order"]</label>
+                    <input id="Minimum" type="text" asp-for="Minimum" name="Minimum" class="form-control text-right" onkeypress="return validateIsNumber(event);">
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label>@localizer["Unit measure"]</label>
+                    <div class="input-group">
+                        <select asp-for="MinimumUnitMeasureId" name="MinimumUnitMeasureId" class="form-control select2bs4" id="MinimumUnitMeasures" asp-items="@Model.MinimumUnitMeasures">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label asp-for="QuantityToOrder">@localizer["Quantity to order"]</label>
+                    <input id="QuantityToOrder" type="text" asp-for="QuantityToOrder" name="QuantityToOrder" class="form-control text-right" onkeypress="return validateIsNumber(event);">
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label>@localizer["Unit measure"]</label>
+                    <div class="input-group">
+                        <select asp-for="QuantityToOrderUnitMeasureId" name="QuantityToOrderUnitMeasureId" class="form-control select2bs4" id="QuantityToOrderUnitMeasures" asp-items="@Model.QuantityToOrderUnitMeasures">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-8 border-bottom mb-3">
+            <div class="form-row">
+                <label class="font-weight-normal">@localizer["Location"]</label>
+                <div class="form-row">
+                    <div class="col-md-6 mb-3">
+                        <label>@localizer["Warehouse"]</label>
+                        <div class="input-group">
+                            <select class="form-control" asp-for="LocationStationId" id="LocationStations" name="LocationStationId">
+                                <option value="" selected="selected">@localizer["Select a position"]</option>
+                                @foreach (var station in Model.StationsList)
+                                {
+                                    if (Model.LocationStationId == station.Id)
+                                    {
+                                        <option value="@station.Id" selected="selected">@station.Description</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@station.Id">@station.Description</option>
+                                    }
+
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label asp-for="Shelves_Rack" class="control-label">@localizer["Shelves/Rack"]</label>
+                        <input asp-for="Shelves_Rack" id="Shelves_Rack" type="number" name="Shelves_Rack" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="0" />
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label asp-for="Shelf" class="control-label">@localizer["Shelf"]</label>
+                        <input asp-for="Shelf" id="Shelf" type="number" name="Shelf" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="0" />
+                    </div>
+                    <div class="col-md-2 mb-3">
+                        <label asp-for="Position" class="control-label">@localizer["Position"]</label>
+                        <input asp-for="Position" id="Position" type="number" name="Position" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="0" />
+                    </div>
+                </div>
+
+                <div class="col-md-12">
+                    <label class="font-weight-normal">@localizer["Physical space that a unit occupies (in meters)"]</label>
+                </div>
+
+                <div class="form-row">
+                    <div class="col-md-3 mb-3 mr-2">
+                        <label class="control-label">@localizer["Width"]</label>
+                        <div class="input-group">
+                            <input asp-for="PhysicalSpaceWidth" id="PhysicalSpaceWidth" type="text" name="PhysicalSpaceWidth" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="0" />
+                            <label class="ml-1 mt-2" for="PhysicalSpaceWidth"><strong id="PhysicalSpaceWidthLabel" class="text-red">metros</strong></label>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3 mr-2">
+                        <label class="control-label">@localizer["Lenght"]</label>
+                        <div class="input-group">
+                            <input asp-for="PhysicalSpaceLength" id="PhysicalSpaceLenght" type="text" name="PhysicalSpaceLength" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="0" />
+                            <label class="ml-1 mt-2" for="PhysicalSpaceLenght"><strong id="PhysicalSpaceLenghtLabel" class="text-red">metros</strong></label>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3 mr-2">
+                        <label class="control-label">@localizer["Height"]</label>
+                        <div class="input-group">
+                            <input asp-for="PhysicalSpaceHeight" id="PhysicalSpaceHeight" type="text" name="PhysicalSpaceHeight" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="0" />
+                            <label class="ml-1 mt-2" for="PhysicalSpaceHeight"><strong id="PhysicalSpaceHeightLabel" class="text-red">metros</strong></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 border-bottom mb-3">
+            <div class="form-row">
+                <div class="col-md-12 mb-3 mt-4">
+                    <label asp-for="StockObservations" class="control-label mt-2">@localizer["Observations"]</label>
+                    <textarea asp-for="StockObservations" name="StockObservations" class="form-control" id="StockObservations" rows="6"></textarea>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="button" class="btn btn-primary">@localizer["Save"]</button>
+        <button id="btn-cancel" type="button" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+    </div>
+
+</form>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        /* Format decimals */
+        const decimalInputsIds = ['StorageQuantity', 'PhysicalSpaceWidth', 'PhysicalSpaceLenght', 'PhysicalSpaceHeight', 'StockWidth', 'StockLength', 'StockHeight', 'StockQuantity', 'StockWeight', 'Existence', 'Minimum', 'QuantityToOrder'];
+
+        let products_select2 = $('#Products');
+        let StorageUnitMeasures = $('#StorageUnitMeasures');
+        let LocationStations = $('#LocationStations');
+        let WidthUnitMeasures = $('#WidthUnitMeasures');
+        let LenghtUnitMeasures = $('#LenghtUnitMeasures');
+        let HeightUnitMeasures = $('#HeightUnitMeasures');
+        let StockQuantityUnitMeasures = $('#StockQuantityUnitMeasures');
+        let WeightUnitMeasures = $('#WeightUnitMeasures');
+        let ExistenceUnitMeasures = $('#ExistenceUnitMeasures');
+        let MinimumUnitMeasures = $('#MinimumUnitMeasures');
+        let QuantityToOrderUnitMeasures = $('#QuantityToOrderUnitMeasures');
+
+        products_select2.select2({
+            language: "es",
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select product"]",
+            ajax: {
+                url: '/Logistics/Stock/LoadProductsSelect2',
+                data: function (params) {
+                    return {
+                        search: params.term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.products
+                    };
+                }
+            }
+        });
+
+        StorageUnitMeasures.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        LocationStations.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        WidthUnitMeasures.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        LenghtUnitMeasures.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        HeightUnitMeasures.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        StockQuantityUnitMeasures.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        WeightUnitMeasures.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        ExistenceUnitMeasures.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        MinimumUnitMeasures.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        QuantityToOrderUnitMeasures.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        validateDecimalsNumbersOnInput(decimalInputsIds);
+
+        products_select2.change(function () {
+            if ($(this).val() != -1) {
+                $.ajax({
+                    url: '/Logistics/Stock/GetProductById',
+                    method: 'get',
+                    data: { id: $(this).val() },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.isValid) {
+                            if (response.product.unitMeasure != null) {
+
+                                ExistenceUnitMeasures.val(response.product.unitMeasure.id);
+                                ExistenceUnitMeasures.change();
+
+                                MinimumUnitMeasures.val(response.product.unitMeasure.id);
+                                MinimumUnitMeasures.change();
+
+                                QuantityToOrderUnitMeasures.val(response.product.unitMeasure.id);
+                                QuantityToOrderUnitMeasures.change();
+
+                            }
+
+                        }
+                    }
+                });
+            }
+        });
+
+        if (@Model.Id != 0) {
+
+            WidthUnitMeasures.val('@Model.StockWidthUnitMeasures.SelectedValue').trigger('change');
+            LenghtUnitMeasures.val('@Model.StockLengthUnitMeasures.SelectedValue').trigger('change');
+            HeightUnitMeasures.val('@Model.StockHeightUnitMeasures.SelectedValue').trigger('change');
+            WeightUnitMeasures.val('@Model.StockWeightUnitMeasures.SelectedValue').trigger('change');
+            QuantityToOrderUnitMeasures.val('@Model.StockQuantityUnitMeasures.SelectedValue').trigger('change');
+
+            ExistenceUnitMeasures.val('@Model.ExistenceUnitMeasures.SelectedValue').trigger('change');
+            MinimumUnitMeasures.val('@Model.MinimumUnitMeasures.SelectedValue').trigger('change');
+            QuantityToOrderUnitMeasures.val('@Model.QuantityToOrderUnitMeasures.SelectedValue').trigger('change');
+
+            $('#form-modal .modal-header').html('<h5 class="modal-title">' + "@Model.CodeAndDescription" + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+
+        }
+
+        $("#btn-save").on("click", function () {
+
+            if (@Model.Id == 0) {
+                if (products_select2.val() != null) {
+
+                    $('#create-form').attr('action', '/Logistics/Stock/_OnPostCreateOrEditExistence?modelId=' + @Model.Id +'&productId=' + products_select2.val());
+                    $('#create-form').submit();
+
+                } else {
+                    alert('¡Atención, debe seleccionar un producto para gestionar su stock.!');
+                }
+            }
+            else {
+                $('#create-form').attr('action', '/Logistics/Stock/_OnPostCreateOrEditExistence?modelId=' + @Model.Id +'&productId=' + products_select2.val());
+                $('#create-form').submit();
+            }
+
+        });
+
+        $("#btn-cancel").on("click", function () {
+            $("#form-modal").modal("hide");
+        });
+
+        $('#create-form').on('submit', function (e) {
+            return jQueryModalPostWithRefresh(this, $('#existencesTable').DataTable());
+        });
+
+        $('#Shelves_Rack').focusin(function () {
+            $(this).val('');
+        });
+
+        $('#Shelf').focusin(function () {
+            $(this).val('');
+        });
+
+        $('#Position').focusin(function () {
+            $(this).val('');
+        });
+
+    });
+
+</script>

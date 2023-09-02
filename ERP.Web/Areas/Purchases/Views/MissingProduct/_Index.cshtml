@@ -1,0 +1,869 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Missing products"];
+}
+@using ERP.Web.Areas.Purchases.Models.MissingProduct
+@model MissingProductViewModel
+@{
+    string deletePermission = "disabled";
+    string editPermission = "disabled";
+    if ((AuthorizationService.AuthorizeAsync(User, Permissions.MissingProducts.Delete)).Result.Succeeded){
+        deletePermission = "";
+    }
+    if ((AuthorizationService.AuthorizeAsync(User, Permissions.MissingProducts.Edit)).Result.Succeeded){
+        editPermission = "";
+    }
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/Purchases/MissingProducts/missingProducts.css" />
+</head>
+
+<body>
+
+    <div class="card">
+
+        <div id="viewAll" class="card-body table-responsive">
+
+            <div id="div-export-buttons" class="btn-toolbar justify-content-center" role="toolbar">
+
+                <div class="input-group pr-3 mt-1">
+                    <input id="daterange_input" type="text" name="daterange_input" class="form-control pr-4" placeholder="@localizer["Filter by date"]" />
+                </div>
+
+                <div class="btn-group mr-2 align-items-center" role="group">
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.MissingProducts.Create)).Result.Succeeded)
+                    {
+                        <a id="btn-create" class="btn bg-secondary pl-1 pr-1" title="@localizer["New"]">
+                            <img class="tables-img-icon" src="~/images/alta faltante blanco.svg" width="40" height="30" />
+                        </a>
+                    }
+                    @*@if ((AuthorizationService.AuthorizeAsync(User, Permissions.MissingProducts.Edit)).Result.Succeeded)
+                    {
+                        <a id="btn-edit-missingProduct" class="btn btn-secondary pl-1 pr-1" title="@localizer["Edit missing product"]">
+                            <img class="tables-img-icon" src="~/images/comentario blanco.svg" width="30" height="30" />
+                        </a>
+                    }*@
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.PurchaseOrder.Create)).Result.Succeeded)
+                    {
+                        <a id="btn-create-purchaseOrder" class="btn btn-secondary pl-1 pr-1" title="@localizer["Purchase order"]">
+                            <img class="tables-img-icon" src="~/images/NewOC.svg" width="30" height="30" />
+                        </a>
+                    }
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.QuoteRequest.Create)).Result.Succeeded)
+                    {
+                        <a id="btn-create-quoteRequest" class="btn btn-secondary pl-1 pr-1" title="@localizer["Quote request"]">
+                            <img class="tables-img-icon" src="~/images/NewSC.svg" width="30" height="30" />
+                        </a>
+                    }
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.ProductionOrder.Create)).Result.Succeeded)
+                    {
+                        <a id="btn-create-productionOrder" class="btn btn-secondary pl-1 pr-1" title="@localizer["Production order"]">
+                            <img class="tables-img-icon" src="~/images/NewOP.svg" width="30" height="30" />
+                        </a>
+                    }
+                    <a id="btn-export-excel" class="btn btn-secondary pl-1 pr-1" title="@localizer["Export"]">
+                        <img class="tables-img-icon" src="~/images/Excel.svg" width="30" height="30" />
+                    </a>
+                </div>
+
+            </div>
+
+            <table id="missingProductsTable" class="table table-striped-blue table-hover nowrap" width="100%">
+                <thead class="bg-thead">
+                    <tr>
+                        <th></th>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Date"]</th>
+                        <th>@localizer["Heading"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Product"]</th>
+                        <th>@localizer["Quantity to order"]</th>
+                        <th>@localizer["Unit"]</th>
+                        <th>@localizer["Quantity"]</th>
+                        <th>@localizer["Storage unit measure"]</th>
+                        <th>@localizer["Purchased quantity"]</th>
+                        <th>@localizer["State"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th>@localizer["Location"]</th>
+                        <th>@localizer["User"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                         <th></th>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Date"]</th>
+                        <th>@localizer["Heading"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Product"]</th>
+                        <th>@localizer["Quantity to order"]</th>
+                        <th>@localizer["Unit"]</th>
+                        <th>@localizer["Quantity"]</th>
+                        <th>@localizer["Storage unit measure"]</th>
+                        <th>@localizer["Purchased quantity"]</th>
+                        <th>@localizer["State"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th>@localizer["Location"]</th>
+                        <th>@localizer["User"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+
+        </div>
+
+    </div>
+
+</body>
+
+@section Scripts
+    {
+    <script src="~/js/site.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            $.fn.dataTable.moment('DD/MM/YYYY HH:mm:ss');
+
+            let MissingProductIds = [];
+
+            //#region Filter parameters for export to excel
+            let sSearch_3 = "";
+            let sSearch_4 = "";
+            let sSearch_5 = "";
+            let sSearch_6 = "";
+            let sSearch_7 = "";
+            let sSearch_8 = "";
+            let sSearch_9 = "";
+            let sSearch_10 = "";
+            let sSearch_11 = "";
+            let sSearch_12 = "";
+            let sSearch_13 = "";
+            let sSearch_14 = "";
+            let sSearch_15 = "";
+            let colIndexOrder = 0;
+            let colOrderDirection = "";
+            //#endregion
+
+            let start = moment().subtract(5, 'months');
+            let end = moment();
+            let dateFromFilterValue = start.format('DD/MM/YYYY');
+            let dateToFilterValue = end.format('DD/MM/YYYY');
+
+            $('input[name="daterange_input"]').daterangepicker({
+                "locale": {
+                    "format": "DD/MM/YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Aceptar",
+                    "cancelLabel": "Cancelar",
+                    "fromLabel": "Desde",
+                    "toLabel": "Hasta",
+                    "daysOfWeek": [
+                        "Do",
+                        "Lu",
+                        "Ma",
+                        "Mi",
+                        "Ju",
+                        "Vi",
+                        "Sa"
+                    ],
+                    "monthNames": [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre"
+                    ],
+                    "firstDay": 1
+                },
+                "autoApply": true,
+                "showDropdowns": true,
+                "opens": "right",
+                "buttonClasses": "btn btn-sm",
+                "applyClass": "btn-primary",
+                "startDate": start,
+                "endDate": end,
+                "minYear": 1995
+            }, cb);
+
+            function cb(start, end) {
+                $('#daterange_input span').html(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+                dateFromFilterValue = start.format('DD/MM/YYYY');
+                dateToFilterValue = end.format('DD/MM/YYYY');
+                refreshTable();
+            }
+
+            $('#daterange_input').on('apply.daterangepicker', function (ev, picker) {
+                dateFromFilterValue = picker.startDate.format('DD/MM/YYYY');
+                dateToFilterValue = picker.endDate.format('DD/MM/YYYY');
+                refreshTable();
+            });
+
+            $('#missingProductsTable tfoot th').each(function (i) {
+                var title = $(this).text();
+                if (title != "@localizer["Actions"]" && title != "") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let missingProductsTable = $("#missingProductsTable").DataTable({
+                "order": [[3, "desc"]],
+                "oLanguage": @localizer["LanguageDataTable"],
+                scrollY: '60vh',
+                scrollX: true,
+                scrollCollapse: true,
+                scroller: true,
+                scroller: {
+                    loadingIndicator: true
+                },
+                "sAjaxSource": "/purchases/missingproduct/_LoadAll",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "dateFromFilter", "value": dateFromFilterValue },
+                        { "name": "dateToFilter", "value": dateToFilterValue }
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "render": function (data, type, row, meta) {
+                            return '<a class="btn btn-group"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input" type="checkbox" value="" id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>';
+                            //if(row.stateMissingProductId == 1){
+                            //    return '<a class="btn btn-group"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input" type="checkbox" value="" id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>';
+                            //}
+                            //else{
+                            //    return '<a class="btn btn-group"><div class="custom-control custom-checkbox small"><input disabled class="checkSelectedRow custom-control-input-disabled" type="checkbox" value="" id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>';
+                            //}                            
+                        },
+                        "visible": true,
+                        "width": "5%",
+                        "orderable": false
+                    },
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false,
+                        "orderable": false
+                    },
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "render": function (data, type, row, meta) {
+
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+
+                            switch (row.stateMissingProductId) {
+                                // Pendiente
+                                case 1:
+                                    html += '<a class="btn action-btn @editPermission" title="@localizer["Edit"]" onclick="editMP(' + row.id + ')"><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    html += '<a class="btn action-btn @deletePermission" title="@localizer["Delete"]" onclick="deleteMP(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    break;
+                                // A cotizar
+                                case 2:
+                                    html += '<a class="btn action-btn @editPermission" title="@localizer["Edit"]" onclick="editMP(' + row.id + ')"><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    html += '<a class="btn action-btn @deletePermission disabled" title="@localizer["Delete"]" onclick="deleteMP(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    break;
+                                // Cotizado
+                                case 3:
+                                    html += '<a class="btn action-btn @editPermission" title="@localizer["Edit"]" onclick="editMP(' + row.id + ')"><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    html += '<a class="btn action-btn @deletePermission disabled" title="@localizer["Delete"]" onclick="deleteMP(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    break;
+                                // Comprado
+                                case 4:
+                                    html += '<a class="btn action-btn @editPermission" title="@localizer["Edit"]" onclick="editMP(' + row.id + ')"><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    html += '<a class="btn action-btn @deletePermission disabled" title="@localizer["Delete"]" onclick="deleteMP(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    break;
+                                // Finalizado
+                                case 5:
+                                    html += '<a class="btn action-btn @editPermission" title="@localizer["Edit"]" onclick="editMP(' + row.id + ')"><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    html += '<a class="btn action-btn @deletePermission disabled" title="@localizer["Delete"]" onclick="deleteMP(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    break;
+                                // A producción
+                                case 7:
+                                    html += '<a class="btn action-btn @editPermission" title="@localizer["Edit"]" onclick="editMP(' + row.id + ')"><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    html += '<a class="btn action-btn @deletePermission disabled" title="@localizer["Delete"]" onclick="deleteMP(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    break;
+                            }
+
+                            html += '</div></div>';
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                        "orderable": false
+                    },
+                    {
+                        "data": "createDate",
+                        "render": function (createDate) {
+                            if (createDate === null) {
+                                return "";
+                            } else {
+                                return moment(createDate).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "product",
+                        "render": function (product) {
+                            if (product === null) {
+                                return "";
+                            } else {
+                                if (product.subCategory === null) {
+                                    return "";
+                                } else {
+                                    return product.subCategory.description;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "product",
+                        "render": function (product) {
+                            if (product === null) {
+                                return "";
+                            } else {
+                                return product.code;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "product",
+                        "render": function (product) {
+                            if (product === null) {
+                                return "";
+                            } else {
+                                return product.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "quantityToOrder",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-right",
+                        "render": $.fn.dataTable.render.number('.', ',', 2)
+                    },
+                    {
+                        "data": "quantityToOrderUnitMeasure",
+                        "render": function (quantityToOrderUnitMeasure) {
+                            if (quantityToOrderUnitMeasure === null) {
+                                return "";
+                            } else {
+                                return quantityToOrderUnitMeasure.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "storageQuantity",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-right",
+                        "render": $.fn.dataTable.render.number('.', ',', 2)
+                    },
+                    {
+                        "data": "storageUnitMeasure",
+                        "render": function (storageUnitMeasure) {
+                            if (storageUnitMeasure === null) {
+                                return "";
+                            } else {
+                                return storageUnitMeasure.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "purchasedQuantity",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center",
+                        "render": $.fn.dataTable.render.number('.', ',', 2)
+                    },
+                    {
+                        "data": "stateMissingProduct",
+                        "render": function (stateMissingProduct) {
+                            if (stateMissingProduct === null) {
+                                return "";
+                            } else {
+                                return stateMissingProduct.name;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                     {
+                        "data": "provider",
+                        "render": function (provider) {
+                            if (provider === null) {
+                                return "";
+                            } else {
+                                return provider.getBussinessNameOrName;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "product",
+                        "render": function (product) {
+                            if (product === null) {
+                                return "";
+                            } else {
+                                if (product.locationStation === null) {
+                                    return "";
+                                } else {
+                                    return product.locationStation.abbreviation;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "userName",
+                        "render": function (userName) {
+                            if (userName === null) {
+                                return "";
+                            } else {
+                                return userName;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                },
+                "drawCallback": function () {
+                    //GetItemsChecked
+                    let rows = missingProductsTable.rows().data();
+                    for (let i = 0; i < rows.length; i++) {
+                        let checkSelectedRow = document.getElementById('checkSelectedRow_' + i);
+
+                        // Vuelvo a checkear los que estaban chequeados cuando se refresco la grilla.s
+                        if (MissingProductIds.length > 0) {
+
+                            for (let x = 0; x < MissingProductIds.length; x++) {
+                                if (MissingProductIds[x] == rows[i].id && !checkSelectedRow.hasAttribute('checked')) {
+                                    checkSelectedRow.setAttribute('checked', 'checked');
+                                }
+                            }
+                        }
+
+                        checkSelectedRow.addEventListener('change', function () {
+                            if (this.checked) {
+                                MissingProductIds.push(rows[i].id);
+
+                            } else {
+                                const index = MissingProductIds.indexOf(rows[i].id);
+                                if (index > -1) {
+                                    MissingProductIds.splice(index, 1);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+
+            $(missingProductsTable.table().container()).on('keyup', 'tfoot input', function () {
+                missingProductsTable
+                    .column($(this).data('index'))
+                    .search(this.value)
+                    .draw();
+            });
+
+            //#region Index order and direction for export to excel
+            colIndexOrder = missingProductsTable.order()[0][0];
+            colOrderDirection = missingProductsTable.order()[0][1];
+
+            // Get order index and direction for table
+            $('div.dataTables_scrollHeadInner thead').on('click', 'th', function () {
+
+                if ($(this).hasClass("sorting") && !$(this).hasClass("sorting_asc") && !$(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+                else if ($(this).hasClass("sorting_asc")) {
+                    colOrderDirection = "desc";
+                }
+                else if ($(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+
+                switch (missingProductsTable.column(this).index()) {
+                    case 3:
+                        colIndexOrder = 3;
+                        break;
+                    case 4:
+                        colIndexOrder = 4;
+                        break;
+                    case 5:
+                        colIndexOrder = 5;
+                        break;
+                    case 6:
+                        colIndexOrder = 6;
+                        break;
+                    case 7:
+                        colIndexOrder = 7;
+                        break;
+                    case 8:
+                        colIndexOrder = 8;
+                        break;
+                    case 9:
+                        colIndexOrder = 9;
+                        break;
+                    case 10:
+                        colIndexOrder = 10;
+                        break;
+                    case 11:
+                        colIndexOrder = 11;
+                        break;
+                    case 12:
+                        colIndexOrder = 12;
+                        break;
+                    case 13:
+                        colIndexOrder = 12;
+                        break;
+                    case 14:
+                        colIndexOrder = 13;
+                        break;
+                    case 15:
+                        colIndexOrder = 14;
+                        break;
+                }
+            });
+            //#endregion
+
+            $('#btn-create').on('click', function () {
+                jQueryModalGet('/purchases/missingproduct/OnGetCreate', '@localizer["New missings products"]');
+            });
+
+            // To edit massive comments
+            $('#btn-edit-missingProduct').on('click', function () {
+                  if (MissingProductIds.length > 0) {
+                       jQueryModalGetModified('/purchases/missingproduct/OnGetEditMultiple?ids=' + MissingProductIds, '@localizer["Edit"]');
+
+                        // Reset checks
+                        MissingProductIds = [];
+                        refreshTable();
+                } else {
+                    $.ajax({
+                        url: '/purchases/missingproduct/ShowAlerts',
+                        method: 'get',
+                        data: { inputDetail: "product_notselected" },
+                        dataType: 'json',
+                        success: function (response) {
+
+                        }
+                    });
+                }
+            });
+
+            // To create purchase order
+            $('#btn-create-purchaseOrder').on('click', function () {
+                // Comprobar que no se agreguen al detalle de orden productos faltantes comprados.
+                if (MissingProductIds.length > 0) {
+                    $.ajax({
+                        url: '/purchases/purchaseorder/CreatePurchaseOrderFromMissingProducts',
+                        method: 'post',
+                        data: { missingProductsIds: MissingProductIds },
+                        success: function (response) {
+                            if (response.isValid) 
+                            {
+                                $('#form-modal .modal-header').html('<h5 class="modal-title">' + '@localizer["New purchase order"]' + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+                                $('#form-modal .modal-body').html(response.html);
+                                $('#form-modal').modal('show');
+                                $('#form-modal').children().children().removeClass('edit-modal');
+
+                                // Reset checks
+                                MissingProductIds = [];
+                                refreshTable();
+                            }
+                            else
+                            {
+                                // Reset checks
+                                MissingProductIds = [];
+                                refreshTable();
+                            }
+                        },
+                        error: function (err) {
+                            console.log(err)
+                        }
+                    });
+                } else {
+                    $.ajax({
+                        url: '/purchases/missingproduct/ShowAlerts',
+                        method: 'get',
+                        data: { inputDetail: "product_notselected" },
+                        dataType: 'json',
+                        success: function (response) {
+
+                        }
+                    });
+                }
+            });
+
+            // To create quote request
+            $('#btn-create-quoteRequest').on('click', function () {
+                // Comprobar que no se agreguen al detalle de la solicitud productos faltantes comprados.
+                if (MissingProductIds.length > 0) {
+                    $.ajax({
+                        url: '/purchases/quoterequest/CreateQuoteRequestFromMissingProducts',
+                        method: 'post',
+                        data: { missingProductsIds: MissingProductIds },
+                        success: function (response) {
+                            if (response.isValid) 
+                            {
+                                $('#form-modal .modal-header').html('<h5 class="modal-title">' + '@localizer["New quote request"]' + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+                                $('#form-modal .modal-body').html(response.html);
+                                $('#form-modal').modal('show');
+                                $('#form-modal').children().children().removeClass('edit-modal');
+
+                                // Reset checks
+                                MissingProductIds = [];
+                                refreshTable();
+                            }
+                            else
+                            {
+                                // Reset checks
+                                MissingProductIds = [];
+                                refreshTable();
+                            }
+                        },
+                        error: function (err) {
+                            console.log(err)
+                        }
+                    });
+                } else {
+                    $.ajax({
+                        url: '/purchases/missingproduct/ShowAlerts',
+                        method: 'get',
+                        data: { inputDetail: "product_notselected" },
+                        dataType: 'json',
+                        success: function (response) {
+
+                        }
+                    });
+                }
+            });
+
+            // To create production order
+            $('#btn-create-productionOrder').on('click', function(){
+                 // Comprobar que no se agreguen al detalle de la solicitud productos faltantes comprados.
+                if (MissingProductIds.length > 0) 
+                {
+                    $.ajax({
+                        url: '/sales/order/CreateProductionOrderFromMissingProducts',
+                        method: 'post',
+                        data: { missingProductsIds: MissingProductIds },
+                        success: function (response) {
+                            if (response.isValid) 
+                            {
+                                $('#form-modal .modal-header').html('<h5 class="modal-title">' + '@localizer["New production order"]' + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+                                $('#form-modal .modal-body').html(response.html);
+                                $('#form-modal').modal('show');
+                                $('#form-modal').children().children().removeClass('edit-modal');
+
+                                // Reset checks
+                                MissingProductIds = [];
+                                refreshTable();
+                            }
+                            else
+                            {
+                                // Reset checks
+                                MissingProductIds = [];
+                                refreshTable();
+                            }
+                        },
+                        error: function (err) {
+                            console.log(err)
+                        }
+                    });
+                } 
+                else 
+                {
+                    $.ajax({
+                        url: '/purchases/missingproduct/ShowAlerts',
+                        method: 'get',
+                        data: { inputDetail: "product_notselected" },
+                        dataType: 'json',
+                        success: function (response) {
+
+                        }
+                    });
+                }
+            });
+
+            $('#btn-export-excel').on('click', function () {
+                window.location.href = "/Purchases/MissingProduct/ExportToExcel" +
+                    "?sSearch_3=" + sSearch_3 +
+                    "&sSearch_4=" + sSearch_4 +
+                    "&sSearch_5=" + sSearch_5 +
+                    "&sSearch_6=" + sSearch_6 +
+                    "&sSearch_7=" + sSearch_7 +
+                    "&sSearch_8=" + sSearch_8 +
+                    "&sSearch_9=" + sSearch_9 +
+                    "&sSearch_10=" + sSearch_10 +
+                    "&sSearch_11=" + sSearch_11 +
+                    "&sSearch_12=" + sSearch_12 +
+                    "&sSearch_13=" + sSearch_13 +
+                    "&sSearch_14=" + sSearch_14 +
+                    "&sSearch_15=" + sSearch_15 +
+                    "&colIndexOrder=" + colIndexOrder +
+                    "&colOrderDirection=" + colOrderDirection +
+                    "&dateFromFilterValue=" + dateFromFilterValue +
+                    "&dateToFilterValue=" + dateToFilterValue;
+            });
+
+            //#region For export to excel, setting filters to send to the server
+            $('.search-control').keyup(function (e) {
+                let colIndex = $(this).attr("data-index");
+                let valueOfInput = $(this).val();
+
+                colIndex++;
+                
+                if (colIndex == 4) {
+                    sSearch_3 = valueOfInput;
+                }
+                else if (colIndex == 5) {
+                    sSearch_4 = valueOfInput;
+                }
+                else if (colIndex == 6) {
+                    sSearch_5 = valueOfInput;
+                }
+                else if (colIndex == 7) {
+                    sSearch_6 = valueOfInput;
+                }
+                else if (colIndex == 8) {
+                    sSearch_7 = valueOfInput;
+                }
+                else if (colIndex == 9) {
+                    sSearch_8 = valueOfInput;
+                }
+                else if (colIndex == 10) {
+                    sSearch_9 = valueOfInput;
+                }
+                else if (colIndex == 11) {
+                    sSearch_10 = valueOfInput;
+                }
+                else if (colIndex == 12) {
+                    sSearch_11 = valueOfInput;
+                }
+                else if (colIndex == 13) {
+                    sSearch_12 = valueOfInput;
+                }
+                else if (colIndex == 14) {
+                    sSearch_13 = valueOfInput;
+                }
+                else if (colIndex == 15) {
+                    sSearch_14 = valueOfInput;
+                }
+                else if (colIndex == 16) {
+                    sSearch_15 = valueOfInput;
+                }
+
+            }).keyup();
+            //#endregion
+
+        });
+
+        //function editMP(missingProductId) {
+        //    jQueryModalGetModified('/purchases/missingproduct/OnGetEdit?id=' + missingProductId, '@localizer["Edit"]')
+        //}
+
+        function editMP(missingProductId) {
+            jQueryModalGet('/purchases/missingproduct/OnGetEdit?id=' + missingProductId, '@localizer["Edit"]')
+        }
+
+        function deleteMP(missingProductId) {
+            if (confirm('@localizer["Are you sure to delete this record?"]')) {
+                let url = "/purchases/missingproduct/OnPostDelete?id=" + missingProductId;
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    success: function (response) {
+                        refreshTable();
+                    }
+                });
+            }
+        }
+
+        function refreshTable() {
+            $('#missingProductsTable').DataTable().clear();
+            $('#missingProductsTable').DataTable().ajax.reload();
+        }
+
+        //jQueryModalGetModified = (url, title) => {
+        //    try {
+        //        $.ajax({
+        //            type: 'GET',
+        //            url: url,
+        //            contentType: false,
+        //            processData: false,
+        //            success: function (res) {
+        //                $('#form-modal .modal-header').html('<h5 class="modal-title">' + title + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+        //                $('#form-modal .modal-body').html(res.html);
+        //                $('#form-modal').modal('show');
+        //                $('#form-modal').children().children().addClass('edit-modal');
+        //            },
+        //            error: function (err) {
+        //                console.log(err)
+        //            },
+        //            complete: function () {
+        //                if (!$('#layout_main_body').hasClass('loaded')) {
+        //                    $('#layout_main_body').addClass('loaded');
+        //                }
+        //            }
+        //        })
+        //        //to prevent default form submit event
+        //        return false;
+        //    } catch (ex) {
+        //        console.log(ex)
+        //    }
+        //}
+
+    </script>
+}

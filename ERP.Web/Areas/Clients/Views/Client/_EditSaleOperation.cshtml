@@ -1,0 +1,383 @@
+﻿@using ERP.Web.Areas.Clients.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model SaleOperationViewModel
+@{
+    if (ViewData["OrderTitle"] != null)
+    {
+        ViewData["Title"] = ViewData["OrderTitle"].ToString();
+    }
+}
+
+
+<form asp-controller="Client" id="form" asp-action="OnPostEditSaleOperation" asp-route-saleOperationId="@Model.Id" asp-route-state="State" asp-route-endingDate="@Model.EndingDate" asp-route-startDate="@Model.StartDate" asp-route-comment="Comment" asp-route-view="@Model.View">
+
+    <div class="col-md-3">
+        <div class="form-check form-check-inline">
+            <label class="control-label">@Model.Operation</label>
+        </div>
+    </div>
+
+    <div class="form-row mx-auto" style="margin-top: 25px">
+        
+        <div id="divContactDate" class="col-lx-2 mb-1">
+            <label id="contactDateLabel" class="control-label">@localizer["Start date"]</label>
+            <input type="date" name="StartDate" value="@Model.StartDateString" class="form-control" asp-for="StartDate" />
+        </div>
+
+        <div id="divEndingDate" class="col-lx-2 mb-1">
+            <label id="contactDateLabel" class="control-label">@localizer["Ending date"]</label>
+            <input type="date" name="EndingDate" value="@Model.EndingDateString" class="form-control" asp-for="EndingDate" />
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label class="control-label">@localizer["Comments"]</label>
+            <textarea class="form-control" id="comments" rows="5" name="Comment" asp-for="Comments"></textarea>
+        </div>
+
+        <div class="col-lx-3 mr-5 pl-3 mb-3">
+            <label class="control-label">@localizer["State"]</label>
+            <select class="form-control select2bs" id="states" name="State">
+                @switch (Model.State)
+                {
+                    case "In progress":
+                    case "En proceso":
+                    case "En progreso":
+                        <option value="1" selected>@localizer["In progress"]</option>
+                        <option value="2">@localizer["Concretized"]</option>
+                        <option value="3">@localizer["Not completed"]</option>
+                        break;
+
+                    case "Concretized":
+                    case "Concretada":
+                        <option value="1">@localizer["In progress"]</option>
+                        <option value="2" selected>@localizer["Concretized"]</option>
+                        <option value="3">@localizer["Not completed"]</option>
+                        break;
+
+                    case "Not completed":
+                    case "No completada":
+                        <option value="1">@localizer["In progress"]</option>
+                        <option value="2">@localizer["Concretized"]</option>
+                        <option value="3" selected>@localizer["Not completed"]</option>
+                        break;
+
+                }
+            </select>
+        </div>
+
+    </div>
+        <div class="card">
+            <div id="viewAll" class="card-body table-responsive">
+                <label>@localizer["Communications asocied"]</label>
+
+                <table id="saleOperationsTable" class="table table-striped-blue nowrap" width="100%">
+                    <thead class="bg-thead">
+                        <tr>
+                            <th>@localizer["Contact date"]</th>
+                            <th>@localizer["Consulted product"]</th>
+                            <th>@localizer["Funcionality"]</th>
+                            <th>@localizer["Piece type"]</th>
+                            <th>@localizer["Contact source"]</th>
+                            <th>@localizer["medio de contacto"]</th>
+                            <th>@localizer["Communication"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var com in Model.Communications)
+                        {
+                            if (com.ConsultedProducts.Count > 0)
+                            {
+                                foreach (var cp in com.ConsultedProducts)
+                                {
+                                    <tr>
+                                        <td>
+                                            @com.ComunicationDate.ToShortDateString()
+                                        </td>
+                                        <td>
+                                            @cp.ProductCode - @cp.ProductDescription
+                                        </td>
+                                        <td>
+                                            @cp.Functionality
+                                        </td>
+                                        <td>
+                                            @cp.PieceType
+                                        </td>
+                                        @if(com.Incoming)
+                                        {
+                                            <td>@localizer["Incoming"]</td>
+                                        }
+                                        else if(com.Outgoing)
+                                        {
+                                            <td>@localizer["Outgoing"]</td>
+                                        }
+                                        <td>
+                                            @com.ContactSource
+                                        </td>
+                                        <td>
+                                            @com.CommunicationName
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr>
+                                    <td>
+                                        @com.ComunicationDate.ToShortDateString()
+                                    </td>
+                                    <td>
+                                        -
+                                    </td>
+                                    <td>
+                                        -
+                                    </td>
+                                    <td>
+                                        -
+                                    </td>
+                                    @if (com.Incoming)
+                                    {
+                                        <td>@localizer["Incoming"]</td>
+                                    }
+                                    else if (com.Outgoing)
+                                    {
+                                        <td>@localizer["Outgoing"]</td>
+                                    }
+                                    <td>
+                                        @com.ContactSource
+                                    </td>
+                                    <td>
+                                        @com.CommunicationName
+                                    </td>
+                                </tr>
+                            }
+
+                        }
+                    </tbody>
+                    <tfoot>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div id="table_div" class="col-sm-12 col-md-12 col-xl-12 mb-3 p-0">
+            <div class="row d-flex col-md-12 ml-1">
+                <label class="card-title text-capitalize mb-3">@localizer["Products"]</label>
+            </div>
+
+            <div id="table_responsive_div" class="table-responsive-sm table-responsive-md table-responsive-lg table-responsive-xl col-sm-12 col-md-12 col-xl-12">
+                <table id="products_table" class="table w-100 nowrap">
+                    <thead class="bg-thead">
+                        <tr>
+
+                            <th>@localizer["Product number"]</th>
+                            <th>@localizer["Code"]</th>
+                            <th>@localizer["Description"]</th>
+                            <th>@localizer["Configuration"]</th>
+                            <th>@localizer["Supply voltage"]</th>
+                            <th>@localizer["Quantity"]</th>
+                            <th></th>
+                        
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if(Model.OrderDetails.Count > 0)
+                        {
+                            @foreach (var od in Model.OrderDetails)
+                            {
+                                
+                                var index = 0;
+
+                                <tr>
+                                    <td><input type="text" class="form-control" name="od[@index].ProductNumber" readonly value="@od.ProductNumber" /></td>
+                                    @if(od.Product is not null)
+                                    {
+                                        <td><input type="text" class="form-control" name="od[@index].Code" readonly value="@od.Product.Code" /></td>
+                                        <td><input type="text" class="form-control" name="od[@index].Product.Description" readonly value="@od.Product.Description" /></td>
+                                    }
+                                    else
+                                    {
+                                        <td><input type="text" class="form-control" name="-" readonly value="-" /></td>
+                                        <td><input type="text" class="form-control" name="-" readonly value="-" /></td>
+                                    }
+                                    @if(od.Structure is not null)
+                                    {
+                                        <td><input type="text" class="form-control" name="od[@index].Structure.Description" readonly value="@od.Structure.Description" /></td>
+                                    }
+                                    else
+                                    {
+                                        <td><input type="text" class="form-control" name="-" readonly value="-" /></td>
+                                    }
+                                    @if(od.SupplyVoltage is not null)
+                                    {
+                                        <td><input type="text" class="form-control" name="od[@index].SupplyVoltage.Description" readonly value="@od.SupplyVoltage.Description" /></td>
+                                    }
+                                    else
+                                    {
+                                        <td><input type="text" class="form-control" name="-" readonly value="-" /></td>
+                                    }
+                                    <td><input type="text" class="form-control" name="od[@index].Quantity" readonly value="@od.Quantity" /></td> 
+                                </tr>
+                                index += 1;
+                                
+                            }
+                        }
+                    
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <div id="buttons-div" class="form-group justify-content-between">
+
+            <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+            <button type="submit" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+
+        </div>
+</form>
+
+<script src="~/js/site.js"></script>
+
+<script>
+
+    $(document).ready(function () {
+
+        if (document.getElementById('states').value == 2) 
+        {
+            $("#divEndingDate").show();
+        }
+        else {
+            $("#divEndingDate").hide();
+        }
+
+
+        $('#states').change(function () {
+
+            if (document.getElementById('states').value == 2) 
+            {
+                $("#divEndingDate").show("slow");
+            }
+            else
+            {
+                $("#divEndingDate").hide("slow");
+            }
+
+
+        });
+
+
+        $("#form").submit(function (event) {
+            if ("@Model.View" != "_ViewAllOperationsSales") {
+                return jQueryModalPostWithoutRefreshSaleOperation(this);
+                refreshTable();
+            }
+            else {
+                return jQueryModalPostEditSaleOperation(this);
+            }
+
+            event.preventDefault();
+        });
+
+    });
+
+    jQueryModalPostEditSaleOperation = form => {
+        try {
+            $.ajax({
+                type: 'POST',
+                url: form.action,
+                data: new FormData(form),
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.isValid) {
+                        $('#form-modal #btn-save').attr('disabled', 'disabled');
+                        $('#form-modal #btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#form-modal #btn-save').text());
+
+                        $('#viewAll').html(res.html)
+                        $('#form-modal').modal('hide');
+                        $('#bussinessName').html('<i class="far fa-user"></i> ' + res.businessName);
+
+                        $('#btn-create').prop('href', '/clients/client/_viewallsales?clientId=' + res.clientId);
+
+                        $('#saleOperationsTable tfoot th').each(function (i) {
+                            if ($(this).text() != "@localizer["Actions"]") {
+                                $(this).html('<input type="text" class="search-control" placeholder="' + $(this).text() + '" data-index="' + i + '" />');
+                            } else {
+                                $(this).html('');
+                            }
+                        });
+
+                        let saleOperationsTable = $("#saleOperationsTable").DataTable({
+                            "order": [[2, "asc"]],
+                            "oLanguage": @localizer["LanguageDataTable"],
+                            scrollY: '40vh',
+                            scrollX: true,
+                            scrollCollapse: true,
+                            scroller: true,
+                            searching: true,
+                            scroller: {
+                                loadingIndicator: true
+                            },
+                            "buttons": [
+                                {
+                                    extend: 'excelHtml5',
+                                    text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                                    titleAttr: 'Exportar archivo Excel',
+                                    title: 'Registro de ventas',
+                                    exportOptions: {
+                                        columns: [1, 2, 3, 4]
+                                    }
+                                }]
+                        });
+                        saleOperationsTable.buttons().container()
+                            .appendTo('#div-export-buttons .btn-group');
+
+                        $(saleOperationsTable.table().container()).on('keyup', 'tfoot input', function () {
+                            saleOperationsTable
+                                .column($(this).data('index'))
+                                .search(this.value)
+                                .draw();
+                        });
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+
+    jQueryModalPostWithoutRefreshSaleOperation = form => {
+        try {
+            $.ajax({
+                type: 'POST',
+                url: form.action,
+                data: new FormData(form),
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.isValid) {
+
+                        $('#form-modal #btn-save').attr('disabled', 'disabled');
+                        $('#form-modal #btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#form-modal #btn-save').text());
+
+                        $('#form-modal').modal('hide');
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+
+</script>

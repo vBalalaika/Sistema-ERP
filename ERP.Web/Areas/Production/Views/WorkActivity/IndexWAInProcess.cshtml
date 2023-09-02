@@ -1,0 +1,49 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Production.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model WorkActivitiesViewModel
+
+<div class="sticky-top-title p-2 bg-filter-custom d-flex align-items-center">
+    <h3 class="mb-3">@localizer["Station"]: @Model.Station.AbreviationDescription</h3>
+</div>
+
+<div class="sticky-top-WA bg-filter-custom row ml-1">
+
+    <div class="col-md-12 mb-2">
+        <h6 class="mb-3">Tareas en proceso</h6>
+    </div>
+
+    <div class="col-md-1">
+        <h6 class="mb-3"><b>Nº OT: </b>@Model.workOrderIdsString</h6>
+    </div>
+    <div class="col-md-2">
+        <h6 class="mb-3"><b>Nº @localizer["Product"]: </b>@Model.workOrdersProductsNumbers</h6>
+    </div>
+    <div class="col-md-2">
+        <h6 class="mb-3"><b>@localizer["Product"]: </b>@Model.workOrdersProductsNames</h6>
+    </div>
+    <div class="col-md-2">
+        <h6 class="mb-3"><b>@localizer["Configuration"]: </b>@Model.workOrdersStructuresNames</h6>
+    </div>
+
+</div>
+
+<div id="viewAll" class="card-body table-responsive">
+
+</div>
+
+@section Scripts
+{
+    <script src="~/js/site.js"></script>
+    <script>
+
+        $(document).ready(function () {
+            loadDataInProcess();
+        });
+
+        function loadDataInProcess() {
+            $('#viewAll').load("/production/workactivity/WorkActivitiesInProcess?workOrderIds=@Model.urlIds" + "&stationId=@Model.Station.Id");
+        }
+
+    </script>
+}

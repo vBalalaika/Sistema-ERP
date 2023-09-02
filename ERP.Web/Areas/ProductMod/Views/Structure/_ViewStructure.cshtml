@@ -1,0 +1,339 @@
+﻿@using ERP.Web.Areas.ProductMod.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model ProductStructureViewModel
+@if (Model.SelectedStructure != null)
+{
+    <div class="col text-left  w-100 mb-4">
+        <h5>@localizer["Configuration"] : @Model.SelectedStructure.Description</h5>
+    </div>
+}
+<div id="div-export-buttons">
+    <div class="btn-group flex-wrap">
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Create)).Result.Succeeded)
+        {
+            <a onclick="jQueryModalGet('/productmod/structure/OnGetCreateOrEdit?productId=@Model.Product.Id' + '&viewToRender=_ViewStructure', '@localizer["Create structure"]')" class="btn btn-secondary text-white">
+                <i class="fa fa-plus-square"></i>
+            </a>
+        }
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Edit)).Result.Succeeded)
+        {
+            <a onclick="jQueryModalGet('/productmod/structure/OnGetCreateOrEdit?structureId=@Model.SelectedStructure.Id' + '&productId=@Model.Product.Id' + '&viewToRender=_ViewStructure', '@localizer["Edit structure"]')" class="btn btn-secondary text-white"><img class="white-img-icon" src="../../../images/Editar.svg" width="20" height="20" /> </a>
+        }
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.View)).Result.Succeeded)
+        {
+
+            //Structure List
+            <a asp-area="ProductMod" asp-controller="Structure" asp-action="Index" asp-route-productId="@Model.Product.Id" class="btn btn-secondary text-white"><img class="white-img-icon" src="../../../images/Configuraciones.svg" width="20" height="20" /></a>
+        }
+    </div>
+</div>
+<table id="structureTable" class="table table-striped-blue w-100 nowrap" cellspacing="0">
+    <thead class="bg-thead text-white">
+        <tr>
+            <th>@localizer["Level"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Raw material"]</th>
+            <th>@localizer["Width"]</th>
+            <th>@localizer["Length"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["Stock"]</th>
+            <th>@localizer["Version"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.SelectedStructure.StructureItems)
+        {
+            <tr>
+                <td>
+                    @item.Level
+                </td>
+                <td>
+                    <div style="margin-left:@(item.SpacingPixels)px;">
+                        @if (item.SonProduct != null)
+                        {
+                            @item.SonProduct.Code
+                        }
+                        else
+                        {
+                            @item.SonStructure.Product.Code
+                        }
+                    </div>
+                </td>
+                <td>
+                    <div style="margin-left:@(item.SpacingPixels)px;">
+                        @if (item.SonProduct != null)
+                        {
+                            @item.SonProduct.Description
+                        }
+                        else
+                        {
+                            @(item.SonStructure.Product.Description + " - (" + item.SonStructure.Description + ')' );
+                        }
+                    </div>
+                </td>
+                <td>
+                    @item.Quantity
+                </td>
+                <td>
+                    @if (item.SonProduct != null)
+                    {
+                        @item.SonProduct.ProductFeature.RawMaterialDescription
+                    }
+                    else
+                    {
+                        @item.SonStructure.Product.ProductFeature.RawMaterialDescription
+                    }
+                </td>
+                <td>
+                    @if (item.SonProduct != null)
+                    {
+                        @item.SonProduct.ProductFeature.ComponentWidhtPiece
+                    }
+                    else
+                    {
+                        @item.SonStructure.Product.ProductFeature.ComponentWidhtPiece
+                    }
+                </td>
+                <td>
+                    @if (item.SonProduct != null)
+                    {
+                        @item.SonProduct.ProductFeature.ComponentLongPiece
+                    }
+                    else
+                    {
+                        @item.SonStructure.Product.ProductFeature.ComponentLongPiece
+                    }
+
+                </td>
+                <td>
+                    @item.RoadMap
+                </td>
+                <td>
+                    @if (item.SonProduct != null)
+                    {
+                        @if (item.SonProduct.ProductFeature.StoredStock)
+                        {
+                            <i class="fa fa-check-circle" style="color: #77DD77" aria-hidden="true"></i>
+                        }
+                        else
+                        {
+                            <i class="fa fa-times-circle" style="color: #FF6961 " aria-hidden="true"></i>
+                        }
+                    }
+                    else
+                    {
+                        @if (item.SonStructure.Product.ProductFeature.StoredStock)
+                        {
+                            <i class="fa fa-check-circle" style="color: #77DD77" aria-hidden="true"></i>
+                        }
+                        else
+                        {
+                            <i class="fa fa-times-circle" style="color: #FF6961 " aria-hidden="true"></i>
+                        }
+                    }
+
+
+                </td>
+                <td>
+                    @if (item.SonProduct != null)
+                    {
+                        @item.SonProduct.Version
+                    }
+                    else
+                    {
+                        @item.SonStructure.Product.Version
+                    }
+                </td>
+
+
+
+            </tr>
+        }
+
+    </tbody>
+    <tfoot>
+        <tr>
+            <th>@localizer["Level"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Raw material"]</th>
+            <th>@localizer["Width"]</th>
+            <th>@localizer["Length"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["Stock"]</th>
+            <th>@localizer["Version"]</th>
+        </tr>
+    </tfoot>
+</table>
+<script>
+    $(document).ready(function () {
+        //snipet de codigo para orden del level en la datatable
+        jQuery.extend(jQuery.fn.dataTableExt.oSort, {
+            'chapter-pre': function (a) {
+                var i, item;
+                var m = a.split('.'),
+                    x = '',
+                    xa = '';
+
+                for (i = 0; i < 10; i++) {
+                    if (i < m.length) {
+                        item = m[i];
+
+                        if (item.length == 1) {
+                            x += '0000000000' + item;
+                        }
+                        else if (item.length == 2) {
+                            x += '000000000' + item;
+                        }
+                        else if (item.length == 3) {
+                            x += '00000000' + item;
+                        }
+                        else if (item.length == 4) {
+                            x += '0000000' + item;
+                        }
+                        else if (item.length == 5) {
+                            x += '000000' + item;
+                        }
+                        else if (item.length == 6) {
+                            x += '00000' + item;
+                        }
+                        else if (item.length == 7) {
+                            x += '0000' + item;
+                        }
+                        else if (item.length == 8) {
+                            x += '000' + item;
+                        }
+                        else if (item.length == 9) {
+                            x += '00' + item;
+                        }
+                        else if (item.length == 10) {
+                            x += '0' + item;
+                        }
+                        else {
+                            x += item;
+                        }
+                    } else {
+                        x += '0000000000';
+                    }
+                }
+
+                return x;
+            },
+
+            'chapter-asc': function (a, b) {
+                return a < b ? -1 : a > b ? 1 : 0;
+            },
+
+            'chapter-desc': function (a, b) {
+                return a < b ? 1 : a > b ? -1 : 0;
+            }
+        });
+
+        $('#structureTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Stock"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let structureTable = $("#structureTable").DataTable({
+            "columnDefs": [{
+                "type": "chapter",
+                "targets": 0
+            }],
+            "oLanguage": @localizer["LanguageDataTable"],
+            scrollY: '65vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            stateSave: true,
+            stateLoadParams: function (settings, data) {
+                for (i = 0; i < data.columns["length"]; i++) {
+                    var col_search_val = data.columns[i].search.search;
+                    if (col_search_val != "") {
+                        $("input", $('#structureTable tfoot th')[i]).val(col_search_val);
+                        $("input", $('#structureTable tfoot th')[i]).css("color", "red");
+                    }
+                }
+            },
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img src="../../../images/Excel.svg" width="20" height="20" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Datos de Estructura: ' + "@Model.RemoveDiacritics(Model.SelectedStructure.Description)" + " para el producto: " + "@Model.RemoveDiacritics(Model.Product.CodeAndDescription)",
+                    exportOptions: {
+                        columns: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+                        format: {
+                            body: function (data, row, column, node) {
+                                return reformatExportData(data, row, column, node);
+                            }
+                        }
+                    },
+                    customize: function (xlsx) {
+                        addCustomNumberFormat(xlsx, '#,##0.0##');
+                        formatTargetColumn(xlsx, 'F'); // Excel column F
+                        formatTargetColumn(xlsx, 'G'); // Excel column G
+                    }
+                }]
+        });
+
+        structureTable.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(structureTable.table().container()).on('keyup', 'tfoot input', function () {
+            structureTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+    });
+
+    function reformatExportData(data, row, column, node) {
+        if (column === 1) {
+            var newData = data.split(">")[1].split("<")[0];
+            return newData.trim();
+        }
+        else if (column === 2) {
+            var newData = data.split(">")[1].split("<")[0];
+            return newData.trim();
+        }
+        else if (column === 5) {
+            // replace spaces with nothing; replace commas with points.
+            var newData = data.replace(',', '.').replaceAll(' ', '');
+            return newData;
+        }
+        else if (column == 6) {
+            // replace spaces with nothing; replace commas with points.
+            var newData = data.replace(',', '.').replaceAll(' ', '');
+            return newData;
+        }
+        else if (column === 7) {
+            var newData = data.replaceAll("-&gt;", " -> ");
+            return newData;
+        }
+        else if (column === 8) {
+            var newData = "";
+            if (data.includes("fa fa-check-circle")) {
+                newData = "Sí";
+            } else {
+                newData = "No";
+            }
+            return newData;
+        }
+        else {
+            return data;
+        }
+    }
+
+</script>

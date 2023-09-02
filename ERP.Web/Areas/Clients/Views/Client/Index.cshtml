@@ -1,0 +1,45 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Clients"];
+}
+@using ERP.Web.Areas.Clients.Models
+@model ClientViewModel
+
+<head>
+    <link href="~/css/Clients/clients.css" rel="stylesheet" />
+</head>
+<body>
+
+    <div class="card">
+
+        <div id="viewAll" class="card-body table-responsive">
+
+        </div>
+
+    </div>
+</body>
+
+@section Scripts
+{
+    <script src="~/js/site.js"></script>
+    <script src="~/js/Clients/client.js"></script>
+
+    <script>
+
+        $(document).ready(function () {
+
+            let clientTable = $("#clientTable").DataTable({
+                "oLanguage": @localizer["LanguageDataTable"],
+            });
+
+            loadData();
+
+        });
+
+        function loadData() {
+            $('#viewAll').load('/clients/client/LoadAll');
+        }
+
+    </script>
+}

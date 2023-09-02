@@ -1,0 +1,947 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Clients.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model CommunicationViewModel
+
+@{
+    var index = 0;
+}
+<form id="create-form" class="form-modal" method="post" asp-controller="Client" asp-action="OnPostCreateComunication" asp-route-id="@Model.Id" onsubmit="return jQueryModalPostModified(this);" enctype="multipart/form-data">
+
+    <div class="form-row mx-auto">
+
+        <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+        <input type="hidden" asp-for="ClientId" name="ClientId" class="form-control">
+        <input type="hidden" asp-for="SaleOperationId" name="SaleOperationId" class="form-control" id="saleOperationId">
+        <input type="hidden" asp-for="CommunicationName" name="CommunicationName" class="form-control">
+        <input type="hidden" asp-for="ViewAll" name="ViewAll" class="form-control">
+
+
+        @if(Model.Id == 0) //Create
+        {
+            <div id="divContactDate" class="col-lx-2 mb-1">
+                <label id="contactDateLabel" class="control-label">@localizer["Contact date"]</label>
+                <input type="date" class="form-control" name="ComunicationDate" asp-for="ComunicationDate" value="@Model.DateTimeToday" />
+            </div>
+
+            <div id="divIncoming" class="col-lx-2 ml-3 mb-3">
+                <label id="contactLabel" class="control-label pl-1">@localizer["Origin contact"]</label>
+                <div></div>
+                <a class="btn btn-group">
+                    <div class="pr-3 custom-control custom-checkbox small">
+                        <input id="incomingCheck" class="custom-control-input" type="checkbox" name="Incoming" asp-for="Incoming">
+                        <label for="incomingCheck" class="custom-control-label">@localizer["Incoming"]</label>
+                    </div>
+                    <div class="custom-control custom-checkbox small">
+                        <input id="outgoingCheck" class="custom-control-input" type="checkbox" name="Outgoing" asp-for="Outgoing">
+                        <label for="outgoingCheck" class="custom-control-label">@localizer["Outgoing"]</label>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-lx-3 mr-5 pl-3 mb-3">
+                <label asp-for="ContactSource" class="control-label">@localizer["Contact source"]</label>
+                <select name="ContactSource" class="form-control select2bs" id="ContactSources" asp-items="@Model.ContactSources">
+                    <option value="0">@localizer["Select contact source"]</option>
+                </select>
+            </div>
+
+            <div id="divSaleOperation" class="col-lx-1 ml-5">
+                <label class="control-label pl-3">@localizer["Operation"]</label>
+                <div></div>
+                <a class="btn btn-group">
+                    <div class="pr-3 custom-control custom-checkbox small">
+                        <input id="newCheck" class="custom-control-input" type="checkbox" name="NewOperation" asp-for="NewOperation">
+                        <label for="newCheck" class="custom-control-label">@localizer["New"]</label>
+                    </div>
+                    <div class="pr-2 custom-control custom-checkbox small">
+                        <input id="existingCheck" class="custom-control-input" type="checkbox" name="ExistingOperation" asp-for="ExistingOperation">
+                        <label for="existingCheck" class="custom-control-label">@localizer["Existing"]</label>
+                    </div>
+                </a>
+            </div>
+
+            <div id="divInputSaleOperation" class="col-md-3">
+                <label></label>
+                <div id="selectSaleOperation_div" class="">
+                    <select name="SelectExistingSaleOperation" class="form-control select2bs4" id="SelectExistingSaleOperation">
+                        <option value="0">@localizer["Select operation"]</option>
+                    </select>
+                </div>
+                <div id="createNewSaleOperation_div" class="">
+                    <input type="text" class="form-control" name="CreateNewSaleOperation" id="CreateNewSaleOperation" value="@localizer["New operation"]" disabled>
+                </div>
+            </div>
+
+            <div id="divContactReason" class="col-lg-4 mb-3 w-100">
+                <label class="control-label">@localizer["Contact reason"]</label>
+                <div></div>
+                <a class="btn btn-group">
+                    <div class="pr-3 custom-control custom-checkbox small">
+                        <input id="consultedProductCheck" class="custom-control-input" type="checkbox" name="ConsultedProduct" asp-for="ConsultedProduct">
+                        <label for="consultedProductCheck" class="custom-control-label">@localizer["Products"]</label>
+                    </div>
+                    <div class="pr-3 custom-control custom-checkbox small">
+                        <input id="anotherReasonCheck" class="custom-control-input" type="checkbox" name="AnotherReason" asp-for="AnotherReason">
+                        <label for="anotherReasonCheck" class="custom-control-label">@localizer["Another reason"]</label>
+                    </div>
+                </a>
+            </div>
+
+        }
+        else //Edit
+        {
+            <div id="divContactDate" class="col-lx-2 mb-1">
+                <label id="contactDateLabel" class="control-label">@localizer["Contact date"]</label>
+                <input type="date" class="form-control" name="ComunicationDate" asp-for="ComunicationDate" value="@Model.ComunicationDateString"/>
+            </div>   
+
+            <div id="divIncoming" class="col-lx-2 ml-3 mb-3">
+                <label id="contactLabel" class="control-label pl-1">@localizer["Origin contact"]</label>
+                <div></div>
+                <a class="btn btn-group">
+                    <div class="pr-3 custom-control custom-checkbox small">
+                        <input id="incomingCheck" class="custom-control-input" type="checkbox" name="Incoming" asp-for="Incoming">
+                        <label for="incomingCheck" class="custom-control-label">@localizer["Incoming"]</label>
+                    </div>
+                    <div class="custom-control custom-checkbox small">
+                        <input id="outgoingCheck" class="custom-control-input" type="checkbox" name="Outgoing" asp-for="Outgoing">
+                        <label for="outgoingCheck" class="custom-control-label">@localizer["Outgoing"]</label>
+                    </div>
+                </a>
+            </div>
+
+            <div class="col-lx-3 mr-5 pl-3 mb-3">
+                <label asp-for="ContactSource" class="control-label">@localizer["Contact source"]</label>
+                <select name="ContactSource" class="form-control select2bs" id="ContactSources" asp-items="@Model.ContactSources">
+                    <option value=@Model.ContactSource>@Model.ContactSource</option>
+                </select>
+            </div>
+
+            <div id="divSaleOperation" class="col-lx-1 ml-5">
+                <label class="control-label pl-3">@localizer["Operation"]</label>
+                <div></div>
+                <a class="btn btn-group">
+
+                    <div class="pr-3 custom-control custom-checkbox small" id="newOperationDiv">
+                        @if(Model.SaleOperation == null)
+                        {
+                            <input checked id="newCheck" class="custom-control-input" type="checkbox" name="NewOperation" asp-for="NewOperation">
+                        }else{
+                            <input id="newCheck" class="custom-control-input" type="checkbox" name="NewOperation" asp-for="NewOperation">
+                        }
+                        <label for="newCheck" class="custom-control-label">@localizer["New"]</label>
+                    </div>
+                    <div class="pr-2 custom-control custom-checkbox small">
+                        @if(Model.SaleOperation is not null)
+                        {
+                            <input checked id="existingCheck" class="custom-control-input" type="checkbox" name="ExistingOperation" asp-for="ExistingOperation">
+                        }else{
+                            <input id="existingCheck" class="custom-control-input" type="checkbox" name="ExistingOperation" asp-for="ExistingOperation">
+                        }
+                        <label for="existingCheck" class="custom-control-label">@localizer["Existing"]</label>
+                    </div>
+                </a>
+            </div>
+
+            <div id="divInputSaleOperation" class="col-md-3">
+                <label></label>
+                <div id="selectSaleOperation_div" class="">
+                    <select name="SelectExistingSaleOperation" class="form-control select2bs4" id="SelectExistingSaleOperation">
+                        @if(Model.SaleOperation is not null)
+                        {
+                            <option value="0">@Model.SaleOperation.Operation</option>
+                        }
+                        else
+                        {
+                            <option value="0">@localizer["Select operation"]</option>
+                        }
+                    </select>
+                </div>
+                <div id="createNewSaleOperation_div" class="">
+                    <input type="text" class="form-control" name="CreateNewSaleOperation" id="CreateNewSaleOperation" value="@localizer["New operation"]" disabled>
+                </div>
+            </div>
+
+            <div id="divContactReason" class="col-lg-4 mb-3 w-100">
+                <label class="control-label">@localizer["Contact reason"]</label>
+                <div></div>
+                <a class="btn btn-group">
+                    <div class="pr-3 custom-control custom-checkbox small">
+                        @if(Model.ConsultedProduct && Model.ConsultedProducts.Count > 0)
+                        {
+                            <input checked id="consultedProductCheck" class="custom-control-input" type="checkbox" name="ConsultedProduct" asp-for="ConsultedProduct">
+                        }
+                        else{
+                            <input id="consultedProductCheck" class="custom-control-input" type="checkbox" name="ConsultedProduct" asp-for="ConsultedProduct">
+                        }
+                        <label for="consultedProductCheck" class="custom-control-label">@localizer["Products"]</label>
+                    </div>
+                    <div class="pr-3 custom-control custom-checkbox small">
+                        @if(Model.AnotherReason)
+                        {
+                            <input checked id="anotherReasonCheck" class="custom-control-input" type="checkbox" name="AnotherReason" asp-for="AnotherReason">
+                        }
+                        else{
+                            <input id="anotherReasonCheck" class="custom-control-input" type="checkbox" name="AnotherReason" asp-for="AnotherReason">
+                        }
+                        <label for="anotherReasonCheck" class="custom-control-label">@localizer["Another reason"]</label>
+                    </div>
+                </a>
+            </div>
+        }
+
+        <div id="check_others_div" class="col-sm-3 col-md-5 col-lg-5 col-xl-4 mb-3">
+            <label class="control-label">@localizer["Consult products"]</label>
+            <a class="btn btn-group">
+                <div class="custom-control custom-checkbox small pr-3">
+                    <input id="check_simplemak" class="custom-control-input" type="checkbox" checked>
+                    <label for="check_simplemak" class="custom-control-label">Simplemak</label>
+                </div>
+                <div class="custom-control custom-checkbox small pr-3">
+                    <input id="check_imported" class="custom-control-input" type="checkbox">
+                    <label for="check_imported" class="custom-control-label">@localizer["Imported"]</label>
+                </div>
+                <div class="custom-control custom-checkbox small pr-3">
+                    <input id="check_others" class="custom-control-input" type="checkbox">
+                    <label for="check_others" class="custom-control-label">@localizer["Others"]</label>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label asp-for="Comments" class="control-label">@localizer["Comments"]</label>
+            <textarea asp-for="Comments" name="Comments" class="form-control" id="Comments" rows="5"></textarea>
+        </div>
+
+        @*<div id="products_div" class="col-sm-12 col-md-12 col-lg-12 col-xl-5 mb-3">
+            <label class="control-label">@localizer["Product"]</label>
+            <select name="Products" class="form-control select2bs4" id="Products" asp-items="@Model.ConsultedProductsSL">
+                <option value="0">@localizer["Select product"]</option>
+            </select>
+        </div>*@
+
+        <div id="products_div" class="col-sm-12 col-md-12 col-lg-12 col-xl-4 mb-3">
+            <label class="control-label">@localizer["Product"]</label>
+            <select name="Products" class="form-control select2bs4" id="Products">
+                <option value="0">@localizer["Select product"]</option>
+            </select>
+        </div>
+
+        <div id="structures_div" class="col-sm-12 col-md-12 col-lg-12 col-xl-3 mb-3">
+            <label class="control-label">@localizer["Configurations"]</label>
+            <select name="Structures" class="form-control select2bs4" id="Structures" disabled>
+                <option value="0">@localizer["Select configuration"]</option>
+            </select>
+        </div>
+
+        <div id="btn_add_div" class="col-sm-12 col-md-12 col-lg-12 col-xl-1 mb-3">
+            <label class="control-label">@localizer["Add"]</label>
+            <button id="btn_add_product" type="button" class="form-control btn btn-primary"><i class="fas fa-plus-circle"></i></button>
+        </div>
+
+        <div id="functionality_div" class="col-sm-12 col-md-12 col-lg-12 col-xl-4 mb-3">
+            <label class="control-label">@localizer["Functionality"]</label>
+            <select name="Functionalities" class="form-control select2bs4" id="Functionalities" asp-items="@Model.Functionalities" disabled>
+                <option value="0">@localizer["Select functionality"]</option>
+            </select>
+        </div>
+
+        <div id="piece_type_div" class="col-sm-12 col-md-12 col-lg-12 col-xl-3 mb-3">
+            <label class="control-label">@localizer["Piece type"]</label>
+            <select name="PieceTypes" class="form-control select2bs4" id="PieceTypes" asp-items="@Model.PieceTypes" disabled>
+                <option value="0">@localizer["Select piece type"]</option>
+            </select>
+        </div>
+
+        <div id="btn_add_others_div" class="col-sm-12 col-md-12 col-lg-12 col-xl-1 mb-3">
+            <label class="control-label">@localizer["Add"]</label>
+            <button id="btn_add_other_product" type="button" class="form-control btn btn-primary"><i class="fas fa-plus-circle"></i></button>
+        </div>
+
+        
+        <div id="table_div" class="col-sm-12 col-md-12 col-xl-12 mb-3 p-0">
+            <div class="row d-flex col-md-12 ml-1">
+                <label class="card-title text-capitalize mb-3">@localizer["Products"]</label>
+            </div>
+
+            <div id="table_responsive_div" class="table-responsive-sm table-responsive-md table-responsive-lg table-responsive-xl col-sm-12 col-md-12 col-xl-12">
+                <table id="products_table" class="table w-100 nowrap">
+                    <thead class="bg-thead">
+                        <tr>
+                            <th hidden></th>
+                            <th>@localizer["Code"]</th>
+                            <th>@localizer["Description"]</th>
+                            <th>@localizer["Configuration"]</th>
+                            <th>@localizer["Functionality"]</th>
+                            <th>@localizer["Piece type"]</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (Model.ConsultedProducts.Count() > 0)
+                        {
+                            foreach (var consultedProduct in Model.ConsultedProducts)
+                            {
+                                <tr>
+                                    <td class="d-none">
+                                        <input type="hidden" name="ConsultedProducts.Index" value="@index" />
+                                        <input type="hidden" name="ConsultedProducts[@index].ProductId" value="@consultedProduct.ProductId" />
+                                        <input type="hidden" name="ConsultedProducts[@index].StructureId" value="@consultedProduct.StructureId" />
+                                    </td>
+
+                                    <td><input type="text" class="form-control" name="ConsultedProducts[@index].ProductCode" readonly value="@consultedProduct.ProductCode" /></td>
+                                    <td><input type="text" class="form-control" name="ConsultedProducts[@index].ProductDescription" readonly value="@consultedProduct.ProductDescription" /></td>
+                                    <td><input type="text" class="form-control" name="ConsultedProducts[@index].StructureDescription" readonly value="@consultedProduct.StructureDescription" /></td>
+                                    <td><input type="text" class="form-control" name="ConsultedProducts[@index].Functionality" readonly value="@consultedProduct.Functionality" /></td>
+                                    <td><input type="text" class="form-control" name="ConsultedProducts[@index].PieceType" readonly value="@consultedProduct.PieceType" /></td>
+
+@*                                    @if(Model.Id != 0) //Cuando crea la comunicacion no tienen id los ConsultedProduc, se necesita el Id de los mismos para borrarlos en el editCommunication
+                                    {
+                                        <td hidden><input type="text" class="form-control" name="ConsultedProducts[@index].Id" readonly value="@consultedProduct.Id" /></td>
+                                    }*@
+                                    <td><button type="button" id="btn-remove-@index" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td>
+                                </tr>
+                                index += 1;
+                            }
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        @if (Model.Id == 0)
+        {
+            <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+            <button type="submit" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+        }
+        else
+        {
+            <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save changes"]</button>
+            <button type="submit" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+        }
+    </div>
+
+</form>
+
+
+
+<script type="text/javascript" language="javascript">
+    $.validator.unobtrusive.parse(document);
+    $(document).ready(function () {
+
+        let indexForTable = @index;
+
+        let check_simplemak = document.getElementById('check_simplemak');
+        let check_imported = document.getElementById('check_imported');
+        let check_others = document.getElementById('check_others');
+
+        
+
+        if (@Model.Id != 0) { //Update
+            $("#check_others_div").hide();
+            $("#products_div").hide();
+            $("#structures_div").hide();
+            $("#btn_add_div").hide();
+            $("#functionality_div").hide();
+            $("#piece_type_div").hide();
+            $("#btn_add_others_div").hide();
+            $("#selectSaleOperation_div").show();
+            $("#createNewSaleOperation_div").hide();
+
+        }
+        else {
+            $("#newCheck").prop('checked', true);
+            $("#check_others_div").hide();
+            $("#products_div").hide();
+            $("#structures_div").hide();
+            $("#btn_add_div").hide();
+            $("#functionality_div").hide();
+            $("#piece_type_div").hide();
+            $("#btn_add_others_div").hide();
+            $("#table_div").hide();
+            $("#selectSaleOperation_div").hide();
+            $("#createNewSaleOperation_div").show();
+        }
+
+
+        $("#ContactSources").select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        $("#Products").select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        $("#SelectExistingSaleOperation").select2({
+            language: "es",
+            theme: "bootstrap4",
+            ajax: {
+                url: '/Clients/Client/LoadExistingOperations',
+                data: function (params, id) {
+                    return {
+                        search: params.term,
+                        id: @Model.ClientId
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.saleOperations
+                    };
+                }
+            }
+        });
+
+        $('#SelectExistingSaleOperation').change(function () {
+        
+            if($(this).val() != 0)
+            {
+                document.getElementById("saleOperationId").value = $(this).val();
+            }
+            else
+            {
+                alert("Debe seleccionar una operacion");
+            }
+
+        });
+
+
+        $("#Structures").select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+        $("#Functionalities").select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+        $("#PieceTypes").select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        $("#Products").prop('disabled', true);
+        // Initial load products select2
+        $.ajax({
+            url: '/Clients/Client/GetSimplemakProducts',
+            method: 'get',
+            dataType: 'json',
+            success: function (response) {
+                if (response.isValid) {
+                    $("#Products").empty();
+                    $("#Products").append($("<option />").val(0).text('@localizer["Select product"]'));
+                    $.each(response.data, function (index, item) {
+                        $("#Products").append($('<option/>', { value: item.value, text: item.text }));
+                    });
+                } else {
+                    $("#Products").empty();
+                    $("#Products").append($("<option />").val(0).text('@localizer["Select product"]'));
+                    $("#Products").prop('disabled', true);
+                }
+            },
+            complete: function () {
+                $("#Products").prop('disabled', false);
+            }
+        });
+
+        check_simplemak.addEventListener('change', function () {
+
+            $("#Products").prop('disabled', true);
+
+            if (this.checked) {
+                $("#check_imported").prop('checked', false);
+
+                $("#Functionalities").prop("disabled", true);
+                $("#PieceTypes").prop("disabled", true);
+
+                $("#products_div").show("slow");
+                $("#structures_div").show("slow");
+                $("#btn_add_div").show("slow");
+
+                $("#functionality_div").hide();
+                $("#piece_type_div").hide();
+                $("#btn_add_others_div").hide();
+
+                ajaxGetSimplemakProducts();
+
+            } else {
+                $("#check_imported").prop('checked', true);
+
+                $("#Functionalities").removeAttr("disabled");
+                $("#PieceTypes").removeAttr("disabled");
+
+                $("#products_div").hide();
+                $("#structures_div").hide();
+                $("#btn_add_div").hide();
+
+                $("#functionality_div").show("slow");
+                $("#piece_type_div").show("slow");
+                $("#btn_add_others_div").show("slow");
+
+                ajaxGetImportedProducts();
+            }
+        });
+
+        check_imported.addEventListener('change', function () {
+
+            $("#Products").prop('disabled', true);
+
+            if (this.checked) {
+                $("#check_simplemak").prop('checked', false);
+
+                $("#Functionalities").prop("disabled", true);
+                $("#PieceTypes").prop("disabled", true);
+
+                $("#products_div").show("slow");
+                $("#structures_div").show("slow");
+                $("#btn_add_div").show("slow");
+
+                $("#functionality_div").hide();
+                $("#piece_type_div").hide();
+                $("#btn_add_others_div").hide();
+
+                 ajaxGetImportedProducts();
+
+            } else {
+                $("#check_simplemak").prop('checked', true);
+
+                $("#Functionalities").removeAttr("disabled");
+                $("#PieceTypes").removeAttr("disabled");
+
+                $("#products_div").hide();
+                $("#structures_div").hide();
+                $("#btn_add_div").hide();
+
+                $("#functionality_div").show("slow");
+                $("#piece_type_div").show("slow");
+                $("#btn_add_others_div").show("slow");
+
+                ajaxGetSimplemakProducts();
+            }
+        });
+
+        check_others.addEventListener('change', function () {
+
+            $("#Functionalities").val(0).trigger("change");
+            $("#PieceTypes").val(0).trigger("change");
+            $("#Products").val(0).trigger("change");
+            $("#Structures").val(0).trigger("change");
+
+            if (this.checked) {
+                $("#check_simplemak").prop('checked', false);
+                $("#check_imported").prop('checked', false);
+
+                $("#check_simplemak").attr('disabled', true);
+                $("#check_imported").attr('disabled', true);
+
+                $("#Functionalities").removeAttr("disabled");
+                $("#PieceTypes").removeAttr("disabled");
+
+                $("#products_div").hide();
+                $("#structures_div").hide();
+                $("#btn_add_div").hide();
+
+                $("#functionality_div").show("slow");
+                $("#piece_type_div").show("slow");
+                $("#btn_add_others_div").show("slow");
+            } else {
+                $("#check_simplemak").attr('disabled', false);
+                $("#check_imported").attr('disabled', false);
+
+                $("#Functionalities").prop("disabled", true);
+                $("#PieceTypes").prop("disabled", true);
+
+                $("#products_div").show("slow");
+                $("#structures_div").show("slow");
+                $("#btn_add_div").show("slow");
+
+                $("#functionality_div").hide();
+                $("#piece_type_div").hide();
+                $("#btn_add_others_div").hide();
+            }
+        });
+
+        $('#newCheck').on('change', function () {
+            if (this.checked) {
+                $('#existingCheck').prop('checked', false);
+                $("#createNewSaleOperation_div").show("slow");
+                $("#selectSaleOperation_div").hide("slow");
+                
+            } else {
+                $('#existingCheck').prop('checked', true);
+                $('#newCheck').prop('checked', false);
+                $("#createNewSaleOperation_div").hide("slow");
+                $("#selectSaleOperation_div").show("slow");
+                
+            }
+        });
+
+        $('#existingCheck').on('change', function () {
+            if (this.checked) {
+                $('#newCheck').prop('checked', false);
+                $("#createNewSaleOperation_div").hide("slow");
+                $("#selectSaleOperation_div").show("slow");
+                
+            } else {
+                $('#newCheck').prop('checked', true);
+                $('#existingCheck').prop('checked', false);
+                $("#createNewSaleOperation_div").show("slow");
+                $("#selectSaleOperation_div").hide("slow");
+                
+            }
+        });
+
+        $('#incomingCheck').on('change', function () {
+            if (this.checked) {
+                $('#outgoingCheck').prop('checked', false);
+            } else {
+                $('#outgoingCheck').prop('checked', true);
+            }
+        });
+
+        $('#outgoingCheck').on('change', function () {
+            if (this.checked) {
+                $('#incomingCheck').prop('checked', false);
+            } else {
+                $('#incomingCheck').prop('checked', true);
+            }
+        });
+
+        $('#consultedProductCheck').on('change', function () {
+            if (this.checked) {
+                $('#anotherReasonCheck').prop('checked', false);
+                $('#postSaleCheck').prop('checked', false);
+
+                $("#check_others_div").show("slow");
+                $("#table_div").show("slow");
+                if ($("#check_simplemak").prop('checked')) {
+                    $("#products_div").show("slow");
+                    $("#structures_div").show("slow");
+                    $("#btn_add_div").show("slow");
+                } else {
+                    $("#functionality_div").show("slow");
+                    $("#piece_type_div").show("slow");
+                    $("#btn_add_others_div").show("slow");
+                }
+            } else {
+                $('#anotherReasonCheck').prop('checked', true);
+                $('#postSaleCheck').prop('checked', false);
+
+                $("#check_others_div").hide("slow");
+                $("#table_div").hide("slow");
+                if ($("#check_simplemak").prop('checked')) {
+                    $("#products_div").hide("slow");
+                    $("#structures_div").hide("slow");
+                    $("#btn_add_div").hide("slow");
+                } else {
+                    $("#functionality_div").hide("slow");
+                    $("#piece_type_div").hide("slow");
+                    $("#btn_add_others_div").hide("slow");
+                }
+            }
+        });
+
+        $('#anotherReasonCheck').on('change', function () {
+            if (this.checked) {
+                $('#consultedProductCheck').prop('checked', false);
+                $('#postSaleCheck').prop('checked', false);
+
+                $("#check_others_div").hide("slow");
+                $("#table_div").hide("slow");
+                if ($("#check_simplemak").prop('checked')) {
+                    $("#products_div").hide("slow");
+                    $("#structures_div").hide("slow");
+                    $("#btn_add_div").hide("slow");
+                } else {
+                    $("#functionality_div").hide("slow");
+                    $("#piece_type_div").hide("slow");
+                    $("#btn_add_others_div").hide("slow");
+                }
+            } else {
+                $('#consultedProductCheck').prop('checked', true);
+                $('#postSaleCheck').prop('checked', false);
+
+                $("#check_others_div").show("slow");
+                $("#table_div").show("slow");
+                if ($("#check_simplemak").prop('checked')) {
+                    $("#products_div").show("slow");
+                    $("#structures_div").show("slow");
+                    $("#btn_add_div").show("slow");
+                } else {
+                    $("#functionality_div").show("slow");
+                    $("#piece_type_div").show("slow");
+                    $("#btn_add_others_div").show("slow");
+                }
+            }
+        });
+
+        //$('#postSaleCheck').on('change', function () {
+        //    if (this.checked) {
+        //        $('#consultedProductCheck').prop('checked', true);
+
+        //        $('#anotherReasonCheck').prop('checked', false);
+
+        //        $("#check_others_div").show("slow");
+        //        $("#table_div").show("slow");
+        //        if ($("#check_simplemak").prop('checked')) {
+        //            $("#products_div").show("slow");
+        //            $("#structures_div").show("slow");
+        //            $("#btn_add_div").show("slow");
+        //        } else {
+        //            $("#functionality_div").show("slow");
+        //            $("#piece_type_div").show("slow");
+        //            $("#btn_add_others_div").show("slow");
+        //        }
+
+        //    } else {
+        //        $('#consultedProductCheck').prop('checked', false);
+
+        //        $("#check_others_div").hide("slow");
+        //        $("#table_div").hide("slow");
+        //        $("#products_div").hide("slow");
+        //        $("#structures_div").hide("slow");
+        //        $("#btn_add_div").hide("slow");
+
+        //        $("#functionality_div").hide("slow");
+        //        $("#piece_type_div").hide("slow");
+        //        $("#btn_add_others_div").hide("slow");
+        //    }
+        //});
+
+        $("#Products").change(
+            function () {
+                if ($('#Products').val() != 0) {
+
+                    // Load structures
+                    $.ajax({
+                        url: '/Clients/Client/GetStructuresByProductId',
+                        method: 'get',
+                        data: { id: $('#Products').val() },
+                        dataType: 'json',
+                        success: function (response) {
+                            if (response.isValid) {
+                                $("#Structures").empty();
+                                $("#Structures").append($("<option />").val(0).text('@localizer["Select configuration"]'));
+                                $("#Structures").prop("disabled", false);
+                                $.each(response.structures, function (index, item) {
+                                    $("#Structures").append($('<option/>', { value: item.value, text: item.text }));
+                                });
+                            } else {
+                                $("#Structures").empty();
+                                $("#Structures").prop("disabled", true);
+                            }
+                        }
+                    });
+                } else {
+                    $("#Structures").empty();
+                    $("#Structures").append($("<option />").val(0).text('@localizer["Select configuration"]'));
+                    $("#Structures").prop("disabled", true);
+                }
+            }
+        );
+
+        $(document).on("click", ".btn-remove", function () {
+            $(this).closest('tr').remove();
+        });
+
+        $("#btn_add_product").on("click", function () {
+
+            if ($('#Products').val() != 0 && $('#Structures').val() != 0) {
+
+                $("#table_div").show("slow");
+
+                let htmlToTable = '<tr id="' + indexForTable + '">' +
+                    '<td class="d-none">' +
+                    '<input type="hidden" name="ConsultedProducts.Index" value="' + indexForTable + '" />' +
+                    '<input type="hidden" class="form-control" name="ConsultedProducts[' + indexForTable + '].ProductId" readonly value="' + $('#Products').val() + '" />' +
+                    '<input type="hidden" class="form-control" name="ConsultedProducts[' + indexForTable + '].StructureId" readonly value="' + $('#Structures').val() + '" />' +
+                    '</td>' +
+                    '<td><input type="text" class="form-control" name="ConsultedProducts[' + indexForTable + '].ProductCode" readonly value="' + $("#Products option:selected").text().substring(0, 6) + '" /></td>' +
+                    '<td><input type="text" class="form-control" name="ConsultedProducts[' + indexForTable + '].ProductDescription" readonly value="' + $("#Products option:selected").text().substring(9) + '" /></td>' +
+                    '<td><input type="text" class="form-control" name="ConsultedProducts[' + indexForTable + '].StructureDescription" readonly value="' + $("#Structures option:selected").text() + '"/></td>' +
+                    '<td><input type="text" class="form-control" name="ConsultedProducts[' + indexForTable + '].Functionality" readonly value=""/></td>' +
+                    '<td><input type="text" class="form-control" name="ConsultedProducts[' + indexForTable + '].PieceType" readonly value=""/></td>' +
+
+                    '<td><button type="button" id="btn-remove-' + indexForTable + '" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td></tr>';;
+
+                $("#products_table tbody").append(htmlToTable);
+                indexForTable++;
+
+                $("#Products").val(0).trigger("change");
+                $("#Structures").val(0).trigger("change");
+                $("#Structures").prop('disabled', true);
+
+            } else {
+                $.ajax({
+                    url: '/Clients/Client/ShowAlerts',
+                    method: 'get',
+                    data: { alertId: 1 },
+                    dataType: 'json'
+                });
+            }
+        });
+
+        $("#btn_add_other_product").on("click", function () {
+
+            if ($('#Functionalities').val() != 0 && $('#PieceTypes').val() != 0) {
+
+                $("#table_div").show("slow");
+
+                let htmlToTable = '<tr id="' + indexForTable + '">' +
+                    '<td class="d-none">' +
+                    '<input type="hidden" name="ConsultedProducts.Index" value="' + indexForTable + '" />' +
+                    '<input type="hidden" class="form-control" name="ConsultedProducts[' + indexForTable + '].FunctionalityId" readonly value="' + $("#Functionalities").val() + '"/></td>' +
+                    '<input type="hidden" class="form-control" name="ConsultedProducts[' + indexForTable + '].PieceTypeId" readonly value="' + $("#PieceTypes").val() + '"/></td>' +
+                    '</td>' +
+                    '<td><input type="text" class="form-control" name="ConsultedProducts[' + indexForTable + '].ProductCode" readonly value="" /></td>' +
+                    '<td><input type="text" class="form-control" name="ConsultedProducts[' + indexForTable + '].ProductDescription" readonly value="" /></td>' +
+                    '<td><input type="text" class="form-control" name="ConsultedProducts[' + indexForTable + '].StructureDescription" readonly value="" /></td>' +
+                    '<td><input type="text" class="form-control" name="ConsultedProducts[' + indexForTable + '].Functionality" readonly value="' + $("#Functionalities option:selected").text() + '"/></td>' +
+                    '<td><input type="text" class="form-control" name="ConsultedProducts[' + indexForTable + '].PieceType" readonly value="' + $("#PieceTypes option:selected").text() + '"/></td>' +
+
+                    '<td><button type="button" id="btn-remove-' + indexForTable + '" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td></tr>';
+
+                $("#products_table tbody").append(htmlToTable);
+                indexForTable++;
+
+                $("#Functionalities").val(0).trigger("change");
+                $("#PieceTypes").val(0).trigger("change");
+
+            } else {
+                $.ajax({
+                    url: '/Clients/Client/ShowAlerts',
+                    method: 'get',
+                    data: { alertId : 2 },
+                    dataType: 'json'
+                });
+            }
+
+        });
+
+        $("#btn-create-reminder").on("click", function () {
+            let url = (window.location.pathname + window.location.search);
+            let clientId = url.split("=")[1];
+            jQueryModalGet('/clients/client/OnGetCreateReminderByClientId?id='+ clientId ,'@localizer["New reminder"]')
+        });
+
+    });
+
+    jQueryModalPostModified = form => {
+        try {
+            $.ajax({
+                type: 'POST',
+                url: form.action,
+                data: new FormData(form),
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.isValid) {
+
+                        if(res.viewAll == true)
+                        {
+                            window.location.href = '/clients/client/_ViewAllComunications?clientId=' + @Model.ClientId;
+                        }
+                        else{
+                            console.log("BB");
+                            window.location.href = '/clients/client/indexallcommunications?postSale=false';
+                        }
+                        $('#btn-save').attr('disabled', 'disabled');
+                        $('#btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#btn-save').text());
+
+
+                        let url = (window.location.pathname + window.location.search);
+                        let urlFromOrder = url.split("&")[1];
+                        if (urlFromOrder == "fromOrder=true") {
+                            $('#form-modal').modal('hide');
+                            window.location.href = window.location.href.split("?")[0].replace("/clients/client/_viewallcomunications", "/sales/order?sale=true&fromClient=true");
+                        }
+
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+    function ajaxGetSimplemakProducts() {
+        $.ajax({
+            url: '/Clients/Client/GetSimplemakProducts',
+            method: 'get',
+            dataType: 'json',
+            success: function (response) {
+                if (response.isValid) {
+                    $("#Products").empty();
+                    $("#Products").append($("<option />").val(0).text('@localizer["Select product"]'));
+                    $.each(response.data, function (index, item) {
+                        $("#Products").append($('<option/>', { value: item.value, text: item.text }));
+                    });
+                } else {
+                    $("#Products").empty();
+                    $("#Products").append($("<option />").val(0).text('@localizer["Select product"]'));
+                    $("#Products").prop('disabled', true);
+                }
+            },
+            complete: function () {
+                $("#Products").prop('disabled', false);
+            }
+        });
+    }
+
+    function ajaxGetImportedProducts() {
+        $.ajax({
+            url: '/Clients/Client/GetImportedProducts',
+            method: 'get',
+            dataType: 'json',
+            success: function (response) {
+                if (response.isValid) {
+                    $("#Products").empty();
+                    $("#Products").append($("<option />").val(0).text('@localizer["Select product"]'));
+                    $.each(response.data, function (index, item) {
+                        $("#Products").append($('<option/>', { value: item.value, text: item.text }));
+                    });
+                } else {
+                    $("#Products").empty();
+                    $("#Products").append($("<option />").val(0).text('@localizer["Select product"]'));
+                    $("#Products").prop('disabled', true);
+                }
+            },
+            complete: function () {
+                $("#Products").prop('disabled', false);
+            }
+        });
+    }
+</script>

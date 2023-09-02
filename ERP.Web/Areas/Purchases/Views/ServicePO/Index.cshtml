@@ -1,0 +1,370 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Application.Enums
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Service purchases"];
+}
+@using ERP.Web.Areas.Purchases.Models.PurchaseOrder
+@model ServicePOHeaderViewModel
+@{
+    var isSuperAdmin = false;
+    if (User.IsInRole(Roles.SuperAdmin.ToString()))
+    {
+        isSuperAdmin = true;
+    }
+}
+<head>
+    <link rel="stylesheet" href="~/css/Purchases/PurchaseOrder/PurchaseOrderStyle.css" />
+</head>
+<body>
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+            <div id="div-export-buttons" class="btn-toolbar justify-content-center" role="toolbar">
+                <div class="input-group pr-3 mt-1">
+                    <input id="daterange_input" type="text" name="daterange_input" class="form-control pr-4" placeholder="@localizer["Filter by date"]" />
+                </div>
+                <div class="btn-group mr-2 align-items-center" role="group">
+                    @*@if ((AuthorizationService.AuthorizeAsync(User, Permissions.PurchaseOrder.Create)).Result.Succeeded)
+                    {
+                        <a id="btn-create" class="btn bg-secondary pl-1 pr-1" title="@localizer["Create"]">
+                            <img class="tables-img-icon" src="~/images/NewOC.svg" width="30" height="30" />
+                        </a>
+                    }*@
+                    <a id="btn-export-excel" class="btn bg-secondary pl-1 pr-1" title="@localizer["Export to Excel"]">
+                        <img class="tables-img-icon" src="~/images/Excel.svg" width="30" height="30" />
+                    </a>
+                </div>
+            </div>
+            <table id="servicePurchasesTable" class="table table-striped-blue table-hover nowrap" width="100%" cellspacing="0">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Nº OC"]</th>
+                        <th>@localizer["Date"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th>@localizer["Quantity"]</th>
+                        <th>@localizer["Unit measure"]</th>
+                        <th>@localizer["Unit price"]</th>
+                        <th>@localizer["Bonus"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th>@localizer["Station"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Nº OC"]</th>
+                        <th>@localizer["Date"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th>@localizer["Quantity"]</th>
+                        <th>@localizer["Unit measure"]</th>
+                        <th>@localizer["Unit price"]</th>
+                        <th>@localizer["Bonus"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th>@localizer["Station"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+
+@section Scripts
+    {
+    <script src="~/js/site.js"></script>
+    <script>
+
+        $(document).ready(function () {
+
+            $.fn.dataTable.moment('DD/MM/YYYY HH:mm:ss');
+
+            let start = moment().subtract(5, 'months');
+            let end = moment();
+            let dateFromFilterValue = start.format('DD/MM/YYYY');
+            let dateToFilterValue = end.format('DD/MM/YYYY');
+
+            $('input[name="daterange_input"]').daterangepicker({
+                "locale": {
+                    "format": "DD/MM/YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Aceptar",
+                    "cancelLabel": "Cancelar",
+                    "fromLabel": "Desde",
+                    "toLabel": "Hasta",
+                    "daysOfWeek": [
+                        "Do",
+                        "Lu",
+                        "Ma",
+                        "Mi",
+                        "Ju",
+                        "Vi",
+                        "Sa"
+                    ],
+                    "monthNames": [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre"
+                    ],
+                    "firstDay": 1
+                },
+                "autoApply": true,
+                "showDropdowns": true,
+                "opens": "right",
+                "buttonClasses": "btn btn-sm",
+                "applyClass": "btn-primary",
+                "startDate": start,
+                "endDate": end,
+                "minYear": 1995
+            }, cb);
+
+            function cb(start, end) {
+                $('#daterange_input span').html(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+                dateFromFilterValue = start.format('DD/MM/YYYY');
+                dateToFilterValue = end.format('DD/MM/YYYY');
+                refreshTable();
+            }
+
+            $('#daterange_input').on('apply.daterangepicker', function (ev, picker) {
+                dateFromFilterValue = picker.startDate.format('DD/MM/YYYY');
+                dateToFilterValue = picker.endDate.format('DD/MM/YYYY');
+                refreshTable();
+            });
+
+            $('#servicePurchasesTable tfoot th').each(function (i) {
+                var title = $(this).text();
+                if (title != "@localizer["Actions"]" && title != "") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let servicePurchasesTable = $("#servicePurchasesTable").DataTable({
+                "order": [[2, "desc"]],
+                "oLanguage": @localizer["LanguageDataTable"],
+                scrollY: '60vh',
+                scrollX: true,
+                scrollCollapse: true,
+                scroller: true,
+                scroller: {
+                    loadingIndicator: true
+                },
+                "sAjaxSource": "/purchases/servicepo/_LoadAll",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "dateFromFilter", "value": dateFromFilterValue },
+                        { "name": "dateToFilter", "value": dateToFilterValue }
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false,
+                        "orderable": false
+                    },
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "render": function (data, type, row, meta) {
+
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+
+                            html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editServicePO(' + row.servicePOHeaderId + ')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                            if ("@isSuperAdmin" == "True") {
+                                html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deleteServicePO(' + row.id + ', ' + row.servicePOHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                            }
+
+                            html += '</div></div>';
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                        "orderable": false
+                    },
+                    {
+                        "data": "servicePOHeader.id",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "servicePOHeader.date",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return moment(value).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "product",
+                        "render": function (product) {
+                            if (product === null) {
+                                return "";
+                            } else {
+                                return product.code;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "product",
+                        "render": function (product) {
+                            if (product === null) {
+                                return "";
+                            } else {
+                                return product.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "quantity",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-right",
+                        "render": $.fn.dataTable.render.number('.', ',', 2)
+                    },
+                    {
+                        "data": "unitMeasure",
+                        "render": function (unitMeasure) {
+                            if (unitMeasure === null) {
+                                return "";
+                            } else {
+                                return unitMeasure.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "className": "text-left",
+                        "searchable": true
+                    },
+                    {
+                        "data": "unitPrice",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center",
+                        "render": $.fn.dataTable.render.number('.', ',', 2, '', ' USD')
+                    },
+                    {
+                        "data": "bonus",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center",
+                        "render": $.fn.dataTable.render.number('.', ',', 2, '', '%')
+                    },
+                    {
+                        "data": "servicePOHeader",
+                        "render": function (servicePOHeader) {
+                            if (servicePOHeader === null) {
+                                return "";
+                            } else {
+                                if (servicePOHeader.provider === null) {
+                                    return "";
+                                }
+                                else {
+                                    return servicePOHeader.provider.getBussinessNameOrName;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "servicePOHeader",
+                        "render": function (servicePOHeader) {
+                            if (servicePOHeader === null) {
+                                return "";
+                            } else {
+                                if (servicePOHeader.station === null) {
+                                    return "";
+                                }
+                                else {
+                                    return servicePOHeader.station.abreviationDescription;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                }
+            });
+
+            $('#btn-create').on('click', function () {
+                jQueryModalGet('/purchases/servicepo/OnGetCreateOrEdit', '@localizer["Service purchase order"]');
+            });
+
+            $('#btn-export-excel').on('click', function () {
+                alert("Aún no se implementó");
+            });
+
+        });
+
+        function editServicePO(spohId) {
+            jQueryModalGet('/purchases/servicepo/OnGetCreateOrEdit?id=' + spohId, "@localizer["Service purchase order"]");
+        }
+
+        function deleteServicePO(spodId, spohId) {
+            if (confirm('@localizer["Are you sure to delete this record?"]')) {
+                let url = "/purchases/servicepo/OnPostDelete?spodId=" + spodId + "&spohId=" + spohId;
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    success: function (response) {
+                        if (response.isValid) {
+                            refreshTable();
+                        }
+                    }
+                });
+            }
+        }
+
+        function refreshTable() {
+            $('#servicePurchasesTable').DataTable().clear();
+            $('#servicePurchasesTable').DataTable().ajax.reload();
+        }
+
+    </script>
+}

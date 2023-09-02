@@ -1,0 +1,70 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Production.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model WorkActivitiesViewModel
+
+<div class="sticky-top-title p-2 bg-filter-custom d-flex align-items-center justify-content-between">
+    <h3 class="mb-3">@localizer["Station"]: @Model.Station.AbreviationDescription</h3>
+    <h6 class="mb-3"><b>Nº OT: </b>@Model.workOrderIdsString</h6>
+</div>
+
+<div class="sticky-top-WA bg-filter-custom row ml-1">
+
+    <div class="col-md-3">
+        <h6 class="mb-3"><b>@localizer["Product"]: </b>@Model.workOrdersProductsNames</h6>
+        <h6 class="mb-3"><b>@localizer["Configuration"]: </b>@Model.workOrdersStructuresNames</h6>
+    </div>
+
+    <div class="col-md-2">
+        <h6 class="mb-3"><b>@localizer["Nº Product"]: </b>@Model.workOrdersProductsNumbers</h6>
+    </div>
+
+    <div class="col-md-3 d-flex">
+        <h6 class="mb-3"><b>@localizer["Advance"]: </b></h6>
+
+        <div class="progress-bar-custom progress w-50 ml-3">
+            @if (Model.ShipmentsTotalAdvance == 0)
+            {
+                <div class="progress-bar" id="pb_totalAdvance" role="progressbar" style="width:@(Model.ShipmentsTotalAdvance+"%");" aria-valuenow="@(Model.ShipmentsTotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(Model.ShipmentsTotalAdvance + "%") </div>
+            }
+            else if (Model.ShipmentsTotalAdvance == 100)
+            {
+                <div class="progress-bar bg-success" id="pb_totalAdvance" role="progressbar" style="width:@(Model.ShipmentsTotalAdvance+"%");" aria-valuenow="@(Model.ShipmentsTotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(Model.ShipmentsTotalAdvance + "%") </div>
+            }
+            else
+            {
+                <div class="progress-bar bg-warning" id="pb_totalAdvance" role="progressbar" style="width:@(Model.ShipmentsTotalAdvance+"%");" aria-valuenow="@(Model.ShipmentsTotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(Model.ShipmentsTotalAdvance + "%") </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <h6 id="start_date" class="mb-3"><b>@localizer["Start"]: </b>@Model.StartDate</h6>
+        <h6 id="end_date" class="mb-3"><b>@localizer["End"]: </b>@Model.ShippingEndDate</h6>
+    </div>
+
+    <div class="col-md-2">
+        <h6 id="total_time" class="mb-3"><b>@localizer["Total time"]: </b>@Model.TotalTime</h6>
+    </div>
+
+</div>
+
+<div id="viewAll" class="card-body table-responsive">
+
+</div>
+
+@section Scripts
+{
+    <script src="~/js/site.js"></script>
+    <script>
+
+        $(document).ready(function () {
+            loadData();
+        });
+
+        function loadData() {
+            $('#viewAll').load("/Logistics/Shipping/_LoadAllActivities?workOrderIds=@Model.urlIds" + "&stationId=@Model.Station.Id");
+        }
+
+    </script>
+}

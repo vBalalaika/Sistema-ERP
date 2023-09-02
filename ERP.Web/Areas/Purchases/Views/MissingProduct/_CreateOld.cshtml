@@ -1,0 +1,781 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Purchases.Models.MissingProduct
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model MissingProductViewModel
+
+<div class="form-row">
+    <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+    <input type="hidden" asp-for="UserName" name="UserName" class="form-control">
+    <input type="hidden" asp-for="CreateDate" name="CreateDate" class="form-control">
+
+    <div class="col-md-4 mt-5 mb-3">
+        <label class="control-label">@localizer["Products"]</label>
+        <select tabindex="1" class="form-control select2bs4" id="Products" asp-items="@Model.Products">
+            <option value="-1">@localizer["Select product"]</option>
+        </select>
+    </div>
+
+    <div class="col-md-1 mt-4 mb-3">
+        <div class="form-row">
+            <a class="btn btn-group">
+                <div class="custom-control custom-checkbox small">
+                    <input class="custom-control-input" type="checkbox" id="UnitMeasureCheck">
+                    <label class="custom-control-label" for="UnitMeasureCheck">@localizer["Production unit"]</label>
+                </div>
+            </a>
+        </div>
+        <div class="form-row mt-5">
+            <a class="btn btn-group">
+                <div class="custom-control custom-checkbox small">
+                    <input class="custom-control-input" type="checkbox" checked id="StockUnitMeasureCheck">
+                    <label class="custom-control-label" for="StockUnitMeasureCheck">@localizer["Stock unit"]</label>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <div class="col-md-2 mb-3">
+        <label asp-for="Quantity" class="control-label">@localizer["Quantity"]</label>
+        <input tabindex="2" id="Quantity" disabled type="text" name="Quantity" asp-for="Quantity" class="form-control" value="" onkeypress="return validateIsNumber(event);" />
+        <span asp-validation-for="Quantity" class="text-danger"></span>
+
+        <br />
+
+        <label asp-for="QuantityToOrder" class="control-label">@localizer["Quantity to order"]</label>
+        <input tabindex="3" id="QuantityToOrder" type="text" name="QuantityToOrder" asp-for="QuantityToOrder" class="form-control" value="" onkeypress="return validateIsNumber(event);" />
+        <span asp-validation-for="QuantityToOrder" class="text-danger"></span>
+
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="form-row">
+            <label>@localizer["Production unit"]</label>
+            <div class="input-group">
+                <select tabindex="4" disabled class="form-control select2bs4" id="UnitMeasures" asp-items="@Model.UnitMeasures">
+                    <option value=""></option>
+                </select>
+            </div>
+        </div>
+        <br />
+        <div class="form-row">
+            <label>@localizer["Stock unit"]</label>
+            <div class="input-group">
+                <select tabindex="5" disabled class="form-control select2bs4" id="StockUnitMeasures" asp-items="@Model.StockUnitMeasures">
+                    <option value=""></option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <div id="help-popup">
+        <ul class="list-unstyled">
+            <li>
+                <strong>@localizer["Help"]</strong>
+                <ul>
+                    <li>@localizer["Quantity input cannot be empty."]</li>
+                    <li>@localizer["The quantity cannot be zero."]</li>
+                    <li>@localizer["The quantity is expressed as whole numbers or decimals using commas."]</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+
+    <div id="div-btn-add" class="col-md-1 mt-2 ml-4 d-flex align-items-center">
+        <button tabindex="6" id="btn-add-missingproduct" type="button" class="btn btn-secondary">@localizer["Add"]</button>
+    </div>
+
+    <div class="col-md-12">
+        @* Tabla que muestra los datos agregados *@
+        <table id="missingProductTable" class="table table-striped table-hover nowrap" width="100%">
+            <thead class="bg-thead">
+                <tr>
+                    <th>@localizer["Id"]</th>
+                    <th>@localizer["Product code"]</th>
+                    <th>@localizer["Product description"]</th>
+                    <th>@localizer["Quantity"]</th>
+                    <th hidden></th>
+                    <th>@localizer["Unit measure"]</th>
+                    <th>@localizer["Quantity to order"]</th>
+                    <th>@localizer["Stock unit"]</th>
+                    <th>@localizer["Delete"]</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>@localizer["Id"]</th>
+                    <th>@localizer["Product code"]</th>
+                    <th>@localizer["Product description"]</th>
+                    <th>@localizer["Quantity"]</th>
+                    <th hidden></th>
+                    <th>@localizer["Unit measure"]</th>
+                    <th>@localizer["Quantity to order"]</th>
+                    <th>@localizer["Stock unit"]</th>
+                    <th>@localizer["Delete"]</th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+</div>
+
+
+
+<div id="buttons-div" class="form-group justify-content-between">
+    <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+    <button id="btn-cancel" type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+</div>
+
+
+<script type="text/javascript" language="javascript">
+        $.validator.unobtrusive.parse(document);
+    $(document).ready(function () {
+
+        let productsSelect = $('#Products');
+        let productionUnitMeasures = $('#UnitMeasures');
+        let stockUnitMeasures = $('#StockUnitMeasures');
+        let moveLeft = 0;
+        let moveDown = 0;
+
+        $('#Quantity').hover(function (e) {
+            $('#help-popup').show();
+            moveLeft = $(this).outerWidth();
+            moveDown = $('#help-popup').outerHeight();
+        }, function () {
+                $('#help-popup').hide();
+        });
+
+        $('#Quantity').mousemove(function (e) {
+            let elem = $(this);
+            let target = $('#help-popup');
+            leftD = e.pageX;
+            maxRight = leftD + $(target).outerWidth();
+            windowLeft = $(window).width() - 10;
+            windowRight = 0;
+            maxLeft = e.pageX - (parseInt(moveLeft) + 100);
+            if (maxRight > windowLeft && maxLeft > windowRight) {
+                leftD = maxLeft;
+            }
+            topD = e.pageY - parseInt(moveDown);
+            maxBottom = parseInt(e.pageY + parseInt(moveDown) + 40);
+            windowBottom = parseInt(parseInt($(document).scrollTop()) + parseInt($(window).height()));
+            maxTop = topD;
+            windowTop = elem.offset().top + elem.outerHeight(true);
+            if (maxBottom > windowBottom) {
+                topD = windowBottom - $(target).outerHeight() - 10;
+                leftD += 20;
+            } else if (maxTop < windowTop) {
+                topD = windowTop + 10;
+            }
+            $(target).css('top', topD).css('left', leftD);
+
+        });
+
+        $('#StockQuantity').hover(function (e) {
+            $('#help-popup').show();
+            moveLeft = $(this).outerWidth();
+            moveDown = $('#help-popup').outerHeight();
+        }, function () {
+            $('#help-popup').hide();
+        });
+
+        $('#StockQuantity').mousemove(function (e) {
+            let elem = $(this);
+            let target = $('#help-popup');
+            leftD = e.pageX;
+            maxRight = leftD + $(target).outerWidth();
+            windowLeft = $(window).width() - 10;
+            windowRight = 0;
+            maxLeft = e.pageX - (parseInt(moveLeft) + 100);
+            if (maxRight > windowLeft && maxLeft > windowRight) {
+                leftD = maxLeft;
+            }
+            topD = e.pageY - parseInt(moveDown);
+            maxBottom = parseInt(e.pageY + parseInt(moveDown) + 40);
+            windowBottom = parseInt(parseInt($(document).scrollTop()) + parseInt($(window).height()));
+            maxTop = topD;
+            windowTop = elem.offset().top + elem.outerHeight(true);
+            if (maxBottom > windowBottom) {
+                topD = windowBottom - $(target).outerHeight() - 10;
+                leftD += 20;
+            } else if (maxTop < windowTop) {
+                topD = windowTop + 10;
+            }
+            $(target).css('top', topD).css('left', leftD);
+
+        });
+
+        $('#missingProductTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Delete"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let missingProductTable = $("#missingProductTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "columnDefs": [
+                { "targets": [0], "className": "hide_column", visible: false },
+                { "targets": [1], "className": "productcode_column" },
+                { "targets": [3], "className": "quantity_column" },
+                { "targets": [4], "className": "unitId_column", visible: false},
+                { "targets": [5], "className": "unitmeasure_column" },
+                { "targets": [6], "className": "stockquantity_column" },
+                { "targets": [7], "className": "stockunit_column" },
+                { "targets": [8], "className": "delete_column" },
+            ],
+            order: [[2, "asc"]],
+            scrollY: '60vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            stateSave: true,
+            stateLoadParams: function (settings, data) {
+                for (i = 0; i < data.columns["length"]; i++) {
+                    var col_search_val = data.columns[i].search.search;
+                    if (col_search_val != "") {
+                        $("input", $('#missingProductTable tfoot th')[i]).val(col_search_val);
+                    }
+                }
+            }
+        });
+
+        $(missingProductTable.table().container()).on('keyup', 'tfoot input', function () {
+            missingProductTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+        productsSelect.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        productionUnitMeasures.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        stockUnitMeasures.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        productsSelect.change(function () {
+
+            $.ajax({
+                url: '/purchases/missingproduct/GetProductById',
+                method: 'get',
+                data: { id: $(this).val() },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.isValid) {
+                        if (response.product.unitMeasureId != null) {
+                            $("#UnitMeasures").val(response.product.unitMeasureId).trigger("change");
+                        }
+                        if (response.product.stockUnitMeasureId != null) {
+                            $("#StockUnitMeasures").val(response.product.stockUnitMeasureId).trigger("change");
+                        } else {
+                            $("#StockUnitMeasures").val(19).trigger("change");
+                        }
+
+                        if (response.product.quantityToOrder != 0 && response.product.quantityToOrder != null) {
+                            if ($('#StockUnitMeasureCheck').is(':checked')) {
+                                if (response.product.stockLength != 0) {
+                                    document.getElementById("StockQuantity").value = format_number_to_decimal(response.product.quantityToOrder, 2, ',', '.');
+                                    if (response.product.stockUnitMeasure == null) {
+                                        document.getElementById("Quantity").value = format_number_to_decimal(response.product.quantityToOrder, 2, ',', '.');
+                                    } else {
+                                        unitConversion();
+                                    }
+                                }
+                            }
+                        } else {
+                            document.getElementById("StockQuantity").value = "";
+                            document.getElementById("Quantity").value = "";
+                        }
+                    }
+                }
+            });
+        });
+
+        $('#UnitMeasureCheck').change(function () {
+            if ($(this).is(":checked")) {
+                $('#StockUnitMeasureCheck').prop('checked', false);
+                $('#StockQuantity').attr('disabled', true);
+                $('#Quantity').attr('disabled', false);
+            } else {
+                $('#StockUnitMeasureCheck').prop('checked', true);
+                $('#StockQuantity').attr('disabled', false);
+                $('#Quantity').attr('disabled', true);
+            }
+
+        });
+
+        $('#StockUnitMeasureCheck').change(function () {
+            if ($(this).is(":checked")) {
+                $('#UnitMeasureCheck').prop('checked', false);
+                $('#Quantity').attr('disabled', true);
+                $('#StockQuantity').attr('disabled', false);
+            } else {
+                $('#UnitMeasureCheck').prop('checked', true);
+                $('#Quantity').attr('disabled', false);
+                $('#StockQuantity').attr('disabled', true);
+            }
+
+        });
+
+        $('#Quantity').on('input', function () {
+            if ($('#UnitMeasures').find(':selected').text() == "UNIDAD") {
+                $('#StockQuantity').val($(this).val());
+            }
+            else {
+                unitConversion();
+            }
+        });
+
+        $('#StockQuantity').on('input', function () {
+            if ($('#StockUnitMeasures').find(':selected').text() == "UNIDAD") {
+                $('#Quantity').val($(this).val());
+            }
+            else {
+                unitConversion();
+            }
+        });
+
+        $('#btn-add-missingproduct').on('click', function () {
+
+            if (productsSelect.val() == -1) {
+                $.ajax({
+                    url: '/purchases/missingproduct/ShowAlerts',
+                    method: 'get',
+                    data: { inputDetail: "product_notselected" },
+                    dataType: 'json',
+                    success: function (response) {
+
+                    }
+                });
+            } else {
+                /* Validate quantity */
+                let regex = new RegExp(/^\d*\,?\d*$/);
+                let quantityInput = document.getElementById("Quantity").value;
+                let stockQuantityInput = document.getElementById("StockQuantity").value;
+
+                if (quantityInput != "" || stockQuantityInput != "") {
+
+                    if (quantityInput != 0 || stockQuantityInput != 0) {
+                            /* Por ajax consultar caracteristica del producto elegido en el combo */
+                            $.ajax({
+                                url: '/purchases/missingproduct/GetProductById',
+                                method: 'get',
+                                data: { id: productsSelect.val() },
+                                dataType: 'json',
+                                success: function (response) {
+                                    if (response.isValid) {
+
+                                        missingProductTable.row.add([
+                                            response.product.id,
+                                            response.product.code,
+                                            response.product.description,
+                                            quantityInput,
+                                            response.product.unitMeasure.description,
+                                            response.product.unitMeasure.description,
+                                            stockQuantityInput,
+                                            $('#StockUnitMeasures').find(':selected').text(),
+                                            '<button id="btn-remove" class="btn btn-outline-danger d-block m-auto"> <img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /> </button>',
+                                        ]).draw(false);
+
+                                        $('#Products').val('-1');
+                                        $('#Products').change();
+                                        $('#UnitMeasures').val('');
+                                        $('#UnitMeasures').change();
+                                        $('#StockUnitMeasures').val('');
+                                        $('#StockUnitMeasures').change();
+                                        document.getElementById("Quantity").value = "";
+                                        document.getElementById("StockQuantity").value = "";
+                                        $('#Products').select2('open');
+                                    }
+                                }
+                            });
+
+                    } else {
+                        $.ajax({
+                            url: '/purchases/missingproduct/ShowAlerts',
+                            method: 'get',
+                            data: { inputDetail: "quantity_zero" },
+                            dataType: 'json',
+                            success: function (response) {
+                            }
+                        });
+                    }
+                } else {
+                    $.ajax({
+                        url: '/purchases/missingproduct/ShowAlerts',
+                        method: 'get',
+                        data: { inputDetail: "quantity_empty" },
+                        dataType: 'json',
+                        success: function (response) {
+
+                        }
+                    });
+                }
+            }
+
+        });
+
+        $('#btn-save').on('click', function () {
+            let data = missingProductTable.rows().data();
+            data.each(function (value, index) {
+
+                $.ajax({
+                    url: '/purchases/missingproduct/OnPostCreate',
+                    method: 'post',
+                    data: {
+                        productId: value[0],
+                        productCode: value[1],
+                        productDescription: value[2],
+                        quantity: value[3],
+                        stockQuantity: value[6]
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (index == data.length - 1) {
+                            $('#missingProductsTable').DataTable().clear().draw();
+                            $('#viewAll').load('/purchases/missingproduct/LoadAll');
+                            $('#form-modal').modal('hide');
+                        }
+                    }
+                });
+
+            });
+
+        });
+
+        $('#missingProductTable tbody').on('click', 'button', function () {
+            missingProductTable
+                .row($(this).parents('tr'))
+                .remove()
+                .draw();
+        });
+
+        $('#missingProductTable').closest('.dataTables_scrollBody').css('min-height', '30vh');
+        $('#missingProductTable').DataTable().draw();
+
+    });
+
+    function unitConversion() {
+        $.ajax({
+            url: '/purchases/missingproduct/GetProductById',
+            method: 'get',
+            data: { id: $('#Products').val() },
+            dataType: 'json',
+            success: function (response) {
+                if (response.isValid) {
+                    if (response.product.stockUnitMeasure != null) {
+
+                        let quantity = $('#Quantity').val().replace(/(\.|,)/g, function (x) {
+                            return x == ',' ? '.' : '';
+                        });
+                        let stockQuantity = $('#StockQuantity').val().replace(/(\.|,)/g, function (x) {
+                            return x == ',' ? '.' : '';
+                        });
+
+                        if ($('#UnitMeasureCheck').is(':checked')) {
+
+                            if (response.product.stockLength != 0) {
+                                // HOJA;  Cantidad a pedir = Cantidad / ANCHO * LARGO
+                                if (response.product.stockUnitMeasure.unitType == 5) {
+                                    if (response.product.stockWidth != 0) {
+                                        document.getElementById("StockQuantity").value = format_number_to_decimal(quantity / (parseFloat(response.product.stockWidth) * parseFloat(response.product.stockLength)), 2, ',', '.');
+                                    }
+                                }
+                                // BOBINA, ROLLO o BARRA;  Cantidad a pedir = Cantidad / LARGO
+                                else if (response.product.stockUnitMeasure.unitType == 6 || response.product.stockUnitMeasure.unitType == 7 || response.product.stockUnitMeasure.unitType == 8) {
+                                    document.getElementById("StockQuantity").value = format_number_to_decimal(quantity / parseFloat(response.product.stockLength), 2, ',', '.');
+                                }
+
+                                if (response.product.unitMeasure != null) {
+                                    // Unidades de longitud
+                                    if (response.product.stockUnitMeasure.unitType == 2 && response.product.unitMeasure.unitType == 2) {
+                                        // US METRO a UP CENTIMETRO
+                                        if (response.product.stockUnitMeasure.code == 2 && response.product.unitMeasure.code == 20) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity / 100), 2, ',', '.');
+                                        }
+                                        // US CENTIMETRO a UP METRO
+                                        else if (response.product.stockUnitMeasure.code == 20 && response.product.unitMeasure.code == 2) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity * 100), 2, ',', '.');
+                                        }
+                                        // US METRO a UP MILIMETRO
+                                        if (response.product.stockUnitMeasure.code == 2 && response.product.unitMeasure.code == 15) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity / 1000), 2, ',', '.');
+                                        }
+                                        // US MILIMETRO a UP METRO
+                                        else if (response.product.stockUnitMeasure.code == 15 && response.product.unitMeasure.code == 2) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity * 1000), 2, ',', '.');
+                                        }
+
+                                        // US CENTIMETRO a UP MILIMETRO
+                                        if (response.product.stockUnitMeasure.code == 20 && response.product.unitMeasure.code == 15) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity / 10), 2, ',', '.');
+                                        }
+                                        // US MILIMETRO a UP CENTIMETRO
+                                        else if (response.product.stockUnitMeasure.code == 15 && response.product.unitMeasure.code == 20) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity * 10), 2, ',', '.');
+                                        }
+
+                                        // US CENTIMETRO a UP CENTIMETRO
+                                        if (response.product.stockUnitMeasure.code == 20 && response.product.unitMeasure.code == 20) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity), 2, ',', '.');
+                                        }
+
+                                        // US MILIMETRO a UP MILIMETRO
+                                        if (response.product.stockUnitMeasure.code == 15 && response.product.unitMeasure.code == 15) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity), 2, ',', '.');
+                                        }
+
+                                    }
+                                    // Unidades de peso
+                                    if (response.product.stockUnitMeasure.unitType == 3 && response.product.unitMeasure.unitType == 3) {
+                                        // US KILOGRAMO a  UP GRAMO
+                                        if (response.product.stockUnitMeasure.code == 1 && response.product.unitMeasure.code == 14) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity / 1000), 2, ',', '.');
+                                        }
+                                        // US GRAMO a UP KILOGRAMO
+                                        else if (response.product.stockUnitMeasure.code == 14 && response.product.unitMeasure.code == 1) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity * 1000), 2, ',', '.');
+                                        }
+
+                                        // US KILOGRAMO a  UP KILOGRAMO
+                                        if (response.product.stockUnitMeasure.code == 1 && response.product.unitMeasure.code == 1) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity), 2, ',', '.');
+                                        }
+
+                                        // US GRAMO a  UP GRAMO
+                                        if (response.product.stockUnitMeasure.code == 14 && response.product.unitMeasure.code == 14) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity), 2, ',', '.');
+                                        }
+                                    }
+                                    // Unidades de capacidad
+                                    if (response.product.stockUnitMeasure.unitType == 4 && response.product.unitMeasure.unitType == 4) {
+                                        // US LITRO a  UP MILILITRO
+                                        if (response.product.stockUnitMeasure.code == 5 && response.product.unitMeasure.code == 47) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity / 1000), 2, ',', '.');
+                                        }
+                                        // US MILILITRO a UP LITRO
+                                        else if (response.product.stockUnitMeasure.code == 47 && response.product.unitMeasure.code == 5) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity * 1000), 2, ',', '.');
+                                        }
+
+                                        // US LITRO a  UP LITRO
+                                        if (response.product.stockUnitMeasure.code == 5 && response.product.unitMeasure.code == 5) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity), 2, ',', '.');
+                                        }
+
+                                        // US MILILITRO a  UP MILILITRO
+                                        if (response.product.stockUnitMeasure.code == 47 && response.product.unitMeasure.code == 47) {
+                                            document.getElementById("StockQuantity").value = format_number_to_decimal((quantity), 2, ',', '.');
+                                        }
+                                    }
+                                }
+
+                            }
+
+                        }
+
+                        if ($('#StockUnitMeasureCheck').is(':checked')) {
+
+                            if (response.product.stockLength != 0) {
+                                // HOJA; Cantidad = ANCHO * LARGO * Cantidad a pedir
+                                if (response.product.stockUnitMeasure.unitType == 5) {
+                                    if (response.product.stockWidth != 0) {
+                                        document.getElementById("Quantity").value = format_number_to_decimal((parseFloat(response.product.stockWidth) * parseFloat(response.product.stockLength) * stockQuantity), 2, ',', '.');
+                                    }
+                                }
+                                // BOBINA, ROLLO o BARRA; Cantidad = LARGO * Cantidad a pedir
+                                else if (response.product.stockUnitMeasure.unitType == 6 || response.product.stockUnitMeasure.unitType == 7 || response.product.stockUnitMeasure.unitType == 8) {
+                                    document.getElementById("Quantity").value = format_number_to_decimal((parseFloat(response.product.stockLength) * stockQuantity), 2, ',', '.');
+                                }
+
+                                if (response.product.unitMeasure != null) {
+                                    // Unidades de longitud
+                                    if (response.product.stockUnitMeasure.unitType == 2 && response.product.unitMeasure.unitType == 2) {
+                                        // US METRO a  UP CENTIMETRO
+                                        if (response.product.stockUnitMeasure.code == 2 && response.product.unitMeasure.code == 20) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity * 100), 2, ',', '.');
+                                        }
+                                        // US CENTIMETRO a UP METRO
+                                        else if (response.product.stockUnitMeasure.code == 20 && response.product.unitMeasure.code == 2) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity / 100), 2, ',', '.');
+                                        }
+                                        // US METRO a UP MILIMETRO
+                                        if (response.product.stockUnitMeasure.code == 2 && response.product.unitMeasure.code == 15) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity * 1000), 2, ',', '.');
+                                        }
+                                        // US MILIMETRO a UP METRO
+                                        else if (response.product.stockUnitMeasure.code == 15 && response.product.unitMeasure.code == 2) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity / 1000), 2, ',', '.');
+                                        }
+
+                                        // US CENTIMETRO a UP MILIMETRO
+                                        if (response.product.stockUnitMeasure.code == 20 && response.product.unitMeasure.code == 15) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity * 10), 2, ',', '.');
+                                        }
+                                        // US MILIMETRO a UP CENTIMETRO
+                                        else if (response.product.stockUnitMeasure.code == 15 && response.product.unitMeasure.code == 20) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity / 10), 2, ',', '.');
+                                        }
+
+                                        // US CENTIMETRO a UP CENTIMETRO
+                                        if (response.product.stockUnitMeasure.code == 20 && response.product.unitMeasure.code == 20) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity), 2, ',', '.');
+                                        }
+
+                                        // US MILIMETRO a UP MILIMETRO
+                                        if (response.product.stockUnitMeasure.code == 15 && response.product.unitMeasure.code == 15) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity), 2, ',', '.');
+                                        }
+                                    }
+                                    // Unidades de peso
+                                    if (response.product.stockUnitMeasure.unitType == 3 && response.product.unitMeasure.unitType == 3) {
+                                        // US KILOGRAMO a  UP GRAMO
+                                        if (response.product.stockUnitMeasure.code == 1 && response.product.unitMeasure.code == 14) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity * 1000), 2, ',', '.');
+                                        }
+                                        // US GRAMO a UP KILOGRAMO
+                                        else if (response.product.stockUnitMeasure.code == 14 && response.product.unitMeasure.code == 1) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity / 1000), 2, ',', '.');
+                                        }
+
+                                        // US KILOGRAMO a  UP KILOGRAMO
+                                        if (response.product.stockUnitMeasure.code == 1 && response.product.unitMeasure.code == 1) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity), 2, ',', '.');
+                                        }
+
+                                        // US GRAMO a  UP GRAMO
+                                        if (response.product.stockUnitMeasure.code == 14 && response.product.unitMeasure.code == 14) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity), 2, ',', '.');
+                                        }
+                                    }
+                                    // Unidades de capacidad
+                                    if (response.product.stockUnitMeasure.unitType == 4 && response.product.unitMeasure.unitType == 4) {
+                                        // US LITRO a  UP MILILITRO
+                                        if (response.product.stockUnitMeasure.code == 5 && response.product.unitMeasure.code == 47) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity * 1000), 2, ',', '.');
+                                        }
+                                        // US MILILITRO a UP LITRO
+                                        else if (response.product.stockUnitMeasure.code == 47 && response.product.unitMeasure.code == 5) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity / 1000), 2, ',', '.');
+                                        }
+
+                                        // US LITRO a  UP LITRO
+                                        if (response.product.stockUnitMeasure.code == 5 && response.product.unitMeasure.code == 5) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity), 2, ',', '.');
+                                        }
+
+                                        // US MILILITRO a  UP MILILITRO
+                                        if (response.product.stockUnitMeasure.code == 47 && response.product.unitMeasure.code == 47) {
+                                            document.getElementById("Quantity").value = format_number_to_decimal((stockQuantity), 2, ',', '.');
+                                        }
+                                    }
+                                }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+            }
+        });
+    }
+
+    function format_number_to_decimal(number, dec, dsep, tsep) {
+        if (isNaN(number) || number == null) return '';
+
+        number = parseFloat(number).toFixed(~~dec);
+        tsep = typeof tsep == 'string' ? tsep : ',';
+
+        var parts = number.split('.'),
+            fnums = parts[0],
+            decimals = parts[1] ? (dsep || '.') + parts[1] : '';
+
+        return fnums.replace(/(\d)(?=(?:\d{3})+$)/g, '$1' + tsep) + decimals;
+    }
+
+    function validateIsNumber(evt) {
+
+        // code is the decimal ASCII representation of the pressed key.
+        var code = (evt.which) ? evt.which : evt.keyCode;
+
+        if (code == 8) {
+            return true;
+        } else if (code == 44 || code == 46) {
+            return true;
+        } else if (code >= 48 && code <= 57) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    document.getElementById('Quantity').addEventListener('input', (e) => {
+        var entrada = e.target.value.split(','),
+            parteEntera = entrada[0].replace(/\./g, ''),
+            parteDecimal = entrada[1],
+            salida = parteEntera.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+
+        e.target.value = salida + (parteDecimal !== undefined ? ',' + parteDecimal : '');
+    }, false);
+
+    document.getElementById('StockQuantity').addEventListener('input', (e) => {
+        var entrada = e.target.value.split(','),
+            parteEntera = entrada[0].replace(/\./g, ''),
+            parteDecimal = entrada[1],
+            salida = parteEntera.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+
+        e.target.value = salida + (parteDecimal !== undefined ? ',' + parteDecimal : '');
+    }, false);
+
+</script>

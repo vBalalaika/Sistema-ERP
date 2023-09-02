@@ -1,0 +1,1016 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = ViewData["PriceTitle"].ToString();
+}
+@using ERP.Web.Areas.Sales.Models
+@model PriceViewModel
+
+<head>
+    <link rel="stylesheet" href="~/css/Sales/prices.css" />
+</head>
+<body>
+
+    <div class="sticky-top-filters form-row mt-4 bg-filter-custom p-2">
+
+        <div class="col-sm-5 col-md-6 col-xl-4 mb-3">
+            <div class="form-check form-check-inline">
+                <div class="custom-control custom-checkbox small">
+                    <input class="custom-control-input" type="checkbox" id="checkSimplemak" checked>
+                    <label class="custom-control-label" for="checkSimplemak">@localizer["Simplemak"]</label>
+                </div>
+            </div>
+            <div class="form-check form-check-inline">
+                <div class="custom-control custom-checkbox small">
+                    <input class="custom-control-input" type="checkbox" id="checkImported">
+                    <label class="custom-control-label" for="checkImported">@localizer["Imported"]</label>
+                </div>
+            </div>
+        </div>
+
+        @if (!ViewBag.spares)
+        {
+            <div class="col-sm-6 col-md-6 col-xl-5 mb-3">
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkPriceAll">
+                        <label class="custom-control-label" for="checkPriceAll">@localizer["USD COMEX"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkPriceArg">
+                        <label class="custom-control-label" for="checkPriceArg">@localizer["USD ARG"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkPriceMx">
+                        <label class="custom-control-label" for="checkPriceMx">@localizer["$ MXN"]</label>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+            <div id="div-export-buttons">
+                <div class="btn-group">
+                    <a id="btn-create" class="btn btn-secondary text-white" title="@localizer["Create"]">
+                        <i class="fa fa-plus-square"></i>
+                    </a>
+                    <a id="btn-update-prices" class="btn btn-secondary text-white" title="@localizer["Update prices"]">
+                        Actualizar
+                    </a>
+                    <a id="btn-export-excel" class="btn btn-secondary text-white h-100" title="@localizer["Export all"]">
+                        <img class="tables-img-icon" src="~/images/Excel.svg" width="25" height="25" />
+                    </a>
+                </div>
+            </div>
+
+            @if (ViewBag.spares)
+            {
+                <table id="pricesTableForSpares" class="table table-striped-blue table-hover w-100 nowrap">
+                    <thead class="bg-thead">
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Actions"]</th>
+                            <th>@localizer["Family/Heading"]</th>
+                            <th>@localizer["Code"]</th>
+                            <th>@localizer["Description"]</th>
+                            <th>@localizer["Configuration"]</th>
+                            <th>@localizer["Unit measure"]</th>
+                            <th>Precio USD COMEX</th>
+                            <th>@localizer["Date"]</th>
+                            <th>@localizer["Observations"]</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot>
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Actions"]</th>
+                            <th>@localizer["Family/Heading"]</th>
+                            <th>@localizer["Code"]</th>
+                            <th>@localizer["Description"]</th>
+                            <th>@localizer["Configuration"]</th>
+                            <th>@localizer["Unit measure"]</th>
+                            <th>Precio USD COMEX</th>
+                            <th>@localizer["Date"]</th>
+                            <th>@localizer["Observations"]</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            }
+            else
+            {
+                <table id="pricesTable" class="table table-striped-blue table-hover w-100 nowrap">
+                    <thead class="bg-thead">
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Actions"]</th>
+                            <th>@localizer["Family/Heading"]</th>
+                            <th>@localizer["Code"]</th>
+                            <th>@localizer["Description"]</th>
+                            <th>@localizer["Configuration"]</th>
+                            <th>@localizer["Unit measure"]</th>
+                            <th>Precio USD ARG</th>
+                            <th>@localizer["Date"]</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>Precio USD COMEX</th>
+                            <th>@localizer["Date"]</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>Precio $ MXN</th>
+                            <th>@localizer["Date"]</th>
+                            <th>@localizer["Observations"]</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                    <tfoot>
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Actions"]</th>
+                            <th>@localizer["Family/Heading"]</th>
+                            <th>@localizer["Code"]</th>
+                            <th>@localizer["Description"]</th>
+                            <th>@localizer["Configuration"]</th>
+                            <th>@localizer["Unit measure"]</th>
+                            <th>Precio USD ARG</th>
+                            <th>@localizer["Date"]</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>Precio USD COMEX</th>
+                            <th>@localizer["Date"]</th>
+                            <th>@localizer["Observations"]</th>
+                            <th>Precio $ MXN</th>
+                            <th>@localizer["Date"]</th>
+                            <th>@localizer["Observations"]</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            }
+        </div>
+    </div>
+</body>
+
+@section Scripts
+{
+    <script type="text/javascript" src="~/js/site.js"></script>
+    <script type="text/javascript">
+
+        $(document).ready(function () {
+
+            // For export to excel
+            let columnFilter_1 = "";
+            let columnFilter_2 = "";
+            let columnFilter_3 = "";
+            let columnFilter_4 = "";
+            let columnFilter_5 = "";
+            let columnFilter_6 = "";
+            let columnFilter_7 = "";
+            let columnFilter_8 = "";
+            let columnFilter_9 = "";
+            let columnFilter_10 = "";
+            let columnFilter_11 = "";
+            let columnFilter_12 = "";
+            let columnFilter_13 = "";
+            let columnFilter_14 = "";
+            let columnFilter_15 = "";
+            let colIndexOrder = 0;
+            let colOrderDirection = "";
+
+            let spares = false;
+
+            if ("@ViewBag.spares" == "True") {
+                spares = true;
+            }
+
+            if ("@Model.isSpares" == "True") {
+                spares = true;
+            }
+
+            if (spares) {
+                $('#pricesTableForSpares').DataTable().destroy();
+                initTableForSpares();
+            } else {
+                $('#pricesTable').DataTable().destroy();
+                initTable();
+            }
+
+            $('.table tfoot th').each(function (i) {
+                let title = $(this).text();
+                if (title != '@localizer["Actions"]') {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            $('#btn-create').on('click', function () {
+                jQueryModalGet('/Sales/Price/OnGetCreateOrEdit?spares=' + spares, '@localizer["New price"]');
+            });
+
+            $('#btn-update-prices').on('click', function () {
+                window.location.href = '/Sales/Price/_UpdatePrices?spares=' + spares;
+            });
+
+            $('#checkSimplemak').change(function () {
+                if (this.checked) {
+                    refreshTable();
+                } else {
+                    refreshTable();
+                }
+            });
+
+            $('#checkImported').change(function () {
+                if (this.checked) {
+                    refreshTable();
+                } else {
+                    refreshTable();
+                }
+            });
+
+            $('#checkPriceAll').change(function () {
+
+                cleanInputSearchs();
+
+                if (this.checked) {
+                    $('#pricesTable').DataTable().column(10).visible(true);
+                    $('#pricesTable').DataTable().column(11).visible(true);
+                    $('#pricesTable').DataTable().column(12).visible(true);
+
+                    $('#pricesTable').DataTable().order([3, 'desc']).draw();
+
+                    setFooterInputs();
+                } else {
+                    $('#pricesTable').DataTable().column(10).visible(false);
+                    $('#pricesTable').DataTable().column(11).visible(false);
+                    $('#pricesTable').DataTable().column(12).visible(false);
+
+                    $('#pricesTable').DataTable().order([3, 'desc']).draw();
+                }
+            });
+
+            $('#checkPriceArg').change(function () {
+
+                cleanInputSearchs();
+
+                if (this.checked) {
+                    $('#pricesTable').DataTable().column(7).visible(true);
+                    $('#pricesTable').DataTable().column(8).visible(true);
+                    $('#pricesTable').DataTable().column(9).visible(true);
+
+                    $('#pricesTable').DataTable().order([3, 'desc']).draw();
+
+                    setFooterInputs();
+                } else {
+                    $('#pricesTable').DataTable().column(7).visible(false);
+                    $('#pricesTable').DataTable().column(8).visible(false);
+                    $('#pricesTable').DataTable().column(9).visible(false);
+
+                    $('#pricesTable').DataTable().order([3, 'desc']).draw();
+                }
+            });
+
+            $('#checkPriceMx').change(function () {
+
+                cleanInputSearchs();
+
+                if (this.checked) {
+                    $('#pricesTable').DataTable().column(13).visible(true);
+                    $('#pricesTable').DataTable().column(14).visible(true);
+                    $('#pricesTable').DataTable().column(15).visible(true);
+
+                    $('#pricesTable').DataTable().order([3, 'desc']).draw();
+
+                    setFooterInputs();
+                } else {
+                    $('#pricesTable').DataTable().column(13).visible(false);
+                    $('#pricesTable').DataTable().column(14).visible(false);
+                    $('#pricesTable').DataTable().column(15).visible(false);
+
+                    $('#pricesTable').DataTable().order([3, 'desc']).draw();
+                }
+            });
+
+            // For export to excel
+            if (spares) {
+                colIndexOrder = $('#pricesTableForSpares').DataTable().order()[0][0];
+                colOrderDirection = $('#pricesTableForSpares').DataTable().order()[0][1];
+            } else {
+                colIndexOrder = $('#pricesTable').DataTable().order()[0][0];
+                colOrderDirection = $('#pricesTable').DataTable().order()[0][1];
+            }
+
+            // For export to excel
+            $('div.dataTables_scrollHeadInner thead').on('click', 'th', function () {
+
+                if ($(this).hasClass("sorting") && !$(this).hasClass("sorting_asc") && !$(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+                else if ($(this).hasClass("sorting_asc")) {
+                    colOrderDirection = "desc";
+                }
+                else if ($(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+
+                if (spares) {
+
+                    switch ($('#pricesTableForSpares').DataTable().column(this).index()) {
+                        case 2:
+                            colIndexOrder = 2;
+                            break;
+                        case 3:
+                            colIndexOrder = 3;
+                            break;
+                        case 4:
+                            colIndexOrder = 4;
+                            break;
+                        case 5:
+                            colIndexOrder = 5;
+                            break;
+                        case 6:
+                            colIndexOrder = 6;
+                            break;
+                        case 7:
+                            colIndexOrder = 7;
+                            break;
+                        case 8:
+                            colIndexOrder = 8;
+                            break;
+                        case 9:
+                            colIndexOrder = 9;
+                            break;
+                    }
+
+                } else {
+
+                    switch ($('#pricesTable').DataTable().column(this).index()) {
+                        case 2:
+                            colIndexOrder = 2;
+                            break;
+                        case 3:
+                            colIndexOrder = 3;
+                            break;
+                        case 4:
+                            colIndexOrder = 4;
+                            break;
+                        case 5:
+                            colIndexOrder = 5;
+                            break;
+                        case 6:
+                            colIndexOrder = 6;
+                            break;
+                        case 7:
+                            colIndexOrder = 7;
+                            break;
+                        case 8:
+                            colIndexOrder = 8;
+                            break;
+                        case 9:
+                            colIndexOrder = 9;
+                            break;
+                        case 10:
+                            colIndexOrder = 10;
+                            break;
+                        case 11:
+                            colIndexOrder = 11;
+                            break;
+                        case 12:
+                            colIndexOrder = 12;
+                            break;
+                        case 13:
+                            colIndexOrder = 13;
+                            break;
+                        case 14:
+                            colIndexOrder = 14;
+                            break;
+                        case 15:
+                            colIndexOrder = 15;
+                            break;
+                    }
+
+                }
+
+            });
+
+            // For export to excel
+            $('.search-control').keyup(function (e) {
+                let colIndex = $(this).attr("data-index");
+                let valueOfInput = $(this).val();
+
+                if (colIndex == 1) {
+                    columnFilter_1 = valueOfInput;
+                }
+                if (colIndex == 2) {
+                    columnFilter_2 = valueOfInput;
+                }
+                else if (colIndex == 3) {
+                    columnFilter_3 = valueOfInput;
+                }
+                else if (colIndex == 4) {
+                    columnFilter_4 = valueOfInput;
+                }
+                else if (colIndex == 5) {
+                    columnFilter_5 = valueOfInput;
+                }
+                else if (colIndex == 6) {
+                    columnFilter_6 = valueOfInput;
+                }
+                else if (colIndex == 7) {
+                    columnFilter_7 = valueOfInput;
+                }
+                else if (colIndex == 8) {
+                    columnFilter_8 = valueOfInput;
+                }
+                else if (colIndex == 9) {
+                    columnFilter_9 = valueOfInput;
+                }
+                else if (colIndex == 10) {
+                    columnFilter_10 = valueOfInput;
+                }
+                else if (colIndex == 11) {
+                    columnFilter_11 = valueOfInput;
+                }
+                else if (colIndex == 12) {
+                    columnFilter_12 = valueOfInput;
+                }
+                else if (colIndex == 13) {
+                    columnFilter_13 = valueOfInput;
+                }
+                else if (colIndex == 14) {
+                    columnFilter_14 = valueOfInput;
+                }
+                else if (colIndex == 15) {
+                    columnFilter_15 = valueOfInput;
+                }
+            }).keyup();
+
+            // For export to excel
+            $('#btn-export-excel').on('click', function () {
+
+                let filter_checkSimplemak = false;
+                let filter_checkImported = false;
+                let filter_checkPriceAll = false;
+                let filter_checkPriceArg = false;
+                let filter_checkPriceMx = false;
+
+                if ($('#checkSimplemak').prop('checked')) {
+                    filter_checkSimplemak = true;
+                }
+                if ($('#checkImported').prop('checked')) {
+                    filter_checkImported = true;
+                }
+                if (!spares) {
+                    if ($('#checkPriceAll').prop('checked')) {
+                        filter_checkPriceAll = true;
+                    }
+                    if ($('#checkPriceArg').prop('checked')) {
+                        filter_checkPriceArg = true;
+                    }
+                    if ($('#checkPriceMx').prop('checked')) {
+                        filter_checkPriceMx = true;
+                    }
+                }
+
+                if (spares) {
+
+                    window.location.href = "/Sales/Price/ExportToExcel?spares=" + spares +
+                        "&columnFilter_1=" + columnFilter_1 +
+                        "&columnFilter_2=" + columnFilter_2 +
+                        "&columnFilter_3=" + columnFilter_3 +
+                        "&columnFilter_4=" + columnFilter_4 +
+                        "&columnFilter_5=" + columnFilter_5 +
+                        "&columnFilter_6=" + columnFilter_6 +
+                        "&columnFilter_7=" + columnFilter_7 +
+                        "&columnFilter_8=" + columnFilter_8 +
+                        "&columnFilter_9=" + columnFilter_9 +
+                        "&filter_checkSimplemak=" + filter_checkSimplemak +
+                        "&filter_checkImported=" + filter_checkImported +
+                        "&colIndexOrder=" + colIndexOrder +
+                        "&colOrderDirection=" + colOrderDirection;
+
+                } else {
+
+                    window.location.href = "/Sales/Price/ExportToExcel?spares=" + spares +
+                        "&columnFilter_1=" + columnFilter_1 +
+                        "&columnFilter_2=" + columnFilter_2 +
+                        "&columnFilter_3=" + columnFilter_3 +
+                        "&columnFilter_4=" + columnFilter_4 +
+                        "&columnFilter_5=" + columnFilter_5 +
+                        "&columnFilter_6=" + columnFilter_6 +
+                        "&columnFilter_7=" + columnFilter_7 +
+                        "&columnFilter_8=" + columnFilter_8 +
+                        "&columnFilter_9=" + columnFilter_9 +
+                        "&columnFilter_10=" + columnFilter_10 +
+                        "&columnFilter_11=" + columnFilter_11 +
+                        "&columnFilter_12=" + columnFilter_12 +
+                        "&columnFilter_13=" + columnFilter_13 +
+                        "&columnFilter_14=" + columnFilter_14 +
+                        "&columnFilter_15=" + columnFilter_15 +
+                        "&filter_checkSimplemak=" + filter_checkSimplemak +
+                        "&filter_checkImported=" + filter_checkImported +
+                        "&filter_checkPriceAll=" + filter_checkPriceAll +
+                        "&filter_checkPriceArg=" + filter_checkPriceArg +
+                        "&filter_checkPriceMx=" + filter_checkPriceMx +
+                        "&colIndexOrder=" + colIndexOrder +
+                        "&colOrderDirection=" + colOrderDirection;
+
+                }
+            });
+
+        });
+
+        function initTable() {
+            $('#pricesTable').DataTable({
+                "scrollY": '55vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "scroller": true,
+                "oLanguage": @localizer["LanguageDataTable"],
+                "sAjaxSource": "/Sales/Price/LoadPricesTable",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "spares", "value": false },
+                        { "name": "checkSimplemak", "value": $("#checkSimplemak").is(":checked") },
+                        { "name": "checkImported", "value": $("#checkImported").is(":checked") },
+                        { "name": "checkPriceAll", "value": $("#checkPriceAll").is(":checked") },
+                        { "name": "checkPriceArg", "value": $("#checkPriceArg").is(":checked") },
+                        { "name": "checkPriceMx", "value": $("#checkPriceMx").is(":checked") },
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "language": {
+                    "thousands": ".",
+                    "decimal": ",",
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "order": [[3, "desc"]],
+                "columnDefs": [
+                    {
+                        target: 7,
+                        visible: false,
+                    },
+                    {
+                        target: 8,
+                        visible: false,
+                    },
+                    {
+                        target: 9,
+                        visible: false,
+                    },
+                    {
+                        target: 10,
+                        visible: false,
+                    },
+                    {
+                        target: 11,
+                        visible: false,
+                    },
+                    {
+                        target: 12,
+                        visible: false,
+                    },
+                    {
+                        target: 13,
+                        visible: false,
+                    },
+                    {
+                        target: 14,
+                        visible: false,
+                    },
+                    {
+                        target: 15,
+                        visible: false,
+                    },
+                ],
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false
+                    },
+                    {
+                        "searchable": false,
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+
+                            if (row.structureViewModel != null) {
+                                html += '<a class="btn action-btn" title="@localizer["History price"]" onclick="getPriceHistoryForProduct(' + row.productId + ', ' + row.structureViewModel.id + ', ' + false + ', ' + '\'' + row.productViewModel.codeAndDescription.toString().replace('"', '') + '\'' + ', ' + '\'' + row.structureViewModel.description + '\')"> <img class="action-img-icon" src="../../../images/Historico.svg" width="30" height="30" /> </a>';
+                            } else {
+                                html += '<a class="btn action-btn" title="@localizer["History price"]" onclick="getPriceHistoryForProduct(' + row.productId + ', ' + null + ', ' + false + ', ' + '\'' + row.productViewModel.codeAndDescription.toString().replace('"', '') + '\'' + ', ' + null + ')"> <img class="action-img-icon" src="../../../images/Historico.svg" width="30" height="30" /> </a>';
+                            }
+
+                            html += '<a class="btn action-btn" title="" onclick="editPrice(' + row.id + ', ' + false + ')"> <img class="action-img-icon" src="../../../images/Editar.svg" width="22" height="22" /> </a>';
+
+                            html += '</div></div>';
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                if (value.subCategory === null) {
+                                    return "";
+                                } else {
+                                    return value.subCategory.description;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.code;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "structureViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                if (value.unitMeasure === null) {
+                                    return "";
+                                } else {
+                                    return value.unitMeasure.description;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceArg",
+                        "render": $.fn.dataTable.render.number('.', ','),
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceArgDate",
+                        "render": function (priceArgDate) {
+                            if (priceArgDate === null) {
+                                return "";
+                            } else {
+                                return moment(priceArgDate).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceArgObservations",
+                        "autoWidth": true,
+                        "searchable": true,
+                    },
+                    {
+                        "data": "priceAll",
+                        "render": $.fn.dataTable.render.number('.', ','),
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceAllDate",
+                        "render": function (priceAllDate) {
+                            if (priceAllDate === null) {
+                                return "";
+                            } else {
+                                return moment(priceAllDate).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceAllObservations",
+                        "autoWidth": true,
+                        "searchable": true,
+                    },
+                    {
+                        "data": "priceMx",
+                        "render": $.fn.dataTable.render.number('.', ','),
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceMxDate",
+                        "render": function (priceMxDate) {
+                            if (priceMxDate === null) {
+                                return "";
+                            } else {
+                                return moment(priceMxDate).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceMxObservations",
+                        "autoWidth": true,
+                        "searchable": true,
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                }
+            });
+        };
+
+        function initTableForSpares() {
+            $('#pricesTableForSpares').DataTable({
+                "scrollY": '55vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "scroller": true,
+                "oLanguage": @localizer["LanguageDataTable"],
+                "sAjaxSource": "/Sales/Price/LoadPricesTable",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "spares", "value": true },
+                        { "name": "checkSimplemak", "value": $("#checkSimplemak").is(":checked") },
+                        { "name": "checkImported", "value": $("#checkImported").is(":checked") },
+                        { "name": "checkPriceAll", "value": true },
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "order": [[3, "desc"]],
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false
+                    },
+                    {
+                        "searchable": false,
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+
+                            if (row.structureViewModel != null) {
+                                html += '<a class="btn action-btn" title="@localizer["History price"]" onclick="getPriceHistoryForProduct(' + row.productId + ', ' + row.structureViewModel.id + ', ' + true + ', ' + '\'' + row.productViewModel.codeAndDescription.toString().replace('"', '') + '\'' + ', ' + '\'' + row.structureViewModel.description + '\')"> <img class="action-img-icon" src="../../../images/Historico.svg" width="30" height="30" /> </a>';
+                            } else {
+                                html += '<a class="btn action-btn" title="@localizer["History price"]" onclick="getPriceHistoryForProduct(' + row.productId + ', ' + null + ', ' + true + ', ' + '\'' + row.productViewModel.codeAndDescription.toString().replace('"', '') + '\'' + ', ' + null + ')"> <img class="action-img-icon" src="../../../images/Historico.svg" width="30" height="30" /> </a>';
+                            }
+
+                            html += '<a class="btn action-btn" title="" onclick="editPrice(' + row.id + ', ' + true + ')"> <img class="action-img-icon" src="../../../images/Editar.svg" width="22" height="22" /> </a>';
+
+                            html += '</div></div>';
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                if (value.subCategory === null) {
+                                    return "";
+                                } else {
+                                    return value.subCategory.description;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.code;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "structureViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productViewModel",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                if (value.unitMeasure === null) {
+                                    return "";
+                                } else {
+                                    return value.unitMeasure.description;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceAll",
+                        "render": $.fn.dataTable.render.number('.', ',', 2),
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "priceAllDate",
+                        "render": function (priceAllDate) {
+                            if (priceAllDate === null) {
+                                return "";
+                            } else {
+                                return moment(priceAllDate).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceAllObservations",
+                        "autoWidth": true,
+                        "searchable": true,
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                }
+            });
+        };
+
+        function setFooterInputs() {
+            $('.table tfoot th').each(function (i) {
+                let title = $(this).text();
+                if (title == 'Precio USD COMEX') {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                }
+                if (title == 'Precio USD ARG') {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                }
+                if (title == 'Precio $ MXN') {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                }
+                if (title == '@localizer["Date"]') {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                }
+                if (title == '@localizer["Observations"]') {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                }
+            });
+
+            $('#pricesTable').DataTable().columns().every(function () {
+                var that = this;
+                $('input', this.footer()).on('keyup change clear', function () {
+                    if (that.search() !== this.value) {
+                        that
+                            .search(this.value)
+                            .draw();
+                    }
+                });
+            });
+
+            $('#pricesTableForSpares').DataTable().columns().every(function () {
+                var that = this;
+                $('input', this.footer()).on('keyup change clear', function () {
+                    if (that.search() !== this.value) {
+                        that
+                            .search(this.value)
+                            .draw();
+                    }
+                });
+            });
+        }
+
+        function getPriceHistoryForProduct(productId, structureId, spares, codeAndDescription, structureDescription) {
+
+            $('#checkPriceAll').prop('checked', false);
+
+            $('#checkPriceArg').prop('checked', false);
+
+            $('#checkPriceMx').prop('checked', false);
+
+            window.location.href = '/Sales/Price/_PriceHistoryByProduct?productId=' + productId + '&codeAndDescription=' + codeAndDescription + '&structureId=' + structureId + '&structureDescription=' + structureDescription + '&spares=' + spares;
+        };
+
+        function refreshTable() {
+            $('#pricesTable').DataTable().clear();
+            $('#pricesTable').DataTable().ajax.reload();
+            $('#pricesTableForSpares').DataTable().clear();
+            $('#pricesTableForSpares').DataTable().ajax.reload();
+        }
+
+        function cleanInputSearchs() {
+            $('#pricesTable').DataTable().columns().every(function () {
+                var that = this;
+                $('input', this.footer()).val('');
+                that.search('').draw();
+            });
+
+            $('#pricesTableForSpares').DataTable().columns().every(function () {
+                var that = this;
+                $('input', this.footer()).val('');
+                that.search('').draw();
+            });
+        }
+
+        function editPrice(id, spares) {
+            jQueryModalGet('/Sales/Price/OnGetCreateOrEdit?id=' + id + '&spares=' + spares, '@localizer["Edit price"]');
+        }
+    </script>
+}

@@ -1,0 +1,79 @@
+﻿#missingProductsTable_filter, #missingProductTable_filter, #missingProductTable_info, #missingProductTable_length {
+    display: none
+}
+
+.quantity_column {
+    text-align: right;
+}
+
+.unitmeasure_column {
+    text-align: left;
+}
+
+.delete_column {
+    text-align: center;
+}
+
+#helpDiv {
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+
+.modal-content.edit-modal {
+    width: 40% !important
+}
+
+@media only screen and (max-width: 767px) {
+    #div-export-buttons {
+        display: contents;
+        text-align: center;
+    }
+
+    #btn-create {
+        width: 100%;
+        flex: 1 1 auto;
+        float: none;
+        text-align: center;
+        margin-bottom: 0.5em;
+    }
+
+    #btn-create-purchaseOrder {
+        width: 100%;
+        flex: 1 1 auto;
+        float: none;
+        text-align: center;
+        margin-bottom: 0.5em;
+    }
+
+    #btn-create-quoteRequest {
+        width: 100%;
+        flex: 1 1 auto;
+        float: none;
+        text-align: center;
+        margin-bottom: 0.5em;
+    }
+
+    div.dt-buttons {
+        float: none;
+        width: 100%;
+        text-align: center;
+        margin-bottom: .5em;
+    }
+}
+
+
+@media only screen and (max-width: 878px) and (min-width: 768px) {
+    #div-export-buttons {
+        right: 20px;
+        position: inherit;
+        top: -40px;
+    }
+}
+
+@media only screen and (max-width: 1157px) and (min-width: 993px) {
+    #div-export-buttons {
+        right: 20px;
+        position: inherit;
+        top: -40px;
+    }
+}

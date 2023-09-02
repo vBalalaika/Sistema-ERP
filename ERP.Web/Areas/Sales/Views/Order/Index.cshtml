@@ -1,0 +1,2406 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    if (ViewData["OrderTitle"] != null)
+    {
+        ViewData["Title"] = ViewData["OrderTitle"].ToString();
+    }
+}
+@using ERP.Web.Areas.Sales.Models
+@model OrderHeaderViewModel
+@{
+    var saleOrderEditPermission = false;
+    var saleOrderDeletePermission = false;
+    var productionOrderEditPermission = false;
+    var productionOrderDeletePermission = false;
+    if ((AuthorizationService.AuthorizeAsync(User, Permissions.SaleOrder.Edit)).Result.Succeeded)
+    {
+        saleOrderEditPermission = true;
+    }
+    if ((AuthorizationService.AuthorizeAsync(User, Permissions.SaleOrder.Delete)).Result.Succeeded)
+    {
+        saleOrderDeletePermission = true;
+    }
+    if ((AuthorizationService.AuthorizeAsync(User, Permissions.ProductionOrder.Edit)).Result.Succeeded)
+    {
+        productionOrderEditPermission = true;
+    }
+    if ((AuthorizationService.AuthorizeAsync(User, Permissions.ProductionOrder.Delete)).Result.Succeeded)
+    {
+        productionOrderDeletePermission = true;
+    }
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/Sales/sales.css" />
+</head>
+
+<body>
+    @Html.HiddenFor(x => x.isSale)
+
+    <div class="sticky-top-filters form-row mt-4 bg-filter-custom p-2">
+        <div class="col-sm-12 col-md-12 col-xl-6 mb-3 pr-0 mr-3">
+            <label for="daterange">@localizer["Date"]</label>
+            <input id="daterange" type="text" name="daterange" class="form-control pr-4 border-0" />
+        </div>
+
+        @if (ViewBag.onlySpares)
+        {
+            <div id="sourceProductChecks" class="col-sm-5 col-md-6 col-xl-4 mb-3">
+                <label for="sourceProductChecks" class="w-100">@localizer["Product source"]</label>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkSimplemak" checked>
+                        <label class="custom-control-label" for="checkSimplemak">@localizer["Simplemak"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkImported" checked>
+                        <label class="custom-control-label" for="checkImported">@localizer["Imported"]</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="saleCategoryChecks" class="col-sm-6 col-md-6 col-xl-5 mb-3 d-none">
+                <label for="saleCategoryChecks" class="w-100">@localizer["Sale category"]</label>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkMachines">
+                        <label class="custom-control-label" for="checkMachines">@localizer["Machines"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkAccesories">
+                        <label class="custom-control-label" for="checkAccesories">@localizer["Accesories"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkSpares" checked>
+                        <label class="custom-control-label" for="checkSpares">@localizer["Spares"]</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="otherChecksDiv" class="col-sm-12 col-md-12 col-xl-4 mb-3">
+                <div class="form-check form-check-inline d-none">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkForStock">
+                        <label class="custom-control-label" for="checkForStock">@localizer["For stock"]</label>
+                    </div>
+                </div>
+
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkAll">
+                        <label class="custom-control-label" for="checkAll">@localizer["All categories"]</label>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (Model.isSale)
+        {
+            <div id="sourceProductChecks" class="col-sm-5 col-md-6 col-xl-4 mb-3">
+                <label for="sourceProductChecks" class="w-100">@localizer["Product source"]</label>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkSimplemak" checked>
+                        <label class="custom-control-label" for="checkSimplemak">@localizer["Simplemak"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkImported" checked>
+                        <label class="custom-control-label" for="checkImported">@localizer["Imported"]</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="saleCategoryChecks" class="col-sm-6 col-md-6 col-xl-5 mb-3">
+                <label for="saleCategoryChecks" class="w-100">@localizer["Sale category"]</label>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkMachines" checked>
+                        <label class="custom-control-label" for="checkMachines">@localizer["Machines"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkAccesories" checked>
+                        <label class="custom-control-label" for="checkAccesories">@localizer["Accesories"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline d-none">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkSpares">
+                        <label class="custom-control-label" for="checkSpares">@localizer["Spares"]</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="otherChecksDiv" class="col-sm-12 col-md-12 col-xl-4 mb-3">
+                <div class="form-check form-check-inline d-none">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkForStock">
+                        <label class="custom-control-label" for="checkForStock">@localizer["For stock"]</label>
+                    </div>
+                </div>
+
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkAll">
+                        <label class="custom-control-label" for="checkAll">@localizer["All categories"]</label>
+                    </div>
+                </div>
+            </div>
+        }
+        else if (!Model.isSale)
+        {
+            <div id="sourceProductChecks" class="col-sm-5 col-md-6 col-xl-4 mb-3 d-none">
+                <label for="sourceProductChecks" class="w-100">@localizer["Product source"]</label>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkSimplemak" checked>
+                        <label class="custom-control-label" for="checkSimplemak">@localizer["Simplemak"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkImported">
+                        <label class="custom-control-label" for="checkImported">@localizer["Imported"]</label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="saleCategoryChecks" class="col-sm-8 col-md-8 col-xl-8 mb-3">
+                <label for="saleCategoryChecks" class="w-100">@localizer["Category"]</label>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkMachines" checked>
+                        <label class="custom-control-label" for="checkMachines">@localizer["Machines"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkAccesories" checked>
+                        <label class="custom-control-label" for="checkAccesories">@localizer["Accesories"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkSpares" checked>
+                        <label class="custom-control-label" for="checkSpares">@localizer["Spares"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkForStock" checked>
+                        <label class="custom-control-label" for="checkForStock">@localizer["For stock"]</label>
+                    </div>
+                </div>
+
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkAll">
+                        <label class="custom-control-label" for="checkAll">@localizer["All categories"]</label>
+                    </div>
+                </div>
+            </div>
+        }
+
+
+    </div>
+
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+
+            <div id="div-export-buttons">
+                <div class="btn-group">
+                    @{
+                        if (Model.isSale)
+                        {
+                            if ((AuthorizationService.AuthorizeAsync(User, Permissions.SaleOrder.Create)).Result.Succeeded)
+                            {
+                                <a id="btn-create" class="btn btn-secondary text-white pl-1 pr-1" title="@localizer["New sale order"]">
+                                    <img class="tables-img-icon" src="~/images/NewOV.svg" width="30" height="30" />
+                                </a>
+
+                                //<a id="btn-export-excel-all" class="btn btn-secondary text-white h-100 pl-1 pr-1" title="@localizer["Export all"]">
+                                //    <img class="tables-img-icon" src="~/images/Excel.svg" width="30" height="30" />
+                                //</a>
+
+                            }
+                        }
+                        else
+                        {
+                            if ((AuthorizationService.AuthorizeAsync(User, Permissions.ProductionOrder.Create)).Result.Succeeded)
+                            {
+                                <a id="btnGenerateWorkOrder" class="btn btn-secondary text-white h-100 pl-1 pr-1" title="@localizer["To production"]">
+                                    <img class="tables-img-icon" src="~/images/A producir.svg" width="30" height="30" />
+                                </a>
+                                <a id="btn-create" class="btn btn-secondary text-white pl-1 pr-1" title="@localizer["New production order"]">
+                                    <img class="tables-img-icon" src="~/images/NewOP.svg" width="30" height="30" />
+                                </a>
+
+                                //<a id="btn-export-excel-all" class="btn btn-secondary text-white h-100 pl-1 pr-1" title="@localizer["Export all"]">
+                                //    <img class="tables-img-icon" src="~/images/Excel.svg" width="30" height="30" />
+                                //</a>
+
+                            }
+                        }
+                    }
+
+                    <a id="btn-export-excel-all" class="btn btn-secondary text-white h-100 pl-1 pr-1" title="@localizer["Export all"]">
+                        <img class="tables-img-icon" src="~/images/Excel.svg" width="30" height="30" />
+                    </a>
+                </div>
+            </div>
+
+            @{
+                if (Model.isSale)
+                {
+                    <table id="saleOrdersTable" class="table table-striped-blue table-hover w-100 nowrap">
+                        <thead class="bg-thead">
+                            <tr>
+                                <th hidden>@localizer["Id"]</th>
+                                <th>@localizer["Actions"]</th>
+                                <th>Nº OV/OP</th>
+                                <th>@localizer["Date"] OV/OP</th>
+                                <th>@localizer["Delivery date"]</th>
+                                <th>Nº prod</th>
+                                <th>@localizer["Code"]</th>
+                                <th>@localizer["Description"]</th>
+                                <th>@localizer["Configuration"]</th>
+                                <th>@localizer["Supply voltage"]</th>
+                                <th>@localizer["Quantity"]</th>
+                                <th>@localizer["Client"]</th>
+                                <th>@localizer["Country"]</th>
+                                <th>@localizer["Sale category"]</th>
+                                <th>@localizer["Family/Heading"]</th>
+                                <th>@localizer["State"]</th>
+                                <th>@localizer["Percentage of completion"]</th>
+                                <th>@localizer["Delivered date"]</th>
+                                <th>@localizer["User"]</th>
+                                <th>@localizer["Billed"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th hidden>@localizer["Id"]</th>
+                                <th>@localizer["Actions"]</th>
+                                <th>Nº OV/OP</th>
+                                <th>@localizer["Date"] OV/OP</th>
+                                <th>@localizer["Delivery date"]</th>
+                                <th>Nº prod</th>
+                                <th>@localizer["Code"]</th>
+                                <th>@localizer["Description"]</th>
+                                <th>@localizer["Configuration"]</th>
+                                <th>@localizer["Supply voltage"]</th>
+                                <th>@localizer["Quantity"]</th>
+                                <th>@localizer["Client"]</th>
+                                <th>@localizer["Country"]</th>
+                                <th>@localizer["Sale category"]</th>
+                                <th>@localizer["Family/Heading"]</th>
+                                <th>@localizer["State"]</th>
+                                <th>@localizer["Percentage of completion"]</th>
+                                <th>@localizer["Delivered date"]</th>
+                                <th>@localizer["User"]</th>
+                                <th>@localizer["Billed"]</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                }
+                else
+                {
+                    <table id="productionOrdersTable" class="table table-striped-blue table-hover w-100 nowrap">
+                        <thead class="bg-thead">
+                            <tr>
+                                <th hidden>@localizer["Id"]</th>
+                                <th>@localizer["Actions"]</th>
+                                <th>Nº OV/OP</th>
+                                <th>@localizer["Date"] OV/OP</th>
+                                <th>@localizer["Delivery date"]</th>
+                                <th>Nº prod</th>
+                                <th>@localizer["Code"]</th>
+                                <th>@localizer["Description"]</th>
+                                <th>@localizer["Configuration"]</th>
+                                <th>@localizer["Supply voltage"]</th>
+                                <th>@localizer["Quantity"]</th>
+                                <th>@localizer["Client"]</th>
+                                <th>@localizer["State"]</th>
+                                <th>@localizer["Percentage of completion"]</th>
+                                <th>@localizer["Family/Heading"]</th>
+                                <th>@localizer["Start"] OT</th>
+                                <th>@localizer["Delivered date"]</th>
+                                <th>@localizer["User"]</th>
+                                @*<th hidden>rowOrder</th>*@
+                            </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <th hidden>@localizer["Id"]</th>
+                                <th>@localizer["Actions"]</th>
+                                <th>Nº OV/OP</th>
+                                <th>@localizer["Date"] OV/OP</th>
+                                <th>@localizer["Delivery date"]</th>
+                                <th>Nº prod</th>
+                                <th>@localizer["Code"]</th>
+                                <th>@localizer["Description"]</th>
+                                <th>@localizer["Configuration"]</th>
+                                <th>@localizer["Supply voltage"]</th>
+                                <th>@localizer["Quantity"]</th>
+                                <th>@localizer["Client"]</th>
+                                <th>@localizer["State"]</th>
+                                <th>@localizer["Percentage of completion"]</th>
+                                <th>@localizer["Family/Heading"]</th>
+                                <th>@localizer["Start"] OT</th>
+                                <th>@localizer["Delivered date"]</th>
+                                <th>@localizer["User"]</th>
+                                @*<th hidden>rowOrder</th>*@
+                            </tr>
+                        </tfoot>
+                    </table>
+                }
+            }
+        </div>
+    </div>
+
+</body>
+
+@section Scripts
+    {
+    <script type="text/javascript" src="~/js/site.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function () {
+
+            let OrdersToProductionIdList = [];
+            let orderId = 0;
+            let hasClient = false;
+            let isSale = false;
+
+            let orderDetailId = 0;
+            let isImportedProduct = false;
+            let orderStateId = 0;
+
+            let start = moment().subtract(5, 'months');
+            let end = moment();
+            let dateFromFilterValue = start.format('DD/MM/YYYY');
+            let dateToFilterValue = end.format('DD/MM/YYYY');
+
+            let onlySpares = false;
+            if ("@ViewBag.onlySpares" == "True") {
+                onlySpares = true;
+            }
+
+            /* Filter parameters for export to excel */
+            let columnFilter_1 = "";
+            let columnFilter_2 = "";
+            let columnFilter_3 = "";
+            let columnFilter_4 = "";
+            let columnFilter_5 = "";
+            let columnFilter_6 = "";
+            let columnFilter_7 = "";
+            let columnFilter_8 = "";
+            let columnFilter_9 = "";
+            let columnFilter_10 = "";
+            let columnFilter_11 = "";
+            let columnFilter_12 = "";
+            let columnFilter_13 = "";
+            let columnFilter_14 = "";
+            let columnFilter_15 = "";
+            let columnFilter_16 = "";
+            let columnFilter_17 = "";
+            let columnFilter_18 = "";
+            let columnFilter_19 = "";
+            let colIndexOrder = 0;
+            let colOrderDirection = "";
+
+            // /sales/order?sale=true&fromClient=true
+            let url = (window.location.pathname + window.location.search);
+            let urlFromClient = url.split("&")[1];
+
+            let saleOrderEditPermission = "disabled";
+            let saleOrderDeletePermission = "disabled";
+            let productionOrderEditPermission = "disabled";
+            let productionOrderDeletePermission = "disabled";
+
+            if ("@saleOrderEditPermission" == "True") {
+                saleOrderEditPermission = "";
+            }
+            if ("@saleOrderDeletePermission" == "True") {
+                saleOrderDeletePermission = "";
+            }
+            if ("@productionOrderEditPermission" == "True") {
+                productionOrderEditPermission = "";
+            }
+            if ("@productionOrderDeletePermission" == "True") {
+                productionOrderDeletePermission = "";
+            }
+
+            $('input[name="daterange"]').daterangepicker({
+                "locale": {
+                    "format": "DD/MM/YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Aceptar",
+                    "cancelLabel": "Cancelar",
+                    "fromLabel": "Desde",
+                    "toLabel": "Hasta",
+                    "daysOfWeek": [
+                        "Do",
+                        "Lu",
+                        "Ma",
+                        "Mi",
+                        "Ju",
+                        "Vi",
+                        "Sa"
+                    ],
+                    "monthNames": [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre"
+                    ],
+                    "firstDay": 1
+                },
+                "autoApply": true,
+                "showDropdowns": true,
+                "opens": "right",
+                "buttonClasses": "btn btn-sm",
+                "applyClass": "btn-primary",
+                "startDate": start,
+                "endDate": end,
+                "minYear": 1995
+            }, cb);
+
+            function cb(start, end) {
+                $('#daterange span').html(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+                dateFromFilterValue = start.format('DD/MM/YYYY');
+                dateToFilterValue = end.format('DD/MM/YYYY');
+                refreshTable();
+            }
+
+            $('#daterange').on('apply.daterangepicker', function (ev, picker) {
+                dateFromFilterValue = picker.startDate.format('DD/MM/YYYY');
+                dateToFilterValue = picker.endDate.format('DD/MM/YYYY');
+                refreshTable();
+            });
+
+            if (urlFromClient == "fromClient=true") {
+                jQueryModalGet('/Sales/Order/OnGetCreateOrEdit?sale=true', '@localizer["New sale order"]');
+            }
+
+            if ("@Model.isSale" == "True") {
+                isSale = true;
+            }
+
+            if (isSale) {
+                $('#btn-create').on('click', function () {
+                    jQueryModalGet('/Sales/Order/OnGetCreateOrEdit?sale=true&onlySpares=' + onlySpares, '@localizer["New sale order"]');
+                });
+            } else {
+                $('#btn-create').on('click', function () {
+                    jQueryModalGet('/Sales/Order/OnGetCreateOrEdit?sale=false&onlySpares=' + onlySpares, '@localizer["New production order"]');
+                });
+            }
+
+            $('#checkAll').change(function () {
+                if (this.checked) {
+
+                    if (!onlySpares) {
+                        $('#checkSimplemak').prop('checked', true);
+                        $('#checkImported').prop('checked', true);
+                        $('#checkMachines').prop('checked', true);
+                        $('#checkAccesories').prop('checked', true);
+                        if (!isSale) {
+                            $('#checkSpares').prop('checked', true);
+                        } else {
+
+                            $('#checkSpares').prop('checked', false);
+                        }
+                        if (!isSale) {
+                            $('#checkForStock').prop('checked', true);
+                        }
+
+                        $('#checkSimplemak').prop('disabled', true);
+                        $('#checkImported').prop('disabled', true);
+                        $('#checkMachines').prop('disabled', true);
+                        $('#checkAccesories').prop('disabled', true);
+                        if (!isSale) {
+                            $('#checkSpares').prop('disabled', true);
+                        } else {
+                            $('#checkSpares').prop('disabled', false);
+                        }
+                        if (!isSale) {
+                            $('#checkForStock').prop('disabled', true);
+                        }
+
+                    } else {
+
+                        $('#checkSimplemak').prop('checked', true);
+                        $('#checkImported').prop('checked', true);
+                        $('#checkMachines').prop('checked', false);
+                        $('#checkAccesories').prop('checked', false);
+
+                        $('#checkSpares').prop('checked', true);
+
+                        $('#checkSimplemak').prop('disabled', true);
+                        $('#checkImported').prop('disabled', true);
+                        $('#checkSpares').prop('disabled', true);
+
+                    }
+
+                    // Setear rango de fechas para mostrar TODO
+                    let startDate = new Date('01/10/1999').toLocaleDateString();
+                    $('#daterange').data('daterangepicker').setStartDate(startDate);
+                    $('#daterange').data('daterangepicker').setEndDate(end);
+                    dateFromFilterValue = startDate;
+                    dateToFilterValue = end.format('DD/MM/YYYY');
+
+                    refreshTable();
+                } else {
+
+                    if (!onlySpares) {
+                        $('#checkSimplemak').prop('checked', true);
+                        $('#checkImported').prop('checked', false);
+                        $('#checkMachines').prop('checked', true);
+                        $('#checkAccesories').prop('checked', true);
+                        if (!isSale) {
+                            $('#checkSpares').prop('checked', true);
+                        } else {
+
+                            $('#checkSpares').prop('checked', false);
+                        }
+                        if (!isSale) {
+                            $('#checkForStock').prop('checked', true);
+                        }
+
+                        $('#checkSimplemak').prop('disabled', false);
+                        $('#checkImported').prop('disabled', false);
+                        $('#checkMachines').prop('disabled', false);
+                        $('#checkAccesories').prop('disabled', false);
+                        if (!isSale) {
+                            $('#checkSpares').prop('disabled', false);
+                        } else {
+                            $('#checkSpares').prop('disabled', false);
+                        }
+                        if (!isSale) {
+                            $('#checkForStock').prop('disabled', false);
+                        }
+                    } else {
+
+                        $('#checkSimplemak').prop('checked', true);
+                        $('#checkImported').prop('checked', false);
+                        $('#checkMachines').prop('checked', false);
+                        $('#checkAccesories').prop('checked', false);
+                        $('#checkSpares').prop('checked', true);
+
+                        $('#checkSimplemak').prop('disabled', false);
+                        $('#checkImported').prop('disabled', false);
+                        $('#checkMachines').prop('disabled', false);
+                        $('#checkAccesories').prop('disabled', false);
+                        $('#checkSpares').prop('disabled', false);
+
+                    }
+
+                    // Setear rango de fechas por defecto
+                    $('#daterange').data('daterangepicker').setStartDate(start);
+                    $('#daterange').data('daterangepicker').setEndDate(end);
+                    dateFromFilterValue = start.format('DD/MM/YYYY');
+                    dateToFilterValue = end.format('DD/MM/YYYY');
+
+                    refreshTable();
+                }
+            });
+
+            $('#checkSimplemak').change(function () {
+                if (this.checked) {
+                    refreshTable();
+                } else {
+                    refreshTable();
+                }
+            });
+
+            $('#checkImported').change(function () {
+                if (this.checked) {
+                    refreshTable();
+                } else {
+                    refreshTable();
+                }
+            });
+
+            $('#checkMachines').change(function () {
+                if (this.checked) {
+                    refreshTable();
+                } else {
+                    refreshTable();
+                }
+            });
+
+            $('#checkAccesories').change(function () {
+                if (this.checked) {
+                    refreshTable();
+                } else {
+                    refreshTable();
+                }
+            });
+
+            $('#checkSpares').change(function () {
+                if (this.checked) {
+                    refreshTable();
+                } else {
+                    refreshTable();
+                }
+            });
+
+            if (!isSale) {
+                $('#checkForStock').change(function () {
+                    if (this.checked) {
+                        refreshTable();
+                    } else {
+                        refreshTable();
+                    }
+                });
+            }
+
+            //Sale Order
+            if ($('#isSale').val() == "True") {
+
+                let saleOrdersTable = $('#saleOrdersTable').DataTable({
+                    "scrollY": '40vh',
+                    "scrollX": true,
+                    "scrollCollapse": true,
+                    "scroller": true,
+                    "oLanguage": @localizer["LanguageDataTable"],
+                    "sAjaxSource": "/Sales/Order/LoadAllSales",
+                    "sServerMethod": "POST",
+                    "fnServerParams": function (aoData) {
+                        aoData.push(
+                            { "name": "checkAll", "value": $("#checkAll").is(":checked") },
+                            { "name": "checkSimplemak", "value": $("#checkSimplemak").is(":checked") },
+                            { "name": "checkImported", "value": $("#checkImported").is(":checked") },
+                            { "name": "checkMachines", "value": $("#checkMachines").is(":checked") },
+                            { "name": "checkAccesories", "value": $("#checkAccesories").is(":checked") },
+                            { "name": "checkSpares", "value": $("#checkSpares").is(":checked") },
+                            { "name": "dateFromFilterValue", "value": dateFromFilterValue },
+                            { "name": "dateToFilterValue", "value": dateToFilterValue },
+                            { "name": "onlySpares", "value": onlySpares }
+                        );
+                    },
+                    "bServerSide": true,
+                    "bProcessing": true,
+                    "bSearchable": true,
+                    "language": {
+                        "processing":
+                            '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                    },
+                    "order": [[3, "desc"], [2, "desc"]],
+                    "columns": [
+                        {
+                            "data": "id",
+                            "searchable": false,
+                            "visible": false
+                        },
+                        {
+                            "searchable": false,
+                            "data": "id",
+                            "render": function (data, type, row, meta) {
+
+                                let iconSize = 22;
+
+                                let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+
+                                if(row.workOrder != null){
+                                    if(row.workOrder.startDate != null){
+                                        row.orderStateId = 2;
+                                    }
+                                }
+
+                                // Cambio del color de iconos segun row.orderStateId:
+                                switch (row.orderStateId) {
+                                    case 1:
+                                        // row.orderStateId = 1 => Pendiente (color normal)
+
+                                        // Icono OV
+                                        html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img  src="../../../images/OV_letra_blanca.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn" title="@localizer["Percentage of completion"]"><img class="action-img-icon" src="../../../images/Avance.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + saleOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + isSale + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+                                    case 2:
+                                        // row.orderStateId = 2 => En proceso (color amarillo #FFD680)
+
+                                        // Icono OV
+                                        html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="/images/OVamarillo_letra_blanca.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn" title="@localizer["Percentage of completion"]"><img src="/images/avanceAmarillo.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + saleOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + isSale + ')" ><img src="/images/Eliminaramarillo.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+                                    case 3:
+                                        // row.orderStateId = 3 => Finalizado (color verde #77DD77)
+
+                                        // Icono OV
+                                        html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OVverde.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn" title="@localizer["Percentage of completion"]"><img src="../../../images/avanceVerde.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + saleOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + isSale + ')" ><img src="../../../images/Eliminarverde.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+                                    case 4:
+                                        // row.orderStateId = 4 => Entregado  (color lila #BFADFE)
+
+                                        // Icono OV
+                                        html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OVlila.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn" title="@localizer["Percentage of completion"]"><img src="../../../images/avanceLila.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + saleOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + true + ')" ><img src="../../../images/Eliminarlila.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+                                    case 5:
+                                        // row.orderStateId = 5 => A producción  (color fuccia)
+
+                                        // Icono OV
+                                        html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OVfuccia.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn" title="@localizer["Percentage of completion"]"><img src="../../../images/Avance fuccia.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + saleOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + true + ')" ><img src="../../../images/Eliminar fuccia.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+                                    case 6:
+                                        // row.orderStateId = 6 => Anulado  (color gris)
+
+                                        // Icono OV
+                                        html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OVgris.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn" title="@localizer["Percentage of completion"]"><img src="../../../images/avanceGris.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + saleOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + true + ')" ><img src="../../../images/eliminarGris.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+                                }
+
+                                html += '</div></div>';
+                                return html;
+                            },
+                            "visible": true,
+                            "width": "5%",
+                        },
+                        {
+                            "data": "orderHeader",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.number;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": "text-center"
+                        },
+                        {
+                            "data": "orderHeader",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return moment(value.orderDate).format('DD/MM/YYYY');
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "deliveryDate",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return moment(value).format('DD/MM/YYYY');
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "productNumber",
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "product",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.code;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "product",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.description;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "structure",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.description;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "supplyVoltage",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.description;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "quantity",
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": "text-center",
+                            "render": $.fn.dataTable.render.number('.', ',', 2)
+                        },
+                        {
+                            "data": "orderHeader",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    if (value.client === null) {
+                                        return "";
+                                    } else {
+                                        return value.client.businessName;
+                                    }
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "orderHeader",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    if (value.client === null) {
+                                        return "";
+                                    } else {
+                                        if (value.client.country === null) {
+                                            return "";
+                                        } else {
+                                            return value.client.country.description;
+                                        }
+                                    }
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "saleCategory",
+                            "render": function (value){
+                                if(value.split('-')[1] != undefined){
+                                    return value.split('-')[1].trim();
+                                }
+                                else{
+                                    return value;
+                                }                                
+                            },
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "product",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    if (value.subCategory === null) {
+                                        return "";
+                                    } else {
+                                        return value.subCategory.description;
+                                    }
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "orderState",
+                            "render": function (data, type, row, meta) {
+                                if (row.workOrder != null) {
+                                    if (row.workOrder.startDate != null) {
+                                        return row.workOrder.getState;
+                                    }
+                                    else {
+                                        return row.orderState.name;
+                                    }
+                                }
+                                else {
+                                    return row.orderState.name;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+                        {
+                            "data": "percentageOfTotalAdvance",
+                            "render": function (data, type, row, meta) {
+                                if(row.workOrder != null){
+                                    if (row.workOrder.totalAdvance == 0) {
+                                        return '<div class="progress-bar-custom progress"> <div class="progress-bar" role="progressbar" style="width: ' + (row.workOrder.totalAdvance) + '%" aria-valuenow="' + (row.workOrder.totalAdvance) + '" aria-valuemin="0" aria-valuemax="100">' + (row.workOrder.totalAdvance) + "%" + '</div></div>';
+                                    } else if (row.workOrder.totalAdvance == 100) {
+                                        return '<div class="progress-bar-custom progress"> <div class="progress-bar bg-success" role="progressbar" style="width: ' + (row.workOrder.totalAdvance) + '%" aria-valuenow="' + (row.workOrder.totalAdvance) + '" aria-valuemin="0" aria-valuemax="100">' + (row.workOrder.totalAdvance) + "%" + '</div></div>';
+                                    } else {
+                                        return '<div class="progress-bar-custom progress"> <div class="progress-bar bg-warning" role="progressbar" style="width: ' + (row.workOrder.totalAdvance) + '%" aria-valuenow="' + (row.workOrder.totalAdvance) + '" aria-valuemin="0" aria-valuemax="100">' + (row.workOrder.totalAdvance) + "%" + '</div></div>';
+                                    }
+                                }
+                                else{
+                                     if (row.percentageOfTotalAdvance == 0) {
+                                        return '<div class="progress-bar-custom progress"> <div class="progress-bar" role="progressbar" style="width: ' + (row.percentageOfTotalAdvance) + '%" aria-valuenow="' + (row.percentageOfTotalAdvance) + '" aria-valuemin="0" aria-valuemax="100">' + (row.percentageOfTotalAdvance) + "%" + '</div></div>';
+                                    } else if (row.percentageOfTotalAdvance == 100) {
+                                        return '<div class="progress-bar-custom progress"> <div class="progress-bar bg-success" role="progressbar" style="width: ' + (row.percentageOfTotalAdvance) + '%" aria-valuenow="' + (row.percentageOfTotalAdvance) + '" aria-valuemin="0" aria-valuemax="100">' + (row.percentageOfTotalAdvance) + "%" + '</div></div>';
+                                    } else {
+                                        return '<div class="progress-bar-custom progress"> <div class="progress-bar bg-warning" role="progressbar" style="width: ' + (row.percentageOfTotalAdvance) + '%" aria-valuenow="' + (row.percentageOfTotalAdvance) + '" aria-valuemin="0" aria-valuemax="100">' + (row.percentageOfTotalAdvance) + "%" + '</div></div>';
+                                    }
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": "text-center reorder-row"
+                        },
+                        //{
+                        //    "data": "percentageOfTotalAdvance",
+                        //    "render": function (value) {
+                        //        if (value == 0) {
+                        //            return '<div class="progress-bar-custom progress"> <div class="progress-bar" role="progressbar" style="width: ' + (value) + '%" aria-valuenow="' + (value) + '" aria-valuemin="0" aria-valuemax="100">' + (value) + "%" + '</div></div>';
+                        //        } else if (value == 100) {
+                        //            return '<div class="progress-bar-custom progress"> <div class="progress-bar bg-success" role="progressbar" style="width: ' + (value) + '%" aria-valuenow="' + (value) + '" aria-valuemin="0" aria-valuemax="100">' + (value) + "%" + '</div></div>';
+                        //        } else {
+                        //            return '<div class="progress-bar-custom progress"> <div class="progress-bar bg-warning" role="progressbar" style="width: ' + (value) + '%" aria-valuenow="' + (value) + '" aria-valuemin="0" aria-valuemax="100">' + (value) + "%" + '</div></div>';
+                        //        }
+                        //    },
+                        //    "autoWidth": true,
+                        //    "searchable": true,
+                        //    "className": "text-center"
+                        //},
+                        {
+                            "data": "deliveredDate",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return moment(value).format('DD/MM/YYYY');
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "orderHeader",
+                            "autoWidth": true,
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.user;
+                                }
+                            },
+                            "searchable": true,
+                            "className": "text-center"
+                        },
+                        {
+                            "data": "orderHeader",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    if (value.billed == 1) {
+                                        return "Facturado";
+                                    } else if (value.billed == 2) {
+                                        return "No facturado";
+                                    } else if (value.billed == 3) {
+                                        return "Sin cargo";
+                                    } else if (value.billed == 4) {
+                                        return "Nota de crédito";
+                                    }
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": "text-center"
+                        },
+                    ],
+                    initComplete: function () {
+                        this.api().columns().every(function () {
+                            var that = this;
+                            $('input', this.footer()).on('keyup change clear', function () {
+                                if (that.search() !== this.value) {
+                                    that
+                                        .search(this.value)
+                                        .draw();
+                                }
+                            });
+                        });
+                    }
+                });
+
+                $('#saleOrdersTable').on('contextmenu', 'tr', function (e) {
+                    e.preventDefault();
+                    orderId = saleOrdersTable.row(this).data().orderHeader.id;
+                    orderDetailId = saleOrdersTable.row(this).data().id;
+                    isImportedProduct = saleOrdersTable.row(this).data().product.productFeature.bought;
+                    orderStateId = saleOrdersTable.row(this).data().orderState.id;
+                });
+
+                $.contextMenu({
+                    selector: '#saleOrdersTable tbody tr',
+                    autoHide: true,
+                    animation: { duration: 500, show: 'fadeIn', hide: 'fadeOut' },
+                    className: 'border-0',
+                    items: {
+                        select1: {
+                            name: "Actualizar estado",
+                            type: 'select',
+                            options: { 0: 'Seleccione estado', 1: 'Pendiente', 2: 'En proceso', 3: 'Finalizado', 4: 'Entregado', 6: 'Anulado' },
+                            selected: orderStateId,
+                            className: 'mb-2',
+                            events: {
+                                change: function (e) {
+
+                                    if (orderStateId == 3 && $(e.target).find(":selected").val() == 3) {
+                                        $.ajax({
+                                            url: '/Sales/Order/UpdateOrderState',
+                                            method: 'POST',
+                                            data: {
+                                                orderStateId: $(e.target).find(":selected").val(),
+                                                orderId: orderId,
+                                                orderDetailId: orderDetailId,
+                                                isImportedProduct: isImportedProduct,
+                                                isSale: isSale,
+                                                onlySpares: onlySpares
+                                            },
+                                            dataType: 'json',
+                                            success: function (response) {
+                                                if (response.isValid) {
+                                                    refreshDataTableInstanceWithoutScrollOnTop(saleOrdersTable);
+                                                }
+                                            }
+                                        });
+                                    }
+                                    else {
+
+                                               $.ajax({
+                                                 url: '/Sales/Order/UpdateOrderState',
+                                                 method: 'POST',
+                                                 data: {
+                                                     orderStateId: $(e.target).find(":selected").val(),
+                                                     orderId: orderId,
+                                                     orderDetailId: orderDetailId,
+                                                     isImportedProduct: isImportedProduct,
+                                                     isSale: isSale,
+                                                     onlySpares: onlySpares
+                                                 },
+                                                 dataType: 'json',
+                                                 success: function (response) {
+                                                     if (response.isValid) {
+                                                         refreshDataTableInstanceWithoutScrollOnTop(saleOrdersTable);
+                                                     }
+                                                 }
+                                             });
+
+                                        // Discount stock
+                                        //     if (isImportedProduct && $(e.target).find(":selected").val() == 3) {
+
+                                        //     if ($('#layout_main_body').hasClass('loaded')) {
+                                        //         $('#layout_main_body').removeClass('loaded');
+                                        //     }
+
+                                        //     // Stock
+                                        //     let url = "/Sales/Order/DiscountStockFromOrderDetail";
+                                        //     $.ajax({
+                                        //         url: url,
+                                        //         data: {
+                                        //             orderDetailId: orderDetailId,
+                                        //             isSale: isSale,
+                                        //             onlySpares: onlySpares
+                                        //         },
+                                        //         type: "POST",
+                                        //         success: function (res) {
+                                        //             if (res.isValid) {
+                                        //                 // Se descontó stock correctamente => Actualizo el estado a finalizado
+                                        //                 $.ajax({
+                                        //                     url: '/Sales/Order/UpdateOrderState',
+                                        //                     method: 'POST',
+                                        //                     data: {
+                                        //                         orderStateId: $(e.target).find(":selected").val(),
+                                        //                         orderId: orderId,
+                                        //                         orderDetailId: orderDetailId,
+                                        //                         isImportedProduct: isImportedProduct,
+                                        //                         isSale: isSale,
+                                        //                         onlySpares: onlySpares
+                                        //                     },
+                                        //                     dataType: 'json',
+                                        //                     success: function (response) {
+                                        //                         if (response.isValid) {
+                                        //                             refreshDataTableInstanceWithoutScrollOnTop(saleOrdersTable);
+                                        //                         }
+                                        //                     }
+                                        //                 });
+                                        //             }
+                                        //         },
+                                        //         complete: function () {
+                                        //             if (!$('#layout_main_body').hasClass('loaded')) {
+                                        //                 $('#layout_main_body').addClass('loaded');
+                                        //             }
+                                        //         }
+                                        //     });
+
+                                        // }
+                                        // else if($(e.target).find(":selected").val() == 3 && onlySpares){
+                                        //     if ($('#layout_main_body').hasClass('loaded')) {
+                                        //         $('#layout_main_body').removeClass('loaded');
+                                        //     }
+
+                                        //     let url = "/Sales/Order/DiscountStockFromOrderDetail";
+                                        //     $.ajax({
+                                        //         url: url,
+                                        //         data: {
+                                        //             orderDetailId: orderDetailId,
+                                        //             isSale: isSale,
+                                        //             onlySpares: onlySpares
+                                        //         },
+                                        //         type: "POST",
+                                        //         success: function (res) {
+                                        //             if (res.isValid) {
+                                        //                 // Se descontó stock correctamente => Actualizo el estado a finalizado
+                                        //                 $.ajax({
+                                        //                     url: '/Sales/Order/UpdateOrderState',
+                                        //                     method: 'POST',
+                                        //                     data: {
+                                        //                         orderStateId: $(e.target).find(":selected").val(),
+                                        //                         orderId: orderId,
+                                        //                         orderDetailId: orderDetailId,
+                                        //                         isImportedProduct: isImportedProduct,
+                                        //                         isSale: isSale,
+                                        //                         onlySpares: onlySpares
+                                        //                     },
+                                        //                     dataType: 'json',
+                                        //                     success: function (response) {
+                                        //                         if (response.isValid) {
+                                        //                             refreshDataTableInstanceWithoutScrollOnTop(saleOrdersTable);
+                                        //                         }
+                                        //                     }
+                                        //                 });
+                                        //             }
+                                        //         },
+                                        //         complete: function () {
+                                        //             if (!$('#layout_main_body').hasClass('loaded')) {
+                                        //                 $('#layout_main_body').addClass('loaded');
+                                        //             }
+                                        //         }
+                                        //     });
+                                        // }
+                                        // else {
+
+                                        //     $.ajax({
+                                        //         url: '/Sales/Order/UpdateOrderState',
+                                        //         method: 'POST',
+                                        //         data: {
+                                        //             orderStateId: $(e.target).find(":selected").val(),
+                                        //             orderId: orderId,
+                                        //             orderDetailId: orderDetailId,
+                                        //             isImportedProduct: isImportedProduct,
+                                        //             isSale: isSale,
+                                        //             onlySpares: onlySpares
+                                        //         },
+                                        //         dataType: 'json',
+                                        //         success: function (response) {
+                                        //             if (response.isValid) {
+                                        //                 refreshDataTableInstanceWithoutScrollOnTop(saleOrdersTable);
+                                        //             }
+                                        //         }
+                                        //     });
+                                        //}
+
+                                    }
+
+                                }
+                            },
+                        },
+                        select2: {
+                            name: "Estado de facturación",
+                            type: 'select',
+                            options: { 0: 'Seleccione estado', 1: 'Facturado', 2: 'No facturado', 3: 'Sin cargo', 4: 'Nota de crédito' },
+                            selected: 0,
+                            events: {
+                                change: function (e) {
+                                    $.ajax({
+                                        url: '/Sales/Order/UpdateBilledState',
+                                        method: 'POST',
+                                        data: {
+                                            billedState: $(e.target).find(":selected").val(),
+                                            orderId: orderId
+                                        },
+                                        dataType: 'json',
+                                        success: function (response) {
+                                            if (response.isValid) {
+                                                refreshDataTableInstanceWithoutScrollOnTop(saleOrdersTable);
+                                            }
+                                        }
+                                    });
+                                }
+                            },
+                        },
+                    }
+                });
+
+                colIndexOrder = saleOrdersTable.order()[0][0];
+                colOrderDirection = saleOrdersTable.order()[0][1];
+
+                $('div.dataTables_scrollHeadInner thead').on('click', 'th', function () {
+
+                    if ($(this).hasClass("sorting") && !$(this).hasClass("sorting_asc") && !$(this).hasClass("sorting_desc")) {
+                        colOrderDirection = "asc";
+                    }
+                    else if ($(this).hasClass("sorting_asc")) {
+                        colOrderDirection = "desc";
+                    }
+                    else if ($(this).hasClass("sorting_desc")) {
+                        colOrderDirection = "asc";
+                    }
+
+                    switch (saleOrdersTable.column(this).index()) {
+                        case 2:
+                            // Nº OV/OP
+                            colIndexOrder = 2;
+                            break;
+                        case 3:
+                            // Fecha OV/OP
+                            colIndexOrder = 3;
+                            break;
+                        case 4:
+                            // Fecha de entrega
+                            colIndexOrder = 4;
+                            break;
+                        case 5:
+                            // Nº prod
+                            colIndexOrder = 5;
+                            break;
+                        case 6:
+                            // Código
+                            colIndexOrder = 6;
+                            break;
+                        case 6:
+                            // Descripción
+                            colIndexOrder = 6;
+                            break;
+                        case 7:
+                            // Configuración
+                            colIndexOrder = 7;
+                            break;
+                        case 8:
+                            // Tensión
+                            colIndexOrder = 8;
+                            break;
+                        case 9:
+                            // Cantidad
+                            colIndexOrder = 9;
+                            break;
+                        case 10:
+                            // Cliente
+                            colIndexOrder = 10;
+                            break;
+                        case 11:
+                            // País
+                            colIndexOrder = 11;
+                            break;
+                        case 12:
+                            // Categoría de venta
+                            colIndexOrder = 12;
+                            break;
+                        case 13:
+                            // Familia/Rubro
+                            colIndexOrder = 13;
+                            break;
+                        case 14:
+                            // Estado
+                            colIndexOrder = 14;
+                            break;
+                        case 15:
+                            // Porcentaje de avance
+                            colIndexOrder = 15;
+                            break;
+                        case 16:
+                            // Fecha entregada
+                            colIndexOrder = 16;
+                            break;
+                        case 17:
+                            // Usuario
+                            colIndexOrder = 17;
+                            break;
+                        case 18:
+                            // Facturación
+                            colIndexOrder = 18;
+                            break;
+
+                    }
+                });
+
+            }
+
+            //Production Order
+            if ($('#isSale').val() == "False") {
+
+                let productionOrdersTable = $('#productionOrdersTable').DataTable({
+                    "scrollY": '40vh',
+                    "scrollX": true,
+                    "scrollCollapse": true,
+                    "scroller": true,
+                    //"rowReorder": {
+                    //    selector: '.reorder-row',
+                    //    update: false,
+                    //    dataSrc: 'rowOrder'
+                    //},
+                    "oLanguage": @localizer["LanguageDataTable"],
+                    "sAjaxSource": "/Sales/Order/LoadAllProduction",
+                    "sServerMethod": "POST",
+                    "fnServerParams": function (aoData) {
+                        aoData.push(
+                            { "name": "checkAll", "value": $("#checkAll").is(":checked") },
+                            { "name": "checkSimplemak", "value": $("#checkSimplemak").is(":checked") },
+                            { "name": "checkImported", "value": $("#checkImported").is(":checked") },
+                            { "name": "checkMachines", "value": $("#checkMachines").is(":checked") },
+                            { "name": "checkAccesories", "value": $("#checkAccesories").is(":checked") },
+                            { "name": "checkSpares", "value": $("#checkSpares").is(":checked") },
+                            { "name": "dateFromFilterValue", "value": dateFromFilterValue },
+                            { "name": "dateToFilterValue", "value": dateToFilterValue },
+                            { "name": "checkForStock", "value": $("#checkForStock").is(":checked") }
+                        );
+                    },
+                    "bServerSide": true,
+                    "bProcessing": true,
+                    "bSearchable": true,
+                    //"stripeClasses": [
+                    //    'odd-row',
+                    //    'even-row'
+                    //],
+                    "language": {
+                        "processing":
+                            '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                    },
+                    "order": [[4, "asc"]],
+                    "columns": [
+                        {
+                            "data": "id",
+                            "searchable": false,
+                            "visible": false
+                        },
+                        {
+                            "searchable": false,
+                            "data": "id",
+                            "render": function (data, type, row, meta) {
+
+                                let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+                                let strDisabledCheck = (row.workOrderId != null & row.workOrderId != 0) ? 'disabled' : '';
+                                let strDisabledOT = (row.workOrderId != null & row.workOrderId != 0) ? '' : 'disabled';
+                                let iconSize = 22;
+
+                                if(row.workOrder != null){
+                                    if(row.workOrder.startDate != null){
+                                        row.orderStateId = 2;
+                                    }
+                                }
+
+                                if(row.workOrder == null && row.orderStateId == 5){
+                                    row.orderStateId = 1;
+                                }
+
+                                // Cambio del color de iconos segun row.orderStateId:
+                                switch (row.orderStateId) {
+                                    case 1:
+                                        // row.orderStateId = 1 => Pendiente (color normal)
+
+                                        // Icono check
+                                        html += '<a class="btn ' + strDisabledCheck + ' btn-group"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input" type="checkbox" value=""  id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn ' + strDisabledOT + ' " title="@localizer["Percentage of completion"]" onclick="navigateToWorkOrderDetail(' + row.workOrderId + ')" ><img class="action-img-icon" src="../../../images/Avance.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OV - solo para los que tienen Client != null
+                                        if (row.orderHeader.client != null) {
+                                            html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img  src="../../../images/OV_letra_blanca.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        } else {
+                                            html += '<a class="btn disabled action-btn" title="@localizer["Sale order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img  src="../../../images/OV_letra_blanca.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        }
+
+                                        // Icono OP
+                                        html += '<a class="btn action-btn ' + productionOrderEditPermission + '" title="@localizer["Production order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img  src="../../../images/OP_letra_blanca.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OT
+                                        html += '<a class="btn action-btn ' + strDisabledOT + '" title="@localizer["Work order"]"  onclick="navigateToWorkOrderHeader(' + row.workOrderId + ')"><img  src="../../../images/OT_letra_blanca.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + productionOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + row.orderHeader.isSale + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+                                    case 2:
+                                        // row.orderStateId = 2 => En proceso (color amarillo #FFD680)
+
+                                        // Icono check
+                                        html += '<a class="btn disabled btn-group"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input" type="checkbox" value=""  id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn ' + strDisabledOT + ' " title="@localizer["Percentage of completion"]" onclick="navigateToWorkOrderDetail(' + row.workOrderId + ')" ><img src="../../../images/avanceAmarillo.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OV - solo para los que tienen Client != null
+                                        if (row.orderHeader.client != null) {
+                                            html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OVamarillo_letra_blanca.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        } else {
+                                            html += '<a class="btn disabled action-btn" title="@localizer["Sale order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OVamarillo_letra_blanca.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        }
+
+                                        // Icono OP
+                                        html += '<a class="btn action-btn ' + productionOrderEditPermission + '" title="@localizer["Production order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OPamarillo_letra_blanca.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OT
+                                        html += '<a class="btn action-btn ' + strDisabledOT + '" title="@localizer["Work order"]"  onclick="navigateToWorkOrderHeader(' + row.workOrderId + ')"><img src="../../../images/OTamarillo_letra_blanca.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + productionOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + row.orderHeader.isSale + ')" ><img src="../../../images/Eliminaramarillo.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+                                    case 3:
+                                        // row.orderStateId = 3 => Finalizado (color verde #77DD77)
+
+                                        // Icono check
+                                        html += '<a class="btn disabled btn-group"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input" type="checkbox" value=""  id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn ' + strDisabledOT + ' " title="@localizer["Percentage of completion"]" onclick="navigateToWorkOrderDetail(' + row.workOrderId + ')" ><img src="../../../images/avanceVerde.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OV - solo para los que tienen Client != null
+                                        if (row.orderHeader.client != null) {
+                                            html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OVverde.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        } else {
+                                            html += '<a class="btn disabled action-btn" title="@localizer["Sale order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OVverde.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        }
+
+                                        // Icono OP
+                                        html += '<a class="btn action-btn ' + productionOrderEditPermission + '" title="@localizer["Production order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OPverde.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OT
+                                        html += '<a class="btn action-btn ' + strDisabledOT + '" title="@localizer["Work order"]"  onclick="navigateToWorkOrderHeader(' + row.workOrderId + ')"><img src="../../../images/OTverde.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + productionOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + row.orderHeader.isSale + ')" ><img src="../../../images/Eliminarverde.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+                                    case 4:
+                                        // row.orderStateId = 4 => Entregado  (color lila #BFADFE)
+
+                                        // Icono check
+                                        html += '<a class="btn disabled btn-group"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input" type="checkbox" value=""  id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn ' + strDisabledOT + ' " title="@localizer["Percentage of completion"]" onclick="navigateToWorkOrderDetail(' + row.workOrderId + ')" ><img src="../../../images/avanceLila.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OV - solo para los que tienen Client != null
+                                        if (row.orderHeader.client != null) {
+                                            html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OVlila.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        } else {
+                                            html += '<a class="btn disabled action-btn" title="@localizer["Sale order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OVlila.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        }
+
+                                        // Icono OP
+                                        html += '<a class="btn action-btn ' + productionOrderEditPermission + '" title="@localizer["Production order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img src="../../../images/OPlila.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OT
+                                        html += '<a class="btn action-btn ' + strDisabledOT + '" title="@localizer["Work order"]"  onclick="navigateToWorkOrderHeader(' + row.workOrderId + ')"><img src="../../../images/OTlila.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + productionOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + row.orderHeader.isSale + ')" ><img src="../../../images/Eliminarlila.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+
+                                    case 5:
+                                        // row.orderStateId = 5 => A producción  (color fuccia)
+
+                                        // Icono check
+                                        html += '<a class="btn disabled btn-group"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input" type="checkbox" value=""  id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn ' + strDisabledOT + ' " title="@localizer["Percentage of completion"]" onclick="navigateToWorkOrderDetail(' + row.workOrderId + ')" ><img  src="../../../images/Avance fuccia.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OV - solo para los que tienen Client != null
+                                        if (row.orderHeader.client != null) {
+                                            html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img  src="../../../images/OVfuccia.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        } else {
+                                            html += '<a class="btn disabled action-btn" title="@localizer["Sale order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img  src="../../../images/OVfuccia.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        }
+
+                                        // Icono OP
+                                        html += '<a class="btn action-btn ' + productionOrderEditPermission + '" title="@localizer["Production order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img  src="../../../images/OPfuccia.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OT
+                                        html += '<a class="btn action-btn ' + strDisabledOT + '" title="@localizer["Work order"]"  onclick="navigateToWorkOrderHeader(' + row.workOrderId + ')"><img  src="../../../images/OTfuccia.png" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + productionOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + row.orderHeader.isSale + ')" ><img  src="../../../images/Eliminar fuccia.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+                                    case 6:
+                                        // row.orderStateId = 6 => Anulado  (color gris)
+
+                                        // Icono check
+                                        html += '<a class="btn disabled btn-group"><div class="custom-control custom-checkbox small"><input class="checkSelectedRow custom-control-input" type="checkbox" value=""  id="checkSelectedRow_' + meta.row + '"><label class="custom-control-label" for="checkSelectedRow_' + meta.row + '"></label></div></a>';
+
+                                        // Icono progreso
+                                        html += '<a class="btn action-btn ' + strDisabledOT + ' " title="@localizer["Percentage of completion"]" onclick="navigateToWorkOrderDetail(' + row.workOrderId + ')" ><img  src="../../../images/avanceGris.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OV - solo para los que tienen Client != null
+                                        if (row.orderHeader.client != null) {
+                                            html += '<a class="btn action-btn ' + saleOrderEditPermission + '" title="@localizer["Sale order"]" onclick="editOrder(' + true + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img  src="../../../images/OVgris.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        } else {
+                                            html += '<a class="btn disabled action-btn" title="@localizer["Sale order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img  src="../../../images/OVgris.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+                                        }
+
+                                        // Icono OP
+                                        html += '<a class="btn action-btn ' + productionOrderEditPermission + '" title="@localizer["Production order"]" onclick="editOrder(' + false + ', ' + onlySpares + ', ' + row.orderHeader.id + ')"><img  src="../../../images/OPgris.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono OT
+                                        html += '<a class="btn action-btn ' + strDisabledOT + '" title="@localizer["Work order"]"  onclick="navigateToWorkOrderHeader(' + row.workOrderId + ')"><img  src="../../../images/OTgris.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        // Icono eliminar
+                                        html += '<a class="btn action-btn ' + productionOrderDeletePermission + '" title="@localizer["Delete"]" onclick="deleteOrder(' + row.orderHeader.id + ', ' + row.orderHeader.isSale + ')" ><img  src="../../../images/eliminarGris.svg" width="' + iconSize + '" height="' + iconSize + '" /></a>';
+
+                                        break;
+                                }
+
+                                html += '</div></div>';
+                                return html;
+                            },
+                            "visible": true,
+                            "width": "5%",
+                        },
+                        {
+                            "data": "orderHeader",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.number;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": "text-center reorder-row"
+                        },
+                        {
+                            "data": "orderHeader",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return moment(value.orderDate).format('DD/MM/YYYY');
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+                        {
+                            "data": "deliveryDate",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return moment(value).format('DD/MM/YYYY');
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+                        {
+                            "data": "productNumber",
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+                        {
+                            "data": "product",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.code;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+                        {
+                            "data": "product",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.description;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+                        {
+                            "data": "structure",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.description;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+                        {
+                            "data": "supplyVoltage",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.description;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+                        {
+                            "data": "quantity",
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": "text-center reorder-row",
+                            "render": $.fn.dataTable.render.number('.', ',', 2)
+                        },
+                        {
+                            "data": "orderHeader",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    if (value.client === null) {
+                                        return "";
+                                    } else {
+                                        return value.client.businessName;
+                                    }
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+                        {
+                            "data": "orderState",
+                            "render": function (data, type, row, meta) {
+                                  if(row.workOrder != null){
+                                    if(row.workOrder.startDate != null){
+                                        return row.workOrder.getState;
+                                    }
+                                    else{
+                                         return row.orderState.name;
+                                    }
+                                }
+                                else{
+                                     return row.orderState.name;
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+                        {
+                            "data": "percentageOfTotalAdvance",
+                            "render": function (data, type, row, meta) {
+                                if(row.workOrder != null){
+                                    if (row.workOrder.totalAdvance == 0) {
+                                        return '<div class="progress-bar-custom progress"> <div class="progress-bar" role="progressbar" style="width: ' + (row.workOrder.totalAdvance) + '%" aria-valuenow="' + (row.workOrder.totalAdvance) + '" aria-valuemin="0" aria-valuemax="100">' + (row.workOrder.totalAdvance) + "%" + '</div></div>';
+                                    } else if (row.workOrder.totalAdvance == 100) {
+                                        return '<div class="progress-bar-custom progress"> <div class="progress-bar bg-success" role="progressbar" style="width: ' + (row.workOrder.totalAdvance) + '%" aria-valuenow="' + (row.workOrder.totalAdvance) + '" aria-valuemin="0" aria-valuemax="100">' + (row.workOrder.totalAdvance) + "%" + '</div></div>';
+                                    } else {
+                                        return '<div class="progress-bar-custom progress"> <div class="progress-bar bg-warning" role="progressbar" style="width: ' + (row.workOrder.totalAdvance) + '%" aria-valuenow="' + (row.workOrder.totalAdvance) + '" aria-valuemin="0" aria-valuemax="100">' + (row.workOrder.totalAdvance) + "%" + '</div></div>';
+                                    }
+                                }
+                                else{
+                                    return '<div class="progress-bar-custom progress"> <div class="progress-bar" role="progressbar" style="width: ' + 0 + '%" aria-valuenow="' + 0 + '" aria-valuemin="0" aria-valuemax="100">' + 0 + "%" + '</div></div>';
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": "text-center reorder-row"
+                        },
+                        {
+                            "data": "product",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    if (value.subCategory === null) {
+                                        return "";
+                                    } else {
+                                        return value.subCategory.description;
+                                    }
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+
+                        {
+                            "data": "startDate",
+                            "render": function (value) {
+                                return value;
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+
+                        {
+                            "data": "deliveredDate",
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return moment(value).format('DD/MM/YYYY');
+                                }
+                            },
+                            "autoWidth": true,
+                            "searchable": true,
+                            "className": 'reorder-row'
+                        },
+                        {
+                            "data": "orderHeader",
+                            "autoWidth": true,
+                            "render": function (value) {
+                                if (value === null) {
+                                    return "";
+                                } else {
+                                    return value.user;
+                                }
+                            },
+                            "searchable": true,
+                            "className": "text-center reorder-row"
+                        },
+                        //{
+                        //    "data": "rowOrder",
+                        //    "className": "text-center",
+                        //    "searchable": false,
+                        //    "visible": false
+                        //},
+                    ],
+                    initComplete: function () {
+                        this.api().columns().every(function () {
+                            var that = this;
+                            $('input', this.footer()).on('keyup change clear', function () {
+                                if (that.search() !== this.value) {
+                                    that
+                                        .search(this.value)
+                                        .draw();
+                                }
+                            });
+                        });
+                    },
+                    "drawCallback": function () {
+                        //GetItemsChecked
+                        let rows = productionOrdersTable.rows().data();
+                        for (let i = 0; i < rows.length; i++) {
+                            let checkSelectedRow = document.getElementById('checkSelectedRow_' + i);
+
+                            // Vuelvo a checkear los que estaban chequeados cuando se refresco la grilla.
+                            if (OrdersToProductionIdList.length > 0) {
+
+                                for (let x = 0; x < OrdersToProductionIdList.length; x++) {
+                                    if (OrdersToProductionIdList[x] == rows[i].id && !checkSelectedRow.hasAttribute('checked')) {
+                                        checkSelectedRow.setAttribute('checked', 'checked');
+                                    }
+                                }
+                            }
+
+                            checkSelectedRow.addEventListener('change', function () {
+                                if (this.checked) {
+                                    OrdersToProductionIdList.push(rows[i].id);
+
+                                } else {
+                                    const index = OrdersToProductionIdList.indexOf(rows[i].id);
+                                    if (index > -1) {
+                                        OrdersToProductionIdList.splice(index, 1);
+                                    }
+                                }
+                            });
+                        }
+                    }
+                });
+
+                $('#productionOrdersTable').on('contextmenu', 'tr', function (e) {
+                    e.preventDefault();
+                    orderId = productionOrdersTable.row(this).data().orderHeader.id;
+                    orderDetailId = productionOrdersTable.row(this).data().id;
+                    isImportedProduct = productionOrdersTable.row(this).data().product.productFeature.bought;
+                    orderStateId = productionOrdersTable.row(this).data().orderState.id;
+                });
+
+                $.contextMenu({
+                    selector: '#productionOrdersTable tbody tr',
+                    autoHide: true,
+                    animation: { duration: 500, show: 'fadeIn', hide: 'fadeOut' },
+                    className: 'border-0',
+                    items: {
+                        select: {
+                            name: "Actualizar estado",
+                            type: 'select',
+                            options: { 0: 'Seleccione estado', 1: 'Pendiente', 2: 'En proceso', 3: 'Finalizado', 4: 'Entregado', 6: 'Anulado' },
+                            selected: orderStateId,
+                            className: 'border-0',
+                            events: {
+                                change: function (e) {
+
+                                    if (orderStateId == 3 && $(e.target).find(":selected").val() == 3) {
+
+                                        $.ajax({
+                                            url: '/Sales/Order/UpdateOrderState',
+                                            method: 'POST',
+                                            data: {
+                                                orderStateId: $(e.target).find(":selected").val(),
+                                                orderId: orderId,
+                                                orderDetailId: orderDetailId,
+                                                isImportedProduct: isImportedProduct,
+                                                isSale: isSale,
+                                                onlySpares: onlySpares
+                                            },
+                                            dataType: 'json',
+                                            success: function (response) {
+                                                if (response.isValid) {
+                                                    refreshDataTableInstanceWithoutScrollOnTop(productionOrdersTable);
+                                                }
+                                            }
+                                        });
+
+                                    }
+                                    else {
+
+                                        $.ajax({
+                                            url: '/Sales/Order/UpdateOrderState',
+                                            method: 'POST',
+                                            data: {
+                                                orderStateId: $(e.target).find(":selected").val(),
+                                                orderId: orderId,
+                                                orderDetailId: orderDetailId,
+                                                isImportedProduct: isImportedProduct,
+                                                isSale: isSale,
+                                                onlySpares: onlySpares
+                                            },
+                                            dataType: 'json',
+                                            success: function (response) {
+                                                if (response.isValid) {
+                                                    refreshDataTableInstanceWithoutScrollOnTop(productionOrdersTable);
+                                                }
+                                            }
+                                            });
+
+                                        // Discount stock
+                                        //    if ($(e.target).find(":selected").val() == 3) {
+
+                                        //        if ($('#layout_main_body').hasClass('loaded')) {
+                                        //            $('#layout_main_body').removeClass('loaded');
+                                        //        }
+
+                                        //        let url = "/Sales/Order/DiscountStockFromOrderDetail";
+                                        //        $.ajax({
+                                        //            url: url,
+                                        //            data: {
+                                        //            orderDetailId: orderDetailId,
+                                        //            isSale: isSale,
+                                        //            onlySpares: onlySpares
+                                        //        },
+                                        //        type: "POST",
+                                        //        success: function (res) {
+                                        //            if (res.isValid) {
+                                        //                // Se descontó stock correctamente => Actualizo el estado a finalizado
+                                        //                $.ajax({
+                                        //                    url: '/Sales/Order/UpdateOrderState',
+                                        //                    method: 'POST',
+                                        //                    data: {
+                                        //                        orderStateId: $(e.target).find(":selected").val(),
+                                        //                        orderId: orderId,
+                                        //                        orderDetailId: orderDetailId,
+                                        //                        isImportedProduct: isImportedProduct,
+                                        //                        isSale: isSale,
+                                        //                        onlySpares: onlySpares
+                                        //                    },
+                                        //                    dataType: 'json',
+                                        //                    success: function (response) {
+                                        //                        if (response.isValid) {
+                                        //                            refreshDataTableInstanceWithoutScrollOnTop(productionOrdersTable);
+                                        //                        }
+                                        //                    }
+                                        //                });
+                                        //            }
+                                        //        },
+                                        //        complete: function () {
+                                        //            if (!$('#layout_main_body').hasClass('loaded')) {
+                                        //                $('#layout_main_body').addClass('loaded');
+                                        //            }
+                                        //        }
+                                        //    });
+
+                                        //} else {
+
+                                        //    $.ajax({
+                                        //        url: '/Sales/Order/UpdateOrderState',
+                                        //        method: 'POST',
+                                        //        data: {
+                                        //            orderStateId: $(e.target).find(":selected").val(),
+                                        //            orderId: orderId,
+                                        //            orderDetailId: orderDetailId,
+                                        //            isImportedProduct: isImportedProduct,
+                                        //            isSale: isSale,
+                                        //            onlySpares: onlySpares
+                                        //        },
+                                        //        dataType: 'json',
+                                        //        success: function (response) {
+                                        //            if (response.isValid) {
+                                        //                refreshDataTableInstanceWithoutScrollOnTop(productionOrdersTable);
+                                        //            }
+                                        //        }
+                                        //    });
+
+                                        //}
+
+                                    }
+                                }
+                            },
+                        },
+                    }
+                });
+
+                // Evento drag & drop
+                //productionOrdersTable.on('row-reorder', function (e, diff, edit) {
+
+                //    var differences = "";
+                //    for (let i = 0; i < diff.length; i++) {
+                //        differences += diff[i].newData + "," + diff[i].oldData + "*";
+                //    }
+
+                //    $.ajax({
+                //        url: '/sales/order/UpdateRowOrderFromDragAndDrop',
+                //        method: 'POST',
+                //        data: {
+                //            diff: differences
+                //        },
+                //        dataType: 'json',
+                //        complete: function () {
+                //            refreshDataTableInstanceWithoutScrollOnTop(productionOrdersTable);
+                //        }
+                //    });
+                //});
+
+                //$('.bg-thead').on('click', function () {
+                //    $('#radioBtnAsc').prop('checked', false);
+                //    $('#radioBtnDesc').prop('checked', false);
+                //});
+
+                //$('#radioBtnAsc').on('change', function () {
+                //    if (this.checked) {
+                //        $('#productionOrdersTable').DataTable().order([18, 'asc']).draw();
+                //    } else {
+                //        $('#productionOrdersTable').DataTable().order([18, 'desc']).draw();
+                //    }
+                //});
+
+                //$('#radioBtnDesc').on('change', function () {
+                //    if (this.checked) {
+                //        $('#productionOrdersTable').DataTable().order([18, 'desc']).draw();
+                //    } else {
+                //        $('#productionOrdersTable').DataTable().order([18, 'asc']).draw();
+                //    }
+                //});
+
+                $('#btnGenerateWorkOrder').on('click', function () {
+                    if (OrdersToProductionIdList.length > 0) {
+                        if (confirm('@localizer["This action will generate passive work order. Do you want to continue?"]')) {
+
+                            showSpinner();
+
+                            let url = '/production/workorder/OnCreateWorkOrder?strOrderDetailIds=' + OrdersToProductionIdList;
+                            $.ajax({
+                                url: url,
+                                type: "POST",
+                                success: function (response) {
+                                    if (response.isValid) {
+                                        // Actualizo el estado "A producción"
+                                        let url = '/sales/order/UpdateOrderState?orderStateId=5&strOrderDetailIds=' + OrdersToProductionIdList;
+                                        $.ajax({
+                                            url: url,
+                                            method: 'POST',
+                                            success: function (resp) {
+                                                if (resp.isValid) {
+                                                    refreshTable();
+                                                    if (response.workOrderId != null) {
+                                                        // Reset checks array
+                                                        OrdersToProductionIdList = [];
+                                                        navigateToWorkOrderHeader(response.workOrderId);
+                                                    }
+                                                }
+                                            }
+                                        });
+                                    }
+                                    else
+                                    {
+                                        refreshTable();
+                                        // Reset checks array
+                                        OrdersToProductionIdList = [];
+                                        hideSpinner();
+                                    }
+                                }
+                            });
+                        }
+                    }
+                    else {
+                        alert("Usted debe seleccionar al menos un registro de producción para enviar a producir.");
+                    }
+                });
+
+                colIndexOrder = productionOrdersTable.order()[0][0];
+                colOrderDirection = productionOrdersTable.order()[0][1];
+
+                $('div.dataTables_scrollHeadInner thead').on('click', 'th', function () {
+
+                    if ($(this).hasClass("sorting") && !$(this).hasClass("sorting_asc") && !$(this).hasClass("sorting_desc")) {
+                        colOrderDirection = "asc";
+                    }
+                    else if ($(this).hasClass("sorting_asc")) {
+                        colOrderDirection = "desc";
+                    }
+                    else if ($(this).hasClass("sorting_desc")) {
+                        colOrderDirection = "asc";
+                    }
+
+                    switch (productionOrdersTable.column(this).index()) {
+                        case 2:
+                            // Nº OV/OP
+                            colIndexOrder = 2;
+                            break;
+                        case 3:
+                            // Fecha OV/OP
+                            colIndexOrder = 3;
+                            break;
+                        case 4:
+                            // Fecha de entrega
+                            colIndexOrder = 4;
+                            break;
+                        case 5:
+                            // Nº prod
+                            colIndexOrder = 5;
+                            break;
+                        case 6:
+                            // Código
+                            colIndexOrder = 6;
+                            break;
+                        case 7:
+                            // Descripción
+                            colIndexOrder = 7;
+                            break;
+                        case 8:
+                            // Configuración
+                            colIndexOrder = 8;
+                            break;
+                        case 9:
+                            // Tensión
+                            colIndexOrder = 9;
+                            break;
+                        case 10:
+                            // Cantidad
+                            colIndexOrder = 10;
+                            break;
+                        case 11:
+                            // Estado
+                            colIndexOrder = 11;
+                            break;
+                        case 12:
+                            // Porcentaje de avance
+                            colIndexOrder = 12;
+                            break;
+                        case 13:
+                            // Familia/Rubro
+                            colIndexOrder = 13;
+                            break;
+                        case 14:
+                            // Inicio OT
+                            colIndexOrder = 14;
+                            break;
+                        case 15:
+                            // Fecha entregada
+                            colIndexOrder = 15;
+                            break;
+                        case 16:
+                            // Usuario
+                            colIndexOrder = 16;
+                            break;
+                    }
+                });
+
+            }
+
+            // To export excel
+            $('#btn-export-excel-all').on('click', function () {
+
+                let filter_checkAll = false;
+                let filter_checkSimplemak = false;
+                let filter_checkImported = false;
+                let filter_checkMachines = false;
+                let filter_checkAccesories = false;
+                let filter_checkSpares = false;
+                let filter_checkForStock = false;
+
+                if ($('#checkAll').prop('checked')) {
+                    filter_checkAll = true;
+                }
+                if ($('#checkSimplemak').prop('checked')) {
+                    filter_checkSimplemak = true;
+                }
+                if ($('#checkImported').prop('checked')) {
+                    filter_checkImported = true;
+                }
+                if ($('#checkMachines').prop('checked')) {
+                    filter_checkMachines = true;
+                }
+                if ($('#checkAccesories').prop('checked')) {
+                    filter_checkAccesories = true;
+                }
+                if ($('#checkSpares').prop('checked')) {
+                    filter_checkSpares = true;
+                }
+                if (!isSale) {
+                    if ($('#checkForStock').prop('checked')) {
+                        filter_checkForStock = true;
+                    }
+                }
+
+                window.location.href = "/Sales/Order/ExportToExcel?isSale=" + isSale +
+                    "&columnFilter_2=" + columnFilter_2 +
+                    "&columnFilter_3=" + columnFilter_3 +
+                    "&columnFilter_4=" + columnFilter_4 +
+                    "&columnFilter_5=" + columnFilter_5 +
+                    "&columnFilter_6=" + columnFilter_6 +
+                    "&columnFilter_7=" + columnFilter_7 +
+                    "&columnFilter_8=" + columnFilter_8 +
+                    "&columnFilter_9=" + columnFilter_9 +
+                    "&columnFilter_10=" + columnFilter_10 +
+                    "&columnFilter_11=" + columnFilter_11 +
+                    "&columnFilter_12=" + columnFilter_12 +
+                    "&columnFilter_13=" + columnFilter_13 +
+                    "&columnFilter_14=" + columnFilter_14 +
+                    "&columnFilter_15=" + columnFilter_15 +
+                    "&columnFilter_16=" + columnFilter_16 +
+                    "&columnFilter_17=" + columnFilter_17 +
+                    "&columnFilter_18=" + columnFilter_18 +
+                    "&columnFilter_19=" + columnFilter_19 +
+                    "&filter_checkAll=" + filter_checkAll +
+                    "&filter_checkSimplemak=" + filter_checkSimplemak +
+                    "&filter_checkImported=" + filter_checkImported +
+                    "&filter_checkMachines=" + filter_checkMachines +
+                    "&filter_checkAccesories=" + filter_checkAccesories +
+                    "&filter_checkSpares=" + filter_checkSpares +
+                    "&filter_checkForStock=" + filter_checkForStock +
+                    "&colIndexOrder=" + colIndexOrder +
+                    "&colOrderDirection=" + colOrderDirection +
+                    "&dateFromFilterValue=" + dateFromFilterValue +
+                    "&dateToFilterValue=" + dateToFilterValue +
+                    "&onlySpares=" + onlySpares;
+
+            });
+
+            $('.table tfoot th').each(function (i) {
+                let title = $(this).text();
+                if (title != '@localizer["Actions"]' && title != '@localizer["Quantity"]' && title != '@localizer["Observations"]' && title != '@localizer["Percentage of completion"]') {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            // For export to excel, setting filters to send to the server
+            $('.search-control').keyup(function (e) {
+                let colIndex = $(this).attr("data-index");
+                let valueOfInput = $(this).val();
+
+                if (colIndex == 1) {
+                    columnFilter_2 = valueOfInput;
+                }
+                if (colIndex == 2) {
+                    columnFilter_3 = valueOfInput;
+                }
+                else if (colIndex == 3) {
+                    columnFilter_4 = valueOfInput;
+                }
+                else if (colIndex == 4) {
+                    columnFilter_5 = valueOfInput;
+                }
+                else if (colIndex == 5) {
+                    columnFilter_6 = valueOfInput;
+                }
+                else if (colIndex == 6) {
+                    columnFilter_7 = valueOfInput;
+                }
+                else if (colIndex == 7) {
+                    columnFilter_8 = valueOfInput;
+                }
+                else if (colIndex == 8) {
+                    columnFilter_9 = valueOfInput;
+                }
+                else if (colIndex == 9) {
+                    columnFilter_10 = valueOfInput;
+                }
+                else if (colIndex == 10) {
+                    columnFilter_11 = valueOfInput;
+                }
+                else if (colIndex == 11) {
+                    columnFilter_12 = valueOfInput;
+                }
+                else if (colIndex == 12) {
+                    columnFilter_13 = valueOfInput;
+                }
+                else if (colIndex == 13) {
+                    columnFilter_14 = valueOfInput;
+                }
+                else if (colIndex == 14) {
+                    columnFilter_15 = valueOfInput;
+                }
+                else if (colIndex == 15) {
+                    columnFilter_16 = valueOfInput;
+                }
+                else if (colIndex == 16) {
+                    columnFilter_17 = valueOfInput;
+                }
+                else if (colIndex == 17) {
+                    columnFilter_18 = valueOfInput;
+                }
+                else if (colIndex == 18) {
+                    columnFilter_19 = valueOfInput;
+                }
+
+            }).keyup();
+
+            $("[name='context-menu-input-select']").select2({
+                theme: "bootstrap4",
+                minimumResultsForSearch: -1
+            });
+            $("[name='context-menu-input-select1']").select2({
+                theme: "bootstrap4",
+                minimumResultsForSearch: -1
+            });
+            $("[name='context-menu-input-select2']").select2({
+                theme: "bootstrap4",
+                minimumResultsForSearch: -1
+            });
+
+        });
+
+        function refreshTable() {
+            $('#saleOrdersTable').DataTable().clear();
+            $('#saleOrdersTable').DataTable().ajax.reload();
+            $('#productionOrdersTable').DataTable().clear();
+            $('#productionOrdersTable').DataTable().ajax.reload();
+        }
+
+        function navigateToWorkOrderHeader(workOrderId) {
+            url = "/production/workorderheader/OnGetWorkOrderHeader?idWorkOrder=" + workOrderId;
+            jQueryModalGet(url, '@localizer["Work order"]');
+        }
+
+        function navigateToWorkOrderDetail(workOrderId) {
+            url = "/production/workorder/LoadWorkOrder?workorderId=" + workOrderId;
+            window.location.href = url;
+        }
+
+        function deleteOrder(orderHeaderId, isSale) {
+            if (confirm('@localizer["Are you sure to delete this record?"]')) {
+                let url = "/sales/order/OnPostDelete?orderHeaderId=" + orderHeaderId + "&isSale=" + isSale;
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    success: function (response) {
+                        refreshTable();
+                    }
+                });
+            }
+        }
+
+        function editOrder(isSale, onlySpares, id) {
+            jQueryModalGet('/Sales/Order/OnGetCreateOrEdit?sale=' + isSale + '&onlySpares=' + onlySpares + '&id=' + id, '@localizer["Edit order"]');
+        }
+
+    </script>
+}

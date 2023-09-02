@@ -1,0 +1,38 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Commons.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Documents types"];
+}
+@model DocumentTypeViewModel
+
+    <body>
+        <div class="card">
+
+            <div id="viewAll" class="card-body table-responsive">
+
+            </div>
+
+        </div>
+    </body>
+    @section Scripts
+{
+        <script src="~/js/site.js"></script>
+        <script>
+        $(document).ready(function () {
+            let documentTypeTable = $("#documentTypeTable").DataTable({ "oLanguage": @localizer["LanguageDataTable"] });
+
+            documentTypeTable.buttons().container()
+                .appendTo('#div-export-buttons .btn-group');
+
+            loadData();
+
+            $('#reload').on('click', function () {
+                loadData();
+            });
+        });
+        function loadData() {
+            $('#viewAll').load('/commons/documentType/LoadAll');
+        }
+        </script>
+    }

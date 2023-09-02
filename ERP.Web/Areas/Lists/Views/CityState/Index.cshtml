@@ -1,0 +1,206 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Lists.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Cities and states"];
+}
+@model CityStateViewModel
+
+<head>
+    <link href="~/css/Lists/lists.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="card">
+        <div class="card-body table-responsive">
+            <div id="div-export-buttons">
+                <div class="btn-group">
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.States.Create)).Result.Succeeded)
+                    {
+                        <a id="btn-create-state" title="@localizer["New state"]" onclick="jQueryModalGet('/Lists/CityState/OnGetCreateOrEditState', '@localizer["New state"]')" class="btn bg-secondary">
+                            <i class="fa fa-plus-square"></i>
+                        </a>
+                    }
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Cities.Create)).Result.Succeeded)
+                    {
+                        <a id="btn-create-city" title="@localizer["New city"]" onclick="jQueryModalGet('/Lists/CityState/OnGetCreateOrEditCity', '@localizer["New city"]')" class="btn bg-secondary">
+                            <i class="fa fa-plus-square"></i>
+                        </a>
+                    }
+                </div>
+            </div>
+            <table id="cityStateTable" class="table table-striped-blue table-hover w-100 nowrap" cellspacing="0">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["State name"]</th>
+                        <th>@localizer["City name"]</th>
+                        <th>@localizer["Postal code"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["State name"]</th>
+                        <th>@localizer["City name"]</th>
+                        <th>@localizer["Postal code"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+
+@section Scripts
+{
+    <script src="~/js/site.js"></script>
+
+    <script>
+        $(document).ready(function () {
+
+            $('#cityStateTable tfoot th').each(function (i) {
+                var title = $(this).text();
+                if (title != "@localizer["Actions"]") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let cityStateTable = $('#cityStateTable')
+                .DataTable({
+                    "scrollY": '55vh',
+                    "scrollX": true,
+                    "scrollCollapse": true,
+                    "scroller": true,
+                    "oLanguage": @localizer["LanguageDataTable"],
+                    "sAjaxSource": "/Lists/CityState/GetCitiesAndStatesRecords",
+                    "bServerSide": true,
+                    "bProcessing": true,
+                    "bSearchable": true,
+                    "language": {
+                        "processing":
+                            '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                    },
+                    "dom": 'Bfrtip',
+                    "buttons": [
+                    {
+                        "extend": "excelHtml5",
+                        "text": '<img class="tables-img-icon" src="../../../images/Excel.svg" width="25" height="25" />',
+                        "titleAttr": "Exportar archivo Excel",
+                        "title": "Datos de ciudades y provincias",
+                        "exportOptions": {
+                            "columns": [2, 3, 4]
+                        }
+                    }],
+                    "columns": [
+                        {
+                            "data": "city_Id",
+                            "autoWidth": true,
+                            "searchable": true,
+                            "visible": false
+                        },
+                        {
+                            "searchable": false,
+                            "render": function (data, type, row, meta) {
+                                return '<div class="btn-group"><div class="d-flex animated--grow-in">' +
+                                    '<a class="btn action-btn" title="@localizer["Edit State"]" onclick="editState(' + row.state_Id + ')" class="dropdown-item"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>' +
+                                    '<a class="btn action-btn" title="@localizer["Delete state"]" onclick="deleteState(' + row.state_Id + ')" class="dropdown-item"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a></div>' +
+                                    '<a class="btn action-btn" title="@localizer["Edit City"]" onclick="editCity(' + row.city_Id + ')" class="dropdown-item"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>' +
+                                    '<a class="btn action-btn" title="@localizer["Delete city"]" onclick="deleteCity(' + row.city_Id + ')" class="dropdown-item"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a></div>';
+                            },
+                            "visible": true,
+                            "width": "5%",
+                        },
+                        {
+                            "data": "state_Name",
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "city_Name",
+                            "autoWidth": true,
+                            "searchable": true
+                        },
+                        {
+                            "data": "city_ZipCode",
+                            "autoWidth": true,
+                            "searchable": true
+                        }
+                    ],
+                    initComplete: function () {
+                        // Apply the search
+                        this.api().columns().every(function () {
+                            var that = this;
+
+                            $('input', this.footer()).on('keyup change clear', function () {
+                                if (that.search() !== this.value) {
+                                    that
+                                        .search(this.value)
+                                        .draw();
+                                }
+                            });
+                        });
+                    }
+                });
+
+            cityStateTable.buttons().container()
+                .appendTo("#div-export-buttons .btn-group");
+
+            // For clean inputs search on datatables.
+            $(document).keyup(function (e) {
+                if (e.key === "Escape") {
+                    $('.search-control').val('');
+                    cityStateTable.state.clear();
+                    window.location.reload();
+                }
+            });
+
+        })
+
+        function editState(id) {
+            let url = "/Lists/CityState/OnGetCreateOrEditState?id=" + id;
+            jQueryModalGet(url, "@localizer["Edit State"]");
+        }
+
+        function editCity(id) {
+            let url = "/Lists/CityState/OnGetCreateOrEditCity?id=" + id;
+            jQueryModalGet(url, "@localizer["Edit City"]");
+        }
+
+        function deleteState(id) {
+            if (confirm('@localizer["Are you sure to delete this record?"]')) {
+                let url = "/Lists/CityState/OnPostDeleteState?id=" + id;
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    success: function (data) {
+                        if (data) {
+                            $('#cityStateTable').DataTable().ajax.reload(null, false);
+                        }
+                    }
+                });
+            }
+        }
+
+        function deleteCity(id) {
+            if (confirm('@localizer["Are you sure to delete this record?"]')) {
+                let url = "/Lists/CityState/OnPostDeleteCity?id=" + id;
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    success: function (data) {
+                        if (data) {
+                            $('#cityStateTable').DataTable().ajax.reload(null, false);
+                        }
+                    }
+                });
+            }
+        }
+
+    </script>
+
+}

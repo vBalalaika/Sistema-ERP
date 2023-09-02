@@ -1,0 +1,442 @@
+﻿@using ERP.Web.Areas.Clients.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<CommunicationViewModel>
+@{
+    ViewData["Title"] = localizer["List of comunications"];
+}
+
+<head>
+    <link href="~/css/Clients/comunications.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="card">
+        <div id="viewComumnications" class="card-body table-responsive">
+
+            <div class="col-sm-12 col-md-12 col-xl-6 mb-3 pr-0 mr-3">
+                <label for="daterange">@localizer["Date"]</label>
+                <input id="daterange" type="text" name="daterange" class="form-control pr-4 border-0" />
+            </div>
+
+            <div id="div-export-buttons">
+                <div class="btn-group">
+
+                </div>
+            </div>
+
+            <table id="comunicationsTable" class="table table-striped-blue table-hover nowrap" width="100%">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Client"]</th>
+                        <th>@localizer["Contact date"]</th>
+                        <th>@localizer["Consulted product"]</th>
+                        <th>@localizer["Functionality"]</th>
+                        <th>@localizer["Piece type"]</th>
+                        <th>@localizer["Origin contact"]</th>
+                        <th>@localizer["Contact source"]</th>
+                        <th>@localizer["Operation"]</th>
+                        <th>@localizer["Communication"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Client"]</th>
+                        <th>@localizer["Contact date"]</th>
+                        <th>@localizer["Consulted product"]</th>
+                        <th>@localizer["Functionality"]</th>
+                        <th>@localizer["Piece type"]</th>
+                        <th>@localizer["Origin contact"]</th>
+                        <th>@localizer["Contact source"]</th>
+                        <th>@localizer["Operation"]</th>
+                        <th>@localizer["Communication"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+
+
+@section Scripts
+{
+    <script>
+
+        $(document).ready(function () {
+
+            //if ("@ViewBag.postSale" == "True") {
+            //    $('#checkPostSale').prop('checked', true);
+            //    $('#checkQueries').prop('checked', false);
+            //} else if ("@ViewBag.postSale" == "False") {
+            //    $('#checkPostSale').prop('checked', false);
+            //    $('#checkQueries').prop('checked', true);
+            //} else {
+            //    $('#checkPostSale').prop('checked', true);
+            //    $('#checkQueries').prop('checked', true);
+            //    $('#checkAll').prop('checked', true);
+            //}
+
+            //$('#checkPostSale').on('change', function () {
+            //    if (this.checked) {
+
+            //        $('#checkQueries').prop('checked', false);
+
+            //        window.location.href = "/clients/client/indexallcommunications?postSale=true";
+            //    } else {
+
+            //        $('#checkQueries').prop('checked', true);
+
+            //        window.location.href = "/clients/client/indexallcommunications?postSale=false";
+            //    }
+            //});
+
+            //$('#checkQueries').on('change', function () {
+            //    if (this.checked) {
+
+            //        $('#checkPostSale').prop('checked', false);
+
+            //        window.location.href = "/clients/client/indexallcommunications?postSale=false";
+            //    } else {
+
+            //        $('#checkPostSale').prop('checked', true);
+
+            //        window.location.href = "/clients/client/indexallcommunications?postSale=true";
+            //    }
+            //});
+
+            //$('#checkAll').on('change', function () {
+            //    if (this.checked) {
+
+            //        $('#checkPostSale').prop('checked', true);
+            //        $('#checkQueries').prop('checked', true);
+
+            //        window.location.href = "/clients/client/indexallcommunications?postSale=null";
+            //    } else {
+
+            //        $('#checkPostSale').prop('checked', false);
+            //        $('#checkQueries').prop('checked', true);
+
+            //        window.location.href = "/clients/client/indexallcommunications?postSale=false";
+            //    }
+            //});
+
+
+            let start = moment().subtract(5, 'months');
+            let end = moment();
+            let dateFromFilterValue = start.format('DD/MM/YYYY');
+            let dateToFilterValue = end.format('DD/MM/YYYY');
+
+
+            $('input[name="daterange"]').daterangepicker({
+                "locale": {
+                    "format": "DD/MM/YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Aceptar",
+                    "cancelLabel": "Cancelar",
+                    "fromLabel": "Desde",
+                    "toLabel": "Hasta",
+                    "daysOfWeek": [
+                        "Do",
+                        "Lu",
+                        "Ma",
+                        "Mi",
+                        "Ju",
+                        "Vi",
+                        "Sa"
+                    ],
+                    "monthNames": [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre"
+                    ],
+                    "firstDay": 1
+                },
+                "autoApply": true,
+                "showDropdowns": true,
+                "opens": "right",
+                "buttonClasses": "btn btn-sm",
+                "applyClass": "btn-primary",
+                "startDate": start,
+                "endDate": end,
+                "minYear": 1995
+            }, cb);
+
+            function cb(start, end) {
+                $('#daterange span').html(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+                dateFromFilterValue = start.format('DD/MM/YYYY');
+                dateToFilterValue = end.format('DD/MM/YYYY');
+                refreshTable();
+            }
+
+            $('#daterange').on('apply.daterangepicker', function (ev, picker) {
+                dateFromFilterValue = picker.startDate.format('DD/MM/YYYY');
+                dateToFilterValue = picker.endDate.format('DD/MM/YYYY');
+                refreshTable();
+            });
+
+
+            $('#comunicationsTable tfoot th').each(function (i) {
+                if ($(this).text() != "@localizer["Actions"]") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + $(this).text() + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+
+            let comunicationsTable = $("#comunicationsTable").DataTable({
+                "order": [[2, "asc"]],
+                "sAjaxSource": "/Clients/Client/LoadAllCommunications",
+                "sServerMethod": "POST",
+                "bServerSide": true,
+                "bProcessing": true,
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "dateFromFilterValue", "value": dateFromFilterValue },
+                        { "name": "dateToFilterValue", "value": dateToFilterValue },
+                    );
+                },
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false
+                    },
+                    {
+                        "searchable": false,
+                        "render": function (data, type, row, meta) {
+
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+
+                            html += '<a class="btn action-btn" title="" onclick="editCommunication(' + row.id + ')"> <img class="action-img-icon" src="../../../images/Editar.svg" width="22" height="22" /> </a>';
+
+                            html += '</div></div>';
+
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                    },
+                    {
+                        "data": "client.businessName",
+                        "searchable": true,
+                        "visible": true
+                    },
+                    {
+                        "data": "comunicationDate",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return moment(value).format('DD/MM/YYYY');
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    },
+                    {//Code and Description
+                        "data": "cpCodeAndDescription",
+                        "render": function (value) {
+                            if (value === null || value === ' ') {
+                                return "-";
+                            } else {
+                                return value;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    },
+                    { //Funcionality
+                        "data": "cpFuncionality",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            } else {
+                                return value;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    },
+                    { //PieceType
+                        "data": "cpPieceType",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            } else {
+                                return value;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    },
+                    {
+                        "data": "incomingOrOutgoin", 
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            }
+                            else{
+                                return value;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    },
+                    {
+                        "data": "contactSource",
+                        "searchable": true,
+                        "visible": true
+                    },
+                    {
+                        "data": "saleOperation",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            } else {
+                                return value.operation;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    },
+                    {
+                        "data": "communicationName",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            } else {
+                                return value;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    }
+                ],
+                "oLanguage": @localizer["LanguageDataTable"],
+                scrollY: '40vh',
+                scrollX: true,
+                scrollCollapse: true,
+                scroller: true,
+                scroller: {
+                    loadingIndicator: true
+                },
+                "buttons": [
+                    {
+                        extend: 'excelHtml5',
+                        attr: { id : 'btn-export-dataTable-excel' },
+                        text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                        titleAttr: 'Exportar archivo Excel',
+                        title: 'Registro de comunicaciones',
+                        exportOptions: {
+                            columns: [2, 3, 4, 5, 6, 7, 8, 9, 10]
+                        }
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                }
+            });
+
+
+            $('div.dataTables_scrollHeadInner thead').on('click', 'th', function () {
+
+                if ($(this).hasClass("sorting") && !$(this).hasClass("sorting_asc") && !$(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+                else if ($(this).hasClass("sorting_asc")) {
+                    colOrderDirection = "desc";
+                }
+                else if ($(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+
+                switch (comunicationsTable.column(this).index()) {
+                    case 2:
+                        // businessName
+                        colIndexOrder = 2;
+                        break;
+                    case 3:
+                        // comunicationDate
+                        colIndexOrder = 3;
+                        break;
+                    case 4:
+                        // CodeAndDescription
+                        colIndexOrder = 4;
+                        break;
+                    case 5:
+                        // Funcionality
+                        colIndexOrder = 5;
+                        break;
+                    case 6:
+                        // PieceType
+                        colIndexOrder = 6;
+                        break;
+                    case 7:
+                        // incomingOrOutgoin
+                        colIndexOrder = 7;
+                        break;
+                    case 8:
+                        // contactSource
+                        colIndexOrder = 8;
+                        break;
+                    case 9:
+                        // saleOperation
+                        colIndexOrder = 9;
+                        break;
+                    case 10:
+                        // communicationName
+                        colIndexOrder = 10;
+                        break;
+
+                }
+            });
+
+            comunicationsTable.buttons().container()
+                .appendTo('#div-export-buttons .btn-group');
+
+            $(comunicationsTable.table().container()).on('keyup', 'tfoot input', function () {
+                comunicationsTable
+                    .column($(this).data('index'))
+                    .search(this.value)
+                    .draw();
+            });
+
+        });
+
+        function refreshTable() {
+            $('#comunicationsTable').DataTable().clear();
+            $('#comunicationsTable').DataTable().ajax.reload();
+        }
+
+        function editCommunication(id){
+            jQueryModalGet('/Clients/Client/OnGetCreateCommunication?id=' + id + '&viewAll=true', '@localizer["Edit communication"]');
+        }
+
+
+    </script>
+}

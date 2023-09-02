@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW 2018 (64 Bit Versión de evaluación) -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="26.6648mm" height="25.3111mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 388.35 368.63"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str1 {stroke:black;stroke-width:14.56;stroke-miterlimit:22.9256}
+    .str3 {stroke:black;stroke-width:7.28;stroke-miterlimit:22.9256}
+    .str0 {stroke:black;stroke-width:14.56;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .str2 {stroke:black;stroke-width:14.56;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .fil0 {fill:none}
+   ]]>
+  </style>
+ </defs>
+ <g id="Capa_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <g id="_2296923053152">
+   <polyline class="fil0 str0" points="125.31,124.1 201.4,158.71 201.18,361.35 7.28,273.15 7.5,70.51 75.32,101.36 "/>
+   <rect class="fil0 str0" transform="matrix(1 -0.497474 -0 0.701851 201.182 157.837)" width="179.88" height="289.97"/>
+   <polyline class="fil0 str1" points="7.5,70.51 190.9,7.67 250.84,26.8 381.06,68.35 "/>
+   <polyline class="fil0 str2" points="254.17,27.86 75.32,101.36 75.32,175.78 "/>
+   <polyline class="fil0 str0" points="304.02,44.81 125.31,124.1 125.31,196.43 98.77,167.77 75.32,175.78 "/>
+   <rect class="fil0 str3" transform="matrix(0.954728 0.416162 -0 0.954728 121.972 265.036)" width="52.5" height="37.57"/>
+   <line class="fil0 str3" x1="128.08" y1="125.36" x2="75.32" y2= "101.36" />
+  </g>
+ </g>
+</svg>

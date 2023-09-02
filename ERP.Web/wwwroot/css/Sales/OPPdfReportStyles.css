@@ -1,0 +1,111 @@
+﻿#logo {
+    width: 60%;
+}
+
+#header_simplemak {
+    height: 10%;
+    background-color: #D3E1F3 !important;
+    color: white;
+}
+
+#body_one {
+    padding-top: 2%;
+    padding-bottom: 2%;
+    border-bottom: 3px solid #D3E1F3 !important;
+}
+
+#body_two {
+    padding-top: 2%;
+    padding-bottom: 2%;
+}
+
+#footer {
+    height: 5%;
+}
+
+#footer_left {
+    margin-right: 1%;
+    background-color: #E1E1E1 !important;
+    position: relative;
+}
+
+#products_table {
+    margin-top: 2%;
+    border-top: 3px solid #D3E1F3 !important;
+}
+
+#bg-thead-pdf {
+    border-bottom: 3px solid #D3E1F3 !important;
+}
+
+#header_right {
+    background-color: #E9F0F9 !important;
+    text-align: center;
+    position: relative;
+    width: 20%;
+}
+
+#header_left {
+    width: 80%;
+    position: relative;
+}
+
+#title {
+    position: absolute;
+    top: 80%;
+    margin-top: -25px;
+    padding-left: 5%;
+}
+
+img {
+    position: absolute;
+    top: 50%;
+    margin-top: -25px;
+    padding-left: 5%;
+}
+
+#bussinessName, #address, #simplemak, #simplemak_address {
+    color: #0085CA !important;
+}
+
+h1 {
+    color: #0085CA !important;
+}
+
+h5, h3 {
+    color: #343A40 !important;
+}
+
+#P {
+    position: absolute;
+    top: 30%;
+    margin-top: -25px;
+    padding-left: 35%;
+}
+
+#cod {
+    color: #0085CA !important;
+    position: absolute;
+    top: 80%;
+    margin-top: -25px;
+    padding-left: 20%;
+}
+
+#simplemak_title {
+    position: absolute;
+    top: 70%;
+    margin-top: -25px;
+    padding-left: 45%;
+}
+
+.flexrow {
+    display: -webkit-box;
+    display: -webkit-flex;
+    display: flex !important;
+}
+
+    .flexrow > div {
+        -webkit-box-flex: 1;
+        -webkit-flex: 1;
+        flex: 1;
+    }

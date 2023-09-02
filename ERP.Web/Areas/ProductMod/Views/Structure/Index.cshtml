@@ -1,0 +1,35 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model ProductStructureViewModel
+@{
+    ViewData["Title"] = "Configuraciones " + Model.Product.CodeAndDescription;
+    //ViewData["Caption"] = localizer["Manage Categories here"];
+}
+
+<div class="col-12 col-sm-12 col-md-12 col-lg-12 col-xl-12">
+    <input type="hidden" asp-for="Product.Id" value="@Model.Product.Id" />
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+        </div>
+    </div>
+</div>
+@section Scripts
+{
+    <script>
+        $(document).ready(function () {
+     
+            var productId = $('#Product_Id').val();
+            loadProductStructure(productId);
+
+            //$('#viewAll').on('click', '#reload', function () {
+            //    var productId = $('#Product_Id').val();
+            //    loadProductStructure(productId);
+            //});
+
+            function loadProductStructure(productId) {
+                $('#viewAll').load('/productmod/structure/LoadAll?productId=' + productId + '');
+            }
+        });
+    </script>
+}

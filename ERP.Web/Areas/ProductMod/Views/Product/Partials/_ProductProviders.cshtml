@@ -1,0 +1,153 @@
+﻿@using ERP.Web.Areas.ProductMod.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model ProductProvidersViewModel
+
+<div class="col-md-12 pl-0">
+    <label class="text-capitalize">@localizer["Providers"]</label>
+    @Html.HiddenFor(x => x.Product.ProductFeature.Bought)
+</div>
+
+    <div class="col-md-12 pl-0">
+        <div id="div-export-buttons-providers" class="text-center">
+            <div class="btn-group">
+            </div>
+        </div>
+        <table id="ProvidersTable" class="table table-striped-blue w-100 nowrap">
+            <thead class="bg-thead">
+                <tr>
+                    <th scope="col">@localizer["Business name"]</th>
+                    @if (!Model.Product.ProductFeature.Bought)
+                    {
+                        <th scope="col" class="hidable">@localizer["Brand"]</th>
+                        <th scope="col" class="hidable">@localizer["Provider code"]</th>
+                        <th scope="col" class="hidable">@localizer["Presentation unit"]</th>
+                        <th scope="col" class="hidable">@localizer["Width"] (mm)</th>
+                        <th scope="col" class="hidable">@localizer["Length"] (mm) </th>
+                        <th scope="col" class="hidable">@localizer["Weight"] (kg)</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model.Providers != null)
+                {
+                    @foreach (var relproviderproduct in Model.Providers)
+                    {
+                        <tr>
+                            <td>
+                                @{
+                                    if (relproviderproduct.Provider != null)
+                                    {
+                                        @relproviderproduct.Provider.BusinessName
+                                    }
+                                }
+                            </td>
+                            @if (!Model.Product.ProductFeature.Bought)
+                            {
+                                <td>
+                                    @relproviderproduct.Brand
+                                </td>
+                                <td class="text-center">
+                                    @relproviderproduct.ProviderCode
+                                </td>
+                                <td class="text-center">
+                                    @{
+                                        if (relproviderproduct.UnitMeasure != null)
+                                        {
+                                            @relproviderproduct.UnitMeasure.Description
+                                        }
+                                    }
+                                </td>
+                                <td class="text-center">
+                                    @Math.Round(relproviderproduct.Width ?? 0, 2)
+                                </td>
+                                <td class="text-center">
+                                    @Math.Round(relproviderproduct.Lenght ?? 0, 2)
+                                </td>
+                                <td class="text-center">
+                                    @Math.Round(relproviderproduct.Weight ?? 0, 2)
+                                </td>
+                            }
+                        </tr>
+                    }
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th scope="col">@localizer["Business name"]</th>
+                    @if (!Model.Product.ProductFeature.Bought)
+                    {
+                        <th scope="col" class="hidable">@localizer["Brand"]</th>
+                        <th scope="col" class="hidable">@localizer["Provider code"]</th>
+                        <th scope="col" class="hidable">@localizer["Presentation unit"]</th>
+                        <th scope="col" class="hidable">@localizer["Width"] (mm)</th>
+                        <th scope="col" class="hidable">@localizer["Length"] (mm) </th>
+                        <th scope="col" class="hidable">@localizer["Weight"] (kg)</th>
+                    }
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+<script>
+    $(document).ready(function () {
+
+        //Busqueda en footers de tablas
+        $('#ProvidersTable tfoot th').each(function (i) {
+            var title = $(this).text().trim();
+            if (title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+        let providersTable = $("#ProvidersTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "order": [[0, "asc"]],
+            scrollY: '60vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="25" height="25" />',
+                    className: 'rounded',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Datos de proveedores para el producto: ' + '@Model.Product.CodeAndDescription',
+                    exportOptions: {
+                        columns: [0, 1, 2, 3, 4, 5, 6]
+                    }
+                }]
+        });
+
+        providersTable.buttons().container()
+            .appendTo('#div-export-buttons-providers .btn-group');
+
+        $(providersTable.table().container()).on('keyup', 'tfoot input', function () {
+            providersTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+        // Hide/show ProvidersTable columns
+        //function updateProvidersTable(value) {
+        //    var isTrueSet = (value === 'true');
+        //    if (isTrueSet) {
+        //        $("table .hidable").each(function () {
+        //            $(this).removeClass('d-none');
+        //        });
+        //    } else {
+        //        $("table .hidable").each(function () {
+        //            $(this).addClass('d-none');
+        //        });
+
+        //    }
+        //}
+        //updateProvidersTable($("#Product_ProductFeature_Bought").val().toLowerCase())
+    });
+</script>

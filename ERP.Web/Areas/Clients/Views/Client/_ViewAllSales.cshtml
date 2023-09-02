@@ -1,0 +1,387 @@
+﻿@using ERP.Web.Areas.Sales.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<OrderDetailViewModel>
+@{
+    if (ViewData["OrderTitle"] != null)
+    {
+        ViewData["Title"] = ViewData["OrderTitle"].ToString();
+    }
+}
+<head>
+    <link href="~/css/Sales/sales.css" rel="stylesheet" />
+</head>
+
+
+
+<body>
+
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+
+            <h3>@localizer["Sales products"]</h3>
+
+            <div class="col-md-4">
+                <div class="form-check form-check-inline">
+                    <label class="control-label"> <i class="far fa-user"></i> @ViewBag.BusinessName</label>
+                </div>
+            </div>
+
+            <div id="saleCategoryChecks" class="col-sm-6 col-md-6 col-xl-5 mb-3" style="margin-top: 20px">
+                <label for="saleCategoryChecks" class="w-100">@localizer["Sale category"]</label>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkMachines">
+                        <label class="custom-control-label" for="checkMachines">@localizer["Machines"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkAccesories">
+                        <label class="custom-control-label" for="checkAccesories">@localizer["Accesories"]</label>
+                    </div>
+                </div>
+                <div class="form-check form-check-inline">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkSpares" checked>
+                        <label class="custom-control-label" for="checkSpares">@localizer["Spares"]</label>
+                    </div>
+                </div>
+            </div>
+
+            
+            <div id="div-export-buttons">
+                <div class="btn-group">
+                    <a id="btn-create" class="btn btn-secondary text-white" asp-area="Clients" asp-controller="Client" asp-action="_ViewAllOperationsSales" asp-route-clientId="@ViewBag.ClientId" title="@localizer["List of sale operations"]" style="cursor:pointer">
+                        <img class="tables-img-icon" src="~/images/sale operation blanco.svg" width="30" height="30" />
+                    </a>
+                </div>
+            </div>
+
+            <table id="saleOrdersTable" class="table table-striped-blue nowrap" width="100%">
+
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>id</th>
+                        <th>Nº OV/OP</th>
+                        <th>@localizer["Date"] OV/OP</th>
+                        <th>@localizer["Delivery date"]</th>
+                        <th>Nº prod</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th>@localizer["Configuration"]</th>
+                        <th>@localizer["Supply voltage"]</th>       
+                        <th>@localizer["Sale category"]</th>
+                        <th>@localizer["Family/Heading"]</th>                    
+                        <th>@localizer["Operation"]</th>                    
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                            <th hidden>id</th>
+                            <th>Nº OV/OP</th>
+                            <th>@localizer["Date"] OV/OP</th>
+                            <th>@localizer["Delivery date"]</th>
+                            <th>Nº prod</th>
+                            <th>@localizer["Code"]</th>
+                            <th>@localizer["Description"]</th>
+                            <th>@localizer["Configuration"]</th>
+                            <th>@localizer["Supply voltage"]</th>
+                            <th>@localizer["Sale category"]</th>
+                            <th>@localizer["Family/Heading"]</th>
+                            <th>@localizer["Operation"]</th>
+                        </tr>
+                </tfoot>
+            </table>                         
+        </div>
+    </div>
+</body>
+
+                        
+@section Scripts
+{
+    <script>
+
+        $(document).ready(function () {
+
+            $('#saleOrdersTable tfoot th').each(function (i) {
+                if ($(this).text() != "@localizer["Actions"]") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + $(this).text() + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let saleOrdersTable = $("#saleOrdersTable").DataTable({
+                scrollY: '55vh',
+                scrollX: true,
+                scrollCollapse: true,
+                scroller: true,
+                oLanguage: @localizer["LanguageDataTable"],
+                order: [[2, "asc"]],
+                sAjaxSource: '/Clients/Client/_LoadAllSales?clientId=' + @ViewBag.ClientId,
+                sServerMethod: "POST",
+                fnServerParams: function (aoData) {
+                    aoData.push(
+                            { "name": "checkMachines", "value": $("#checkMachines").is(":checked") },
+                            { "name": "checkAccesories", "value": $("#checkAccesories").is(":checked") },
+                            { "name": "checkSpares", "value": $("#checkSpares").is(":checked") }
+                    );
+                },
+                bServerSide: true,
+                bProcessing: true,
+                scroller: {
+                    loadingIndicator: true
+                },
+                buttons: [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                        titleAttr: 'Exportar archivo Excel',
+                        title: 'Registro de productos vendidos',
+                        exportOptions: {
+                            columns: [1, 2, 3, 5, 6, 7, 8, 9, 10, 11]
+                        }
+                    }],
+                "columns":[
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false
+                    }, // ID
+                    {
+                        "data": "orderHeader.number",
+                        "searchable": true,
+                        "visible": true
+                    }, // NUMBER
+                    {
+                        "data": "orderHeader.orderDate",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return moment(value).format('DD/MM/YYYY');
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    }, // ORDER DATE
+                    {
+                        "data": "deliveryDate",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return moment(value).format('DD/MM/YYYY');
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    }, // DELIVERY DATE 
+                    {
+                        "data": "productNumber",
+                        "searchable": true,
+                        "visible": true
+                    }, // PRODUCT NUMBER
+                    {
+                        "data": "product",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            } else {
+                                return value.code;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    }, // PRODUCT CODE
+                    {
+                        "data": "product",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    }, // PRODUCT DESCRIPTION
+                    {
+                        "data": "structure",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    }, // STRUCTURE DESCRIPTION
+                    {
+                        "data": "supplyVoltage",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            } else {
+                                return value.description;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    }, // SUPPLY VOLTAGE DESCRIPTION
+                    {
+                        "data": "saleCategory",
+                        "searchable": true,
+                        "visible": true
+                    }, // SALE CATEGORY 
+                    {
+                        "data": "product.subCategory.description",
+                        "searchable": true,
+                        "visible": true
+                    }, // SUB CATEGORY
+                    {
+                        "data": "saleOperation",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            } else {
+                                return value.operation;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    }, // OPERATION
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                }
+            });
+
+            
+            saleOrdersTable.buttons().container().appendTo('#div-export-buttons .btn-group');
+
+            $(saleOrdersTable.table().container()).on('keyup', 'tfoot input', function () {
+                saleOrdersTable
+                    .column($(this).data('index'))
+                    .search(this.value)
+                    .draw();
+            });
+
+
+
+
+            colIndexOrder = saleOrdersTable.order()[0][0];
+            colOrderDirection = saleOrdersTable.order()[0][1];
+
+            $('div.dataTables_scrollHeadInner thead').on('click', 'th', function () {
+
+                if ($(this).hasClass("sorting") && !$(this).hasClass("sorting_asc") && !$(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+                else if ($(this).hasClass("sorting_asc")) {
+                    colOrderDirection = "desc";
+                }
+                else if ($(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+
+                switch (saleOrdersTable.column(this).index()) {
+                    case 1:
+                        colIndexOrder = 1;
+                        break;
+                    case 2:                      
+                        colIndexOrder = 2;
+                        break;
+                    case 3:
+                        colIndexOrder = 3;
+                        break;
+                    case 4:
+                        colIndexOrder = 4;
+                        break;
+                    case 5:
+                        colIndexOrder = 5;
+                        break;
+                    case 6:
+                        colIndexOrder = 6;
+                        break;
+                    case 7:
+                        colIndexOrder = 7;
+                        break;
+                    case 8:
+                        colIndexOrder = 8;
+                        break;
+                    case 9:
+                        colIndexOrder = 9;
+                        break;
+                    case 10:
+                        colIndexOrder = 10;
+                        break;
+                    case 11:
+                        colIndexOrder = 11;
+                        break;
+                    case 12:
+                        colIndexOrder = 12;
+                        break;
+                    case 13:
+                        colIndexOrder = 13;
+                        break;
+
+                }
+            });
+
+
+            $('#checkMachines').change(function () {
+                if (this.checked) {
+                    $('#checkAccesories').prop('checked', false);
+                    $('#checkSpares').prop('checked', false);
+                    $('#checkMachines').prop('checked', true);
+                    refreshTable();
+                } else {
+                    refreshTable();
+                }
+            });
+
+            $('#checkAccesories').change(function () {
+                if (this.checked) {
+                    $('#checkAccesories').prop('checked', true);
+                    $('#checkSpares').prop('checked', false);
+                    $('#checkMachines').prop('checked', false);
+                    refreshTable();
+                } else {
+                    refreshTable();
+                }
+            });
+
+            $('#checkSpares').change(function () {
+                if (this.checked) {
+                    $('#checkAccesories').prop('checked', false);
+                    $('#checkSpares').prop('checked', true);
+                    $('#checkMachines').prop('checked', false);
+                    refreshTable();
+                } else {
+                    refreshTable();
+                }
+            });
+
+        });
+
+
+        function refreshTable() {
+            $('#saleOrdersTable').DataTable().clear();
+            $('#saleOrdersTable').DataTable().ajax.reload();
+        }
+    </script>
+}

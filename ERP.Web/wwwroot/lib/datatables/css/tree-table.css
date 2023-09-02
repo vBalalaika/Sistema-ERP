@@ -1,0 +1,104 @@
+tr .tt-details-control {
+    vertical-align: middle !important;
+}
+
+    tr .tt-details-control .expander {
+        position: relative;
+        color: transparent;
+        margin: 0 10px;
+    }
+
+tr.has-child .tt-details-control {
+    cursor: pointer;
+}
+
+    tr.has-child .tt-details-control .expander {
+        cursor: pointer;
+    }
+
+        tr.has-child .tt-details-control .expander::after {
+            content: '';
+            position: absolute;
+            -webkit-transform: translate(-18%, -50%) rotate(-90deg);
+            transform: translate(-18%, -50%) rotate(-90deg);
+            border-left: 5.04px solid transparent;
+            border-right: 5.04px solid transparent;
+            border-top: 7px solid #000;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer;
+        }
+
+[data-theme="dark"] tr.has-child .tt-details-control .expander::after {
+    border-top: 7px solid #fff;
+}
+
+tr.open .tt-details-control .expander::after {
+    -webkit-transform: translate(-18%, -50%) rotate(0);
+    transform: translate(-18%, -50%) rotate(0);
+}
+
+tr:not(.has-child) .tt-details-control .expander::after {
+    /* content: '-';*/
+    font-weight: bold;
+    color: #000;
+    border: 0;
+}
+
+[data-theme="dark"] tr:not(.has-child) .tt-details-control .expander::after {
+    /* content: '-';*/
+    font-weight: bold;
+    color: #fff;
+    border: 0;
+}
+
+#activitiesTableSoldadura tbody tr:not(.has-child) {
+    /* background-color: #eee !important;*/
+}
+
+[data-theme="dark"] #activitiesTableSoldadura tbody tr:not(.has-child) {
+    /* background-color: #343a40 !important;*/
+}
+
+tr.level-1 .tt-details-control .expander::after {
+    margin-left: 15px !important;
+}
+
+tr.level-2 .tt-details-control .expander::after {
+    margin-left: 30px !important;
+}
+
+tr.level-3 .tt-details-control .expander::after {
+    margin-left: 45px !important;
+}
+
+tr.level-4 .tt-details-control .expander::after {
+    margin-left: 60px !important;
+}
+
+tr.level-5 .tt-details-control .expander::after {
+    margin-left: 75px !important;
+}
+
+tr.level-1 .productNumber {
+    padding-left: 15px !important;
+}
+
+tr.level-2 .productNumber {
+    padding-left: 30px !important;
+}
+
+tr.level-3 .productNumber {
+    padding-left: 45px !important;
+}
+
+tr.level-4 .productNumber {
+    padding-left: 60px !important;
+}
+
+tr.level-5 .productNumber {
+    padding-left: 75px !important;
+}
+
+tr.level-1 {
+    /*background-color: #eee;*/
+}

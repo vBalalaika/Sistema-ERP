@@ -1,0 +1,639 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Application.Enums
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Purchases"];
+}
+@using ERP.Web.Areas.Purchases.Models.PurchaseOrder
+@model PurchaseOrderHeaderViewModel
+@{
+    var isSuperAdmin = false;
+    if (User.IsInRole(Roles.SuperAdmin.ToString()))
+    {
+        isSuperAdmin = true;
+    }
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/Purchases/PurchaseOrder/PurchaseOrderStyle.css" />
+</head>
+<body>
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+            <div id="div-export-buttons" class="btn-toolbar justify-content-center" role="toolbar">
+                <div class="input-group pr-3 mt-1">
+                    <input id="daterange_input" type="text" name="daterange_input" class="form-control pr-4" placeholder="@localizer["Filter by date"]" />
+                </div>
+                <div class="btn-group mr-2 align-items-center" role="group">
+                    @if ((AuthorizationService.AuthorizeAsync(User, Permissions.PurchaseOrder.Create)).Result.Succeeded)
+                    {
+                        <a id="btn-create" class="btn bg-secondary pl-1 pr-1" title="@localizer["Create"]">
+                            <img class="tables-img-icon" src="~/images/NewOC.svg" width="30" height="30" />
+                        </a>
+                    }
+                    <a id="btn-export-excel" class="btn bg-secondary pl-1 pr-1" title="@localizer["Export to Excel"]">
+                        <img class="tables-img-icon" src="~/images/Excel.svg" width="30" height="30" />
+                    </a>
+                </div>
+            </div>
+            <table id="purchasesTable" class="table table-striped-blue table-hover nowrap" width="100%" cellspacing="0">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Number"]</th>
+                        <th>@localizer["Date"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th class="text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Provider unit measure"]</th>
+                        <th class="text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Price unit"]</th>
+                        <th>@localizer["Unit price"]</th>
+                        <th>@localizer["Bonus"]</th>
+                        <th>@localizer["Total"]</th>
+                        <th>@localizer["Returns"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Number"]</th>
+                        <th>@localizer["Date"]</th>
+                        <th>@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th class="text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Provider unit measure"]</th>
+                        <th class="text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Price unit"]</th>
+                        <th>@localizer["Unit price"]</th>
+                        <th>@localizer["Bonus"]</th>
+                        <th>@localizer["Total"]</th>
+                        <th>@localizer["Returns"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+
+@section Scripts
+    {
+    <script src="~/js/site.js"></script>
+    <script>
+
+        $(document).ready(function () {
+
+            $.fn.dataTable.moment('DD/MM/YYYY HH:mm:ss');
+
+            //#region Filter parameters for export to excel
+            let sSearch_2 = "";
+            let sSearch_3 = "";
+            let sSearch_4 = "";
+            let sSearch_5 = "";
+            let sSearch_6 = "";
+            let sSearch_7 = "";
+            let sSearch_8 = "";
+            let sSearch_9 = "";
+            let sSearch_10 = "";
+            let sSearch_11 = "";
+            let sSearch_12 = "";
+            let sSearch_13 = "";
+            let sSearch_14 = "";
+            let colIndexOrder = 0;
+            let colOrderDirection = "";
+            //#endregion
+
+            let start = moment().subtract(5, 'months');
+            let end = moment();
+            let dateFromFilterValue = start.format('DD/MM/YYYY');
+            let dateToFilterValue = end.format('DD/MM/YYYY');
+
+            $('input[name="daterange_input"]').daterangepicker({
+                "locale": {
+                    "format": "DD/MM/YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Aceptar",
+                    "cancelLabel": "Cancelar",
+                    "fromLabel": "Desde",
+                    "toLabel": "Hasta",
+                    "daysOfWeek": [
+                        "Do",
+                        "Lu",
+                        "Ma",
+                        "Mi",
+                        "Ju",
+                        "Vi",
+                        "Sa"
+                    ],
+                    "monthNames": [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre"
+                    ],
+                    "firstDay": 1
+                },
+                "autoApply": true,
+                "showDropdowns": true,
+                "opens": "right",
+                "buttonClasses": "btn btn-sm",
+                "applyClass": "btn-primary",
+                "startDate": start,
+                "endDate": end,
+                "minYear": 1995
+            }, cb);
+
+            function cb(start, end) {
+                $('#daterange_input span').html(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+                dateFromFilterValue = start.format('DD/MM/YYYY');
+                dateToFilterValue = end.format('DD/MM/YYYY');
+                refreshTable();
+            }
+
+            $('#daterange_input').on('apply.daterangepicker', function (ev, picker) {
+                dateFromFilterValue = picker.startDate.format('DD/MM/YYYY');
+                dateToFilterValue = picker.endDate.format('DD/MM/YYYY');
+                refreshTable();
+            });
+
+            $('#purchasesTable tfoot th').each(function (i) {
+                var title = $(this).text();
+                if (title != "@localizer["Actions"]" && title != "") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let purchasesTable = $("#purchasesTable").DataTable({
+                "order": [[2, "desc"]],
+                "oLanguage": @localizer["LanguageDataTable"],
+                "scrollY": '60vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "scroller": true,
+                "sAjaxSource": "/purchases/purchaseorder/_LoadAll",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "dateFromFilter", "value": dateFromFilterValue },
+                        { "name": "dateToFilter", "value": dateToFilterValue }
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false,
+                        "orderable": false
+                    },
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "render": function (data, type, row, meta) {
+
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+
+                            switch (row.purchaseStateId) {
+                                // Pendiente
+                                case 1:
+                                    html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editPO('+ row.purchaseOrderHeaderId +')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    if("@isSuperAdmin" == "True"){
+                                        html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deletePO(' + row.id + ', ' + row.purchaseOrderHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    }
+
+                                    html += '<a class="btn action-btn" title="@localizer["Return item"]" onclick="returnPODItem(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Devolver.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    break;
+                                // A cotizar
+                                case 2:
+                                    html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editPO('+ row.purchaseOrderHeaderId +')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    if ("@isSuperAdmin" == "True") {
+                                        html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deletePO(' + row.id + ', ' + row.purchaseOrderHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    }
+
+                                    html += '<a class="btn action-btn" title="@localizer["Return item"]" onclick="returnPODItem(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Devolver.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    break;
+                                // Cotizado
+                                case 3:
+                                    html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editPO('+ row.purchaseOrderHeaderId +')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    if ("@isSuperAdmin" == "True") {
+                                        html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deletePO(' + row.id + ', ' + row.purchaseOrderHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    }
+
+                                    html += '<a class="btn action-btn" title="@localizer["Return item"]" onclick="returnPODItem(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Devolver.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    break;
+                                // Comprado
+                                case 4:
+                                    html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editPO('+ row.purchaseOrderHeaderId +')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    if ("@isSuperAdmin" == "True") {
+                                        html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deletePO(' + row.id + ', ' + row.purchaseOrderHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    }
+
+                                    html += '<a class="btn action-btn" title="@localizer["Return item"]" onclick="returnPODItem(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Devolver.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    break;
+                                // Finalizado
+                                case 5:
+                                    html += '<a class="btn action-btn" title="@localizer["Edit"]" onclick="editPO('+ row.purchaseOrderHeaderId +')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    if ("@isSuperAdmin" == "True") {
+                                        html += '<a class="btn action-btn" title="@localizer["Delete"]" onclick="deletePO(' + row.id + ', ' + row.purchaseOrderHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    }
+
+                                    html += '<a class="btn action-btn" title="@localizer["Return item"]" onclick="returnPODItem(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Devolver.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    break;
+                                // Devuelto
+                                case 8:
+                                    html += '<a class="btn action-btn disabled" title="@localizer["Edit"]" onclick="editPO(' + row.purchaseOrderHeaderId + ')" ><img class="action-img-icon" src="../../../images/Editar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    if ("@isSuperAdmin" == "True") {
+                                        html += '<a class="btn action-btn disabled" title="@localizer["Delete"]" onclick="deletePO(' + row.id + ', ' + row.purchaseOrderHeaderId + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+                                    }
+
+                                    html += '<a class="btn action-btn disabled" title="@localizer["Return item"]" onclick="returnPODItem(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Devolver.svg" width="' + 22 + '" height="' + 22 + '" /></a>';
+
+                                    break;
+                            }
+
+                            html += '</div></div>';
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                        "orderable": false
+                    },
+                    {
+                        "data": "purchaseOrderHeader.id",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "purchaseOrderHeader.date",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return moment(value).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+                            if(row.missingProduct != null)
+                            {
+                                return row.missingProduct.product.code;
+                            }
+                            else if(row.product != null)
+                            {
+                                return row.product.code;
+                            }
+
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "id",
+                        "render": function (data, type, row, meta) {
+                            if(row.missingProduct != null)
+                            {
+                                return row.missingProduct.product.description;
+                            }
+                            else if (row.product != null) {
+                                return row.product.description;
+                            }
+
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "purchaseOrderHeader",
+                        "render": function (purchaseOrderHeader) {
+                            return purchaseOrderHeader.provider.getBussinessNameOrName;
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "providerQuantity",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-right",
+                        "render": $.fn.dataTable.render.number('.', ',', 2)
+                    },
+                    {
+                        "data": "providerUnitMeasure",
+                        "render": function (providerUnitMeasure) {
+                            if (providerUnitMeasure === null) {
+                                return "";
+                            } else {
+                                return providerUnitMeasure.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "className": "text-left",
+                        "searchable": true
+                    },
+                    {
+                        "data": "priceQuantity",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-right",
+                        "render": $.fn.dataTable.render.number('.', ',', 2)
+                    },
+                    {
+                        "data": "priceUnitMeasure",
+                        "render": function (priceUnitMeasure) {
+                            if (priceUnitMeasure === null) {
+                                return "";
+                            } else {
+                                return priceUnitMeasure.description;
+                            }
+                        },
+                        "autoWidth": true,
+                        "className": "text-left",
+                        "searchable": true
+                    },
+                    {
+                        "data": "unitPrice",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center",
+                        "render": function (data, type, row, meta) {
+                            if (row.moneyType == 1)
+                            {
+                                return $.fn.dataTable.render.number('.', ',', 2, '', ' ARS').display(row.unitPrice);
+                            }
+                            else if (row.moneyType == 2)
+                            {
+                                return $.fn.dataTable.render.number('.', ',', 2, '', ' USD').display(row.unitPrice);
+                            }
+                        }
+                    },
+                    {
+                        "data": "bonus",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center",
+                        "render": $.fn.dataTable.render.number('.', ',', 2, '', ' %')
+                    },
+                    {
+                        "data": "total",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center",
+                        "render": $.fn.dataTable.render.number('.', ',', 2, '')
+                    },
+                    {
+                        "data": "purchaseState",
+                        "className": "text-center",
+                        "render": function (purchaseState) {
+                            if(purchaseState != null)
+                            {
+                                if (purchaseState.id == 8) {
+                                    return "@localizer["Yes"]";
+                                }
+                                else
+                                {
+                                    return '';
+                                }
+                            }
+                            else
+                            {
+                                return '';
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                }
+            });
+
+            //#region Index order and direction for export to excel
+            colIndexOrder = purchasesTable.order()[0][0];
+            colOrderDirection = purchasesTable.order()[0][1];
+
+            // Get order index and direction for table
+            $('div.dataTables_scrollHeadInner thead').on('click', 'th', function () {
+
+                if ($(this).hasClass("sorting") && !$(this).hasClass("sorting_asc") && !$(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+                else if ($(this).hasClass("sorting_asc")) {
+                    colOrderDirection = "desc";
+                }
+                else if ($(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+
+                switch (purchasesTable.column(this).index()) {
+                    case 2:
+                        colIndexOrder = 2;
+                        break;
+                    case 3:
+                        colIndexOrder = 3;
+                        break;
+                    case 4:
+                        colIndexOrder = 4;
+                        break;
+                    case 5:
+                        colIndexOrder = 5;
+                        break;
+                    case 6:
+                        colIndexOrder = 6;
+                        break;
+                    case 7:
+                        colIndexOrder = 7;
+                        break;
+                    case 8:
+                        colIndexOrder = 8;
+                        break;
+                    case 9:
+                        colIndexOrder = 9;
+                        break;
+                    case 10:
+                        colIndexOrder = 10;
+                        break;
+                    case 11:
+                        colIndexOrder = 11;
+                        break;
+                    case 12:
+                        colIndexOrder = 12;
+                        break;
+                    case 13:
+                        colIndexOrder = 13;
+                        break;
+                    case 14:
+                        colIndexOrder = 14;
+                        break;
+                }
+            });
+            //#endregion
+
+            $('#btn-create').on('click', function () {
+                jQueryModalGet('/purchases/purchaseorder/OnGetCreate', '@localizer["New purchase order"]');
+            });
+
+            $('#btn-export-excel').on('click', function () {
+                window.location.href = "/Purchases/PurchaseOrder/ExportToExcel" +
+                    "?sSearch_2=" + sSearch_2 +
+                    "&sSearch_3=" + sSearch_3 +
+                    "&sSearch_4=" + sSearch_4 +
+                    "&sSearch_5=" + sSearch_5 +
+                    "&sSearch_6=" + sSearch_6 +
+                    "&sSearch_7=" + sSearch_7 +
+                    "&sSearch_8=" + sSearch_8 +
+                    "&sSearch_9=" + sSearch_9 +
+                    "&sSearch_10=" + sSearch_10 +
+                    "&sSearch_11=" + sSearch_11 +
+                    "&sSearch_12=" + sSearch_12 +
+                    "&sSearch_13=" + sSearch_13 +
+                    "&sSearch_14=" + sSearch_14 +
+                    "&colIndexOrder=" + colIndexOrder +
+                    "&colOrderDirection=" + colOrderDirection +
+                    "&dateFromFilter=" + dateFromFilterValue +
+                    "&dateToFilter=" + dateToFilterValue;
+            });
+
+            //#region For export to excel, setting filters to send to the server
+            $('.search-control').keyup(function (e) {
+                let colIndex = $(this).attr("data-index");
+                let valueOfInput = $(this).val();
+
+                colIndex++;
+
+                if (colIndex == 3) {
+                    sSearch_2 = valueOfInput;
+                }
+                else if (colIndex == 4) {
+                    sSearch_3 = valueOfInput;
+                }
+                else if (colIndex == 5) {
+                    sSearch_4 = valueOfInput;
+                }
+                else if (colIndex == 6) {
+                    sSearch_5 = valueOfInput;
+                }
+                else if (colIndex == 7) {
+                    sSearch_6 = valueOfInput;
+                }
+                else if (colIndex == 8) {
+                    sSearch_7 = valueOfInput;
+                }
+                else if (colIndex == 9) {
+                    sSearch_8 = valueOfInput;
+                }
+                else if (colIndex == 10) {
+                    sSearch_9 = valueOfInput;
+                }
+                else if (colIndex == 11) {
+                    sSearch_10 = valueOfInput;
+                }
+                else if (colIndex == 12) {
+                    sSearch_11 = valueOfInput;
+                }
+                else if (colIndex == 13) {
+                    sSearch_12 = valueOfInput;
+                }
+                else if (colIndex == 14) {
+                    sSearch_13 = valueOfInput;
+                }
+                else if (colIndex == 15) {
+                    sSearch_14 = valueOfInput;
+                }
+
+            }).keyup();
+            //#endregion
+
+        });
+
+        function refreshTable() {
+            $('#purchasesTable').DataTable().clear();
+            $('#purchasesTable').DataTable().ajax.reload();
+        }
+
+        function editPO(pohId){
+            jQueryModalGet('/purchases/purchaseorder/OnGetCreate?id=' + pohId, "@localizer["Purchase order"]");
+        }
+
+        function deletePO(podId, pohId) {
+            if (confirm('@localizer["Are you sure to delete this record?"]')) {
+                let url = "/purchases/purchaseorder/OnPostDelete?podId=" + podId + "&pohId=" + pohId;
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    success: function (response) {
+                        if (response.isValid) {
+                            //refreshTable();
+                            refreshDatatableKeepingScrollPosition($('#purchasesTable').DataTable());
+                        }
+                    }
+                });
+            }
+        }
+
+        function returnPODItem(podId) {
+            if (confirm('@localizer["Are you sure to return this ítem?"]')) {
+                let url = "/purchases/purchaseorder/OnPostReturnPODItem?podId=" + podId;
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    success: function (response) {
+                        if (response.isValid) {
+                            //refreshTable();
+                            refreshDatatableKeepingScrollPosition($('#purchasesTable').DataTable());
+                        }
+                    }
+                });
+            }
+        }
+
+    </script>
+}

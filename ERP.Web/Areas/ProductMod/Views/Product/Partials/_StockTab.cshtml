@@ -1,0 +1,129 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+
+@model ProductViewModel
+
+<button class="btn btn-primary btn-block text-left collapsed my-3" type="button" data-toggle="collapse" data-target="#tabContent-stock" aria-expanded="false" aria-controls="collapseExample">
+    <i class="fa fas fa-plus-circle"></i>   @localizer["Stock"]
+</button>
+<div class="collapse colapsableTab border" id="tabContent-stock" aria-labelledby="stock-tab">
+    @* Fila 1 *@
+    <div class="form-group row ml-0 mr-0">
+        <div class="col-md-2 mb-3">
+            <label class="mr-3">@localizer["Stock"]</label>
+            <div>
+                @Html.CheckBoxFor(model => model.ProductFeature.StoredStock)
+            </div>
+        </div>
+
+        <div class="col-md-10 mb-3" id="divStock">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="form-row">
+                        <label>@localizer["Stock unit"]</label>
+                        <div class="input-group">
+                            <select tabindex="1" class="form-control select2bs4" asp-for="StockUnitMeasureId" id="StockUnitMeasures" asp-items="@Model.StockUnitMeasures">
+                                <option value="">@localizer["Select unit measure"]</option>
+                            </select>
+                        </div>
+                        <span asp-validation-for="StockUnitMeasures" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-row">
+                        <label>@localizer["Existence"]</label>
+                        <input type="text" asp-for="Existence" name="Existence" id="Existence" class="form-control" onkeypress="return validateIsNumber(event);">
+                        <span asp-validation-for="Existence" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-row">
+                        <label>@localizer["Point of order"]</label>
+                        <input type="text" asp-for="Minimum" name="Minimum" id="Minimum" class="form-control" onkeypress="return validateIsNumber(event);">
+                        <span asp-validation-for="Minimum" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-row">
+                        <label>@localizer["Quantity to order"]</label>
+                        <input type="text" asp-for="QuantityToOrder" name="QuantityToOrder" id="QuantityToOrder" class="form-control" onkeypress="return validateIsNumber(event);">
+                        <span asp-validation-for="QuantityToOrder" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="form-row">
+                        <label>@localizer["Location"]</label>
+                        <div class="input-group">
+                            <select class="form-control" id="LocationStationId" name="LocationStationId">
+                                <option value="" selected="selected">----------</option>
+                                @foreach (var station in Model.StationsList)
+                                {
+                                    if (Model.LocationStationId == station.Id)
+                                    {
+                                        <option value="@station.Id" selected="selected">@station.Description</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@station.Id">@station.Description</option>
+                                    }
+
+                                }
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-2 mb-3"></div>
+
+        <div class="col-md-10 mb-3" id="div-stock-measures">
+            <div class="row">
+                <div class="col-md-3">
+                    <label>@localizer["Width"] <strong class="text-red">*</strong></label>
+                    <div class="form-row">
+                        <div class="form-inline">
+                            <input id="StockWidth" type="text" asp-for="StockWidth" name="StockWidth" class="form-control" onkeypress="return validateIsNumber(event);">
+                            <label class="ml-2" for="StockWidth"><strong id="StockWidthUnitLabel" class="text-red">Unidad</strong></label>
+                        </div>
+                    </div>
+                    <span asp-validation-for="StockWidth" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label>@localizer["Length"] <strong class="text-red">*</strong></label>
+                    <div class="form-row">
+                        <div class="form-inline">
+                            <input id="StockLength" type="text" asp-for="StockLength" name="StockLength" class="form-control" onkeypress="return validateIsNumber(event);">
+                            <label class="ml-2" for="StockLength"><strong id="StockLengthUnitLabel" class="text-red">Unidad</strong></label>
+                        </div>
+                    </div>
+                    <span asp-validation-for="StockLength" class="text-danger"></span>
+                </div>
+                <div class="col-md-3">
+                    <label>@localizer["Height"] <strong class="text-red">*</strong></label>
+                    <div class="form-row">
+                        <div class="form-inline">
+                            <input id="StockHeight" type="text" asp-for="StockHeight" name="StockHeight" class="form-control" onkeypress="return validateIsNumber(event);">
+                            <label class="ml-2" for="StockHeight"><strong id="StockHeightUnitLabel" class="text-red">Unidad</strong></label>
+                        </div>
+                    </div>
+                    <span asp-validation-for="StockHeight" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <label>@localizer["Weight"] <strong class="text-red">*</strong></label>
+                    <div class="form-row">
+                        <div class="form-inline">
+                            <input id="StockWeight" type="text" asp-for="StockWeight" name="StockWeight" class="form-control" onkeypress="return validateIsNumber(event);">
+                            <label class="ml-2" for="StockWeight"><strong class="text-red">kg.</strong></label>
+                        </div>
+                    </div>
+                    <span asp-validation-for="StockWeight" class="text-danger"></span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>

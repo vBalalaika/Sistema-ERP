@@ -1,0 +1,1523 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Purchases.Models.QuoteRequest
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Quote request response"];
+}
+@model QuoteRequestResponseHeaderViewModel
+@{
+    int index = 1;
+}
+
+<form id="create-form" method="post" asp-controller="QuoteRequest" asp-action="OnPostCreateQuoteRequestResponse" asp-route-id="@Model.Id" enctype="multipart/form-data">
+
+    <div class="form-row">
+        
+        <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+        <input type="hidden" asp-for="QuoteRequestHeaderId" name="QuoteRequestHeaderId" class="form-control">
+
+        @if(Model.Id != 0)
+        {
+            <div class="col-md-2 mb-3">
+                <label asp-for="Date" class="control-label">@localizer["Date"]</label>
+                <input asp-for="Date" name="Date" type="date" class="form-control" id="Date" readonly>
+                <span asp-validation-for="Date" class="text-danger"></span>
+            </div>
+            <div class="col-md-8 mb-3">
+                <label asp-for="ProviderId" class="control-label">@localizer["Provider"]</label>
+                <select name="ProviderId" class="form-control select2bs4" id="Providers" asp-for="ProviderId" disabled>
+                    @if(Model.Provider != null)
+                    {
+                        <option value="@Model.ProviderId">@Model.Provider.getBussinessNameOrName</option>  
+                    }
+                </select>
+                <input hidden asp-for="ProviderId" name="ProviderId" type="text" class="form-control" id="ProviderId" readonly>
+            </div>
+        }
+        else
+        {
+            <div class="col-md-2 mb-3">
+                <label asp-for="Date" class="control-label">@localizer["Date"]</label>
+                <input asp-for="Date" name="Date" type="date" class="form-control" id="Date">
+                <span asp-validation-for="Date" class="text-danger"></span>
+            </div>
+            <div class="col-md-8 mb-3">
+                <label asp-for="ProviderId" class="control-label">@localizer["Provider"]</label>
+                <select name="ProviderId" class="form-control select2bs4" id="Providers" asp-for="ProviderId">
+                    <option value="-1">@localizer["Select provider"]</option>
+                </select>
+            </div>
+        }
+
+        <div class="col-md-2 mb-3">
+            <label asp-for="Number" class="control-label">@localizer["Number"]</label>
+            <input asp-for="Number" name="Number" type="number" class="form-control text-center" id="Number" readonly tabindex="-1">
+        </div>
+
+        <div id="table-div" class="col-md-12">
+            <table id="quoteRequestResponseDetailsTable" class="table table-responsive table-striped-blue">
+                <thead class="bg-thead">
+                    <tr>
+                        <th class="pr-4">@localizer["Code"]</th>
+                        <th class="descriptionTh">@localizer["Description"]</th>
+                        <th class="text-center">@localizer["Available"]</th>
+                        <th>@localizer["Replacement code"]</th>
+                        <th class="text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Provider unit measure"]</th>
+                        <th class="text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Quotation unit"]</th>
+                        <th>@localizer["Unit price"]</th>
+                        <th>@localizer["Money"]</th>
+                        <th>@localizer["Bonus"] %</th>
+                        <th>@localizer["Total"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach(var quoteRequestResponseDetailVM in Model.QuoteRequestResponseDetails)
+                    {
+                        if(Model.Id == 0)
+                        {
+                            <tr>
+                                <td class="d-none">
+                                    <input type="hidden" name="QuoteRequestResponseDetails.Index" value="@index" />
+                                    @if (quoteRequestResponseDetailVM.MissingProductId.HasValue)
+                                    {
+                                        <input type="hidden" class="missingProductId form-control" name="QuoteRequestResponseDetails[@index].MissingProductId" readonly value="@quoteRequestResponseDetailVM.MissingProductId.Value" />
+                                    }
+                                    @*else
+                                    {
+                                         <input type="hidden" class="missingProductId form-control" name="QuoteRequestResponseDetails[@index].MissingProductId" readonly value="0" />
+                                    }*@
+                                    else if(quoteRequestResponseDetailVM.AlternativeProductId.HasValue)
+                                    {
+                                        <input type="hidden" class="alternativeProductId form-control" name="QuoteRequestResponseDetails[@index].AlternativeProductId" readonly value="@quoteRequestResponseDetailVM.AlternativeProductId.Value" />
+                                    }
+                                    @*else
+                                    {
+                                        <input type="hidden" class="alternativeProductId form-control" name="QuoteRequestResponseDetails[@index].AlternativeProductId" readonly value="0" />
+                                    }*@
+                                    <input type="hidden" class="providerUnitMeasureId form-control" name="QuoteRequestResponseDetails[@index].ProviderUnitMeasureId" />  
+                                    <input type="hidden" class="priceUnitMeasureId form-control" name="QuoteRequestResponseDetails[@index].PriceUnitMeasureId" />   
+                                </td>
+
+                                @if(quoteRequestResponseDetailVM.MissingProductId.HasValue)
+                                {
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="QuoteRequestResponseDetails[@index].ProductCode" tabindex="-1" readonly value="@quoteRequestResponseDetailVM.MissingProduct.Product.Code" />  
+                                    </td>
+
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="QuoteRequestResponseDetails[@index].ProductDescription" tabindex="-1" readonly value="@quoteRequestResponseDetailVM.MissingProduct.Product.Description" />
+                                    </td>                                    
+                                }
+                                else
+                                {
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="QuoteRequestResponseDetails[@index].ProductCode" tabindex="-1" readonly value="@quoteRequestResponseDetailVM.AlternativeProduct.Code" />  
+                                    </td>
+
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="QuoteRequestResponseDetails[@index].ProductDescription" tabindex="-1" readonly value="@quoteRequestResponseDetailVM.AlternativeProduct.Description" />
+                                    </td>
+                                }
+
+                                <td class="text-center">
+                                    <div class="form-check form-check-inline ml-3 mt-2">
+                                        <div class="custom-control custom-checkbox small">
+                                            <input checked value="true" name="QuoteRequestResponseDetails[@index].Available" class="checkAvailable custom-control-input" type="checkbox" id="checkAvailable_@index">
+                                            <label class="custom-control-label" for="checkAvailable_@index"></label>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    <select class="alternativeProductIdselect2 form-control select2bs4 w-100" name="QuoteRequestResponseDetails[@index].AlternativeProductId" tabindex="0"></select>
+                                </td>
+
+                                <td>
+                                    <input type="text" class="providerQuantity form-control text-right" name="QuoteRequestResponseDetails[@index].ProviderQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="providerUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="priceQuantity form-control text-right" name="QuoteRequestResponseDetails[@index].PriceQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="priceUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="unitPrice form-control text-right" name="QuoteRequestResponseDetails[@index].UnitPrice" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td>
+                                    <select class="moneyTypeSelect2 form-control select2bs4 w-100" name="QuoteRequestResponseDetails[@index].MoneyType" tabindex="0" asp-for="@quoteRequestResponseDetailVM.MoneyType" id="moneyType_@index">
+                                        <option value="1">@localizer["ARS"]</option>
+                                        <option value="2">@localizer["USD"]</option>
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <input type="text" class="bonus form-control text-right" name="QuoteRequestResponseDetails[@index].Bonus" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td class="tdMinWidthModified">
+                                    <input type="text" class="total custom-form-control form-control text-right" name="QuoteRequestResponseDetails[@index].Total" tabindex="-1" placeholder="0,00" readonly />
+                                </td>
+
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td class="d-none">
+                                    <input type="hidden" name="QuoteRequestResponseDetails.Index" value="@index" />
+                                    @if (quoteRequestResponseDetailVM.MissingProductId.HasValue)
+                                    {
+                                        <input type="hidden" class="missingProductId form-control" name="QuoteRequestResponseDetails[@index].MissingProductId" readonly value="@quoteRequestResponseDetailVM.MissingProductId.Value" />
+                                    }
+                                    @*else
+                                    {
+                                        <input type="hidden" class="missingProductId form-control" name="QuoteRequestResponseDetails[@index].MissingProductId" readonly value="0" />                                        
+                                    }*@
+                                    else if(quoteRequestResponseDetailVM.AlternativeProductId.HasValue)
+                                    {
+                                        <input type="hidden" class="alternativeProductId form-control" name="QuoteRequestResponseDetails[@index].AlternativeProductId" readonly value="@quoteRequestResponseDetailVM.AlternativeProductId.Value" />
+                                    }
+                                    @*else
+                                    {
+                                        <input type="hidden" class="alternativeProductId form-control" name="QuoteRequestResponseDetails[@index].AlternativeProductId" readonly value="0" />                                        
+                                    }*@
+                                    <input type="hidden" class="providerUnitMeasureId form-control" name="QuoteRequestResponseDetails[@index].ProviderUnitMeasureId" readonly value="@quoteRequestResponseDetailVM.ProviderUnitMeasureId" />  
+                                    <input type="hidden" class="priceUnitMeasureId form-control" name="QuoteRequestResponseDetails[@index].PriceUnitMeasureId" readonly value="@quoteRequestResponseDetailVM.PriceUnitMeasureId" />  
+                                    <input type="hidden" name="QuoteRequestResponseDetails[@index].Id" readonly value="@quoteRequestResponseDetailVM.Id" /> 
+                                    <input type="hidden" name="QuoteRequestResponseDetails[@index].QuoteRequestResponseHeaderId" readonly value="@quoteRequestResponseDetailVM.QuoteRequestResponseHeaderId" /> 
+                                    <input type="hidden" name="QuoteRequestResponseDetails[@index].ConcurrencyToken" readonly value="@quoteRequestResponseDetailVM.ConcurrencyToken" /> 
+                                </td>
+
+                                @if(quoteRequestResponseDetailVM.MissingProductId.HasValue)
+                                {
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="QuoteRequestResponseDetails[@index].ProductCode" tabindex="-1" readonly value="@quoteRequestResponseDetailVM.MissingProduct.Product.Code" />  
+                                    </td>
+
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="QuoteRequestResponseDetails[@index].ProductDescription" tabindex="-1" readonly value="@quoteRequestResponseDetailVM.MissingProduct.Product.Description" />
+                                    </td>                                    
+                                }
+                                else
+                                {
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="QuoteRequestResponseDetails[@index].ProductCode" tabindex="-1" readonly value="@quoteRequestResponseDetailVM.AlternativeProduct.Code" />  
+                                    </td>
+
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="QuoteRequestResponseDetails[@index].ProductDescription" tabindex="-1" readonly value="@quoteRequestResponseDetailVM.AlternativeProduct.Description" />
+                                    </td>
+                                }
+
+                                <td class="text-center">
+                                    <div class="form-check form-check-inline ml-3 mt-2">
+                                        <div class="custom-control custom-checkbox small">
+                                            @if (quoteRequestResponseDetailVM.Available)
+                                            {
+                                                <input checked value="true" name="QuoteRequestResponseDetails[@index].Available" class="checkAvailable custom-control-input" type="checkbox" id="checkAvailable_@index">
+                                            }
+                                            else
+                                            {
+                                                <input value="false" name="QuoteRequestResponseDetails[@index].Available" class="checkAvailable custom-control-input" type="checkbox" id="checkAvailable_@index">
+                                            }
+                                            @*<input checked="@quoteRequestResponseDetailVM.Available" value="@quoteRequestResponseDetailVM.Available" name="QuoteRequestResponseDetails[@index].Available" class="checkAvailable custom-control-input" type="checkbox" id="checkAvailable_@index">*@
+                                            <label class="custom-control-label" for="checkAvailable_@index"></label>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>
+                                    @if(quoteRequestResponseDetailVM.AlternativeProductId != null)
+                                    {
+                                        if(quoteRequestResponseDetailVM.MissingProductId != null)
+                                        {
+                                            <select class="alternativeProductIdselect2 form-control select2bs4 w-100" name="QuoteRequestResponseDetails[@index].AlternativeProductId" tabindex="0" asp-items="@Model.AlternativeProducts" asp-for="@quoteRequestResponseDetailVM.AlternativeProductId"></select>
+                                        }
+                                        else
+                                        {
+                                            <select class="alternativeProductIdselect2 form-control select2bs4 w-100" name="QuoteRequestResponseDetails[@index].AlternativeProductId" tabindex="0"></select>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <select class="alternativeProductIdselect2 form-control select2bs4 w-100" name="QuoteRequestResponseDetails[@index].AlternativeProductId" tabindex="0"></select>
+                                    }
+                                </td>
+
+                                <td>
+                                    <input type="text" class="providerQuantity form-control text-right" name="QuoteRequestResponseDetails[@index].ProviderQuantity" tabindex="0" placeholder="0,00" value="@String.Format("{0:N2}", Math.Round(quoteRequestResponseDetailVM.ProviderQuantity, 2))" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="providerUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly value="@quoteRequestResponseDetailVM.ProviderUnitMeasure.Description" />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="priceQuantity form-control text-right" name="QuoteRequestResponseDetails[@index].PriceQuantity" tabindex="0" placeholder="0,00" value="@String.Format("{0:N2}", Math.Round(quoteRequestResponseDetailVM.PriceQuantity, 2))" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="priceUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly value="@quoteRequestResponseDetailVM.PriceUnitMeasure.Description" />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="unitPrice form-control text-right" name="QuoteRequestResponseDetails[@index].UnitPrice" tabindex="0" placeholder="0,00" value="@String.Format("{0:N2}", Math.Round(quoteRequestResponseDetailVM.UnitPrice, 2))" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td>
+                                    <select class="moneyTypeSelect2 form-control select2bs4 w-100" name="QuoteRequestResponseDetails[@index].MoneyType" tabindex="0" asp-for="@quoteRequestResponseDetailVM.MoneyType" id="moneyType_@index">
+                                        <option value="1">@localizer["ARS"]</option>
+                                        <option value="2">@localizer["USD"]</option>
+                                    </select>
+                                </td>
+
+                                <td>
+                                    <input type="text" class="bonus form-control text-right" name="QuoteRequestResponseDetails[@index].Bonus" tabindex="0" placeholder="0,00" value="@String.Format("{0:N2}", Math.Round(quoteRequestResponseDetailVM.Bonus, 2))" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td class="tdMinWidthModified">
+                                    <input type="text" class="total custom-form-control form-control text-right" name="QuoteRequestResponseDetails[@index].Total" tabindex="-1" placeholder="0,00" value="@String.Format("{0:N2}", Math.Round(quoteRequestResponseDetailVM.Total, 2))" readonly />
+                                </td>
+
+                            </tr>
+                        }
+
+                        index++;
+                    }
+                </tbody>
+                
+            </table>
+           
+            @if(Model.Id == 0)
+            {
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Bonus" class="col-md-10 col-form-label font-weight-normal">@localizer["Bonus"] (%)</label>
+                    <div class="col-md-2">
+                        <input asp-for="Bonus" name="Bonus" type="text" class="form-control text-right" id="Bonus" onkeypress="return validateIsNumber(event);" value="0,00">
+                    </div>
+                </div>
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                    <div class="col-md-2">
+                        <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                            <option value="1" selected>21%</option>
+                            <option value="2">10,5%</option>
+                            <option value="3">27%</option>
+                            <option value="4">0%</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Total" class="col-md-10 col-form-label font-weight-normal">@localizer["Total"]</label>
+                    <div class="col-md-2">
+                        <input asp-for="Total" name="Total" type="text" class="form-control text-right" id="Total" onkeypress="return validateIsNumber(event);" value="0,00" readonly> 
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Bonus" class="col-md-10 col-form-label font-weight-normal">@localizer["Bonus"] (%)</label>
+                    <div class="col-md-2">
+                        <input asp-for="Bonus" name="Bonus" type="text" class="form-control text-right" id="Bonus" onkeypress="return validateIsNumber(event);" value="@Math.Round(Model.Bonus, 2)">
+                    </div>
+                </div>
+                switch (Model.IVA)
+                {
+                    case 0:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1" selected>21%</option>
+                                <option value="2">10,5%</option>
+                                <option value="3">27%</option>
+                                <option value="4">0%</option>
+                            </select>
+                        </div>
+                    </div>   
+                    break;
+                    case 1:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1" selected>21%</option>
+                                <option value="2">10,5%</option>
+                                <option value="3">27%</option>
+                                <option value="4">0%</option>
+                            </select>
+                        </div>
+                    </div>   
+                    break;
+                    case 2:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1">21%</option>
+                                <option value="2" selected>10,5%</option>
+                                <option value="3">27%</option>
+                                <option value="4">0%</option>
+                            </select>
+                        </div>
+                    </div>  
+                    break;
+                    case 3:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1">21%</option>
+                                <option value="2">10,5%</option>
+                                <option value="3" selected>27%</option>
+                                <option value="4">0%</option>
+                            </select>
+                        </div>
+                    </div>  
+                    break;
+                    case 4:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1">21%</option>
+                                <option value="2">10,5%</option>
+                                <option value="3">27%</option>
+                                <option value="4" selected>0%</option>
+                            </select>
+                        </div>
+                    </div>  
+                    break;
+                }
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Total" class="col-md-10 col-form-label font-weight-normal">@localizer["Total"]</label>
+                    <div class="col-md-2">
+                        <input asp-for="Total" name="Total" type="text" class="form-control text-right" id="Total" onkeypress="return validateIsNumber(event);" value="@Math.Round(Model.Total, 2)" readonly> 
+                    </div>
+                </div>
+            }
+
+        </div>
+
+        <div class="col-md-12 mb-3">
+            <label asp-for="Comments" class="control-label">@localizer["Comments"]</label>
+            <textarea asp-for="Comments" name="Comments" class="form-control" id="Comments" rows="5"></textarea>
+        </div>
+
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+        <button type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+    </div>
+
+</form>
+         
+<script src="~/js/site.js"></script>
+<script type="text/javascript">
+    $.validator.unobtrusive.parse(document);
+    $(document).ready(function () {
+
+        let index = @index;
+        let select2Providers = $('#Providers');
+
+        $('.moneyTypeSelect2').each(function (index, element) {
+            if (!$(this).hasClass("select2-hidden-accessible")) {
+                $(this).select2({
+                    language: "es",
+                    theme: "bootstrap4",
+                    placeholder: "@localizer["Select money type"]"
+                });
+
+                $(this).next().removeAttr('style');
+            }
+        });
+
+        if(@Model.Id == 0)
+        {
+            $('#table-div').hide();
+        }
+        else
+        {
+            $('#table-div').show('slow');
+
+            // Cargo los select2 de productos en codigo de reemplazo, se carga con productos que provee el proveedor que seleccione.
+            $('.alternativeProductIdselect2').each(function(index, element) {
+                if(!$(this).hasClass("select2-hidden-accessible")){
+                    $(this).select2({
+                        language: "es",
+                        theme: "bootstrap4",
+                        placeholder: "@localizer["Select product"]",
+                        ajax: {
+                            url: '/purchases/quoterequest/_LoadAlternativeProductsByProviderId',
+                            data: function (params) {
+                                return {
+                                    search: params.term,
+                                    providerId: select2Providers.val()
+                                };
+                            },
+                            processResults: function (data) {
+                                return {
+                                    results: data.alternativeProducts
+                                };
+                            }
+                        }
+                    });
+
+                    $(this).next().removeAttr('style');
+                }
+            });
+
+        }
+
+        $("#Bonus").on({
+            "focus": function (event) {
+                $(event.target).select();
+            },
+            "keyup": function (event) {
+                $(event.target).val(function (index, value) {
+                    return value.replace(/\D/g, "")
+                        .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                        .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                });
+            },
+            "change": function (event) {
+                $(event.target).val(function (index, value) {
+                    let valueAux = value;
+                    if (!value.includes(",")) {
+                        valueAux = value.concat(",00");
+                    }
+                    else {
+                        valueAux = value;
+                    }
+
+                    if (value.charAt(0) == "0" && value.length == 1) {
+                        valueAux = value.concat(",00");
+                    }
+                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                        if(value.charAt(1) == "."){
+                            valueAux = value.slice(2);
+                        }
+                        else if(value.charAt(2) == "."){
+                            valueAux = value.slice(1);
+                        }
+                        else{
+                            valueAux = value.slice(1);
+                        }
+                    }
+
+                    for (var i = 0; i < valueAux.length; i++) {
+                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                            let addZero = "";
+                            if(valueAux[i] == ","){
+                                addZero = "0";
+                            }
+                            valueAux = addZero + valueAux.slice(i);
+                            break;
+                        }
+                    }
+
+                    if(parseFloat(valueAux.replace(',','.')) > 100 || valueAux.indexOf('.') >= 1)
+                    {
+                        alert("La bonificación no puede ser mayor que 100%.");
+                        return "100,00";
+                    }
+                    else
+                    {
+                        return valueAux;
+                    }
+
+                });
+
+                getTotalForAllTable();
+            }
+        });
+
+        $('#IVA').select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        $('#IVA').change(function(){
+            getTotalForAllTable();
+        });
+
+        select2Providers.select2({
+            language: "es",
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select provider"]",
+            ajax: {
+                url: '/purchases/quoterequest/_LoadProvidersByQuoteRequestSelect2',
+                data: function (params) {
+                    return {
+                        search: params.term,
+                        qrhId: @Model.QuoteRequestHeaderId
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.providers
+                    };
+                }
+            }
+        });
+
+        select2Providers.change(function () {
+
+            $('#table-div').hide();
+
+            let providerId = $(this).val();
+
+            // Agrego los productos de la solicitud original, si es que alguno fue borrado de la grilla, cuando se selecciono el proveedor y este no lo provee.
+            $.ajax({
+                url: '/Purchases/QuoteRequest/getQuoteRequestDetailsByQRHId',
+                data: {
+                    qrhId: @Model.QuoteRequestHeaderId
+                },
+                type: 'get',
+                dataType: 'json',
+                contextType: "application/json",
+                success: function (response) {
+                    if(response.isValid){
+
+                        let missingProductIdsExistsInTable = new Array();
+                        $('#quoteRequestResponseDetailsTable tr td.d-none').each(function() {
+                            missingProductIdsExistsInTable.push(parseInt($(this).find(".missingProductId").val()));
+                        });
+
+                        for(let i = 0; i < response.quoteRequestDetails.length; i++){
+                            if(missingProductIdsExistsInTable.indexOf(response.quoteRequestDetails[i].missingProductId) == -1){
+                                let tr = '<tr>';
+                                tr += '<td class="d-none">';
+                                tr += '<input type="hidden" name="QuoteRequestResponseDetails.Index" value="'+ index +'"/>';
+                                tr += '<input type="hidden" class="missingProductId form-control" name="QuoteRequestResponseDetails['+ index +'].MissingProductId" readonly value="'+ response.quoteRequestDetails[i].missingProductId +'" />';
+                                tr += '<input type="hidden" class="providerUnitMeasureId form-control" name="QuoteRequestResponseDetails['+ index +'].ProviderUnitMeasureId" />';
+                                tr += '<input type="hidden" class="priceUnitMeasureId form-control" name="QuoteRequestResponseDetails['+ index +'].PriceUnitMeasureId" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="custom-form-control form-control" name="QuoteRequestResponseDetails['+ index +'].ProductCode" tabindex="-1" readonly value="'+ response.quoteRequestDetails[i].missingProduct.product.code +'" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="custom-form-control form-control" name="QuoteRequestResponseDetails['+ index +'].ProductDescription" tabindex="-1" readonly value="'+ response.quoteRequestDetails[i].missingProduct.product.description +'" />';
+                                tr += '</td>';
+
+                                tr += '<td class="text-center">';
+                                tr += '<div class="form-check form-check-inline ml-3 mt-2"><div class="custom-control custom-checkbox small"><input checked value="true" name="QuoteRequestResponseDetails['+ index +'].Available" class="checkAvailable custom-control-input" type="checkbox" id="checkAvailable_'+ index +'"><label class="custom-control-label" for="checkAvailable_'+ index +'"></label></div></div>';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<select class="alternativeProductIdselect2 form-control select2bs4 w-100" name="QuoteRequestResponseDetails['+ index +'].AlternativeProductId" tabindex="0"></select>';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="providerQuantity form-control text-right" name="QuoteRequestResponseDetails['+ index +'].ProviderQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="providerUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="priceQuantity form-control text-right" name="QuoteRequestResponseDetails['+ index +'].PriceQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="priceUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="unitPrice form-control text-right" name="QuoteRequestResponseDetails['+ index +'].UnitPrice" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<select class="moneyTypeSelect2 form-control select2bs4 w-100" name="QuoteRequestResponseDetails[' + index + '].MoneyType" tabindex="0"><option value="1">@localizer["ARS"]</option><option value="2">@localizer["USD"]</option></select>';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="bonus form-control text-right" name="QuoteRequestResponseDetails['+ index +'].Bonus" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMinWidthModified">';
+                                tr += '<input type="text" class="total custom-form-control form-control text-right" name="QuoteRequestResponseDetails['+ index +'].Total" tabindex="-1" placeholder="0,00" readonly />';
+                                tr += '</td>';
+
+                                tr += '</tr>';
+
+                                $("#quoteRequestResponseDetailsTable tbody").append(tr);
+
+                                index += 1;
+
+                                document.querySelectorAll('.providerQuantity').forEach(item => {
+                                     if (item != null) {
+                                         $(item).on({
+                                             "focus": function (event) {
+                                                 $(event.target).select();
+                                             },
+                                             "keyup": function (event) {
+                                                 $(event.target).val(function (index, value) {
+                                                     return value.replace(/\D/g, "")
+                                                     .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                     .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                 });
+                                             },
+                                             "change": function (event) {
+                                                 $(event.target).val(function (index, value) {
+                                                     let valueAux = value;
+                                                     if (!value.includes(",")) {
+                                                         valueAux = value.concat(",00");
+                                                     }
+                                                     else {
+                                                         valueAux = value;
+                                                     }
+
+                                                     if (value.charAt(0) == "0" && value.length == 1) {
+                                                         valueAux = value.concat(",00");
+                                                     }
+                                                     else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                         if(value.charAt(1) == "."){
+                                                             valueAux = value.slice(2);
+                                                         }
+                                                         else if(value.charAt(2) == "."){
+                                                             valueAux = value.slice(1);
+                                                         }
+                                                         else{
+                                                             valueAux = value.slice(1);
+                                                         }
+                                                     }
+
+                                                     for (var i = 0; i < valueAux.length; i++) {
+                                                         if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                             let addZero = "";
+                                                             if(valueAux[i] == ","){
+                                                                 addZero = "0";
+                                                             }
+                                                             valueAux = addZero + valueAux.slice(i);
+                                                             break;
+                                                         }
+                                                     }
+                                                     return valueAux;
+                                                 });
+                                             }
+                                         });
+                                     }
+                                 });
+
+                                document.querySelectorAll('.priceQuantity').forEach(item => {
+                                     if (item != null) {
+                                         $(item).on({
+                                             "focus": function (event) {
+                                                 $(event.target).select();
+                                             },
+                                             "keyup": function (event) {
+                                                 $(event.target).val(function (index, value) {
+                                                     return value.replace(/\D/g, "")
+                                                     .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                     .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                 });
+                                             },
+                                             "change": function (event) {
+                                                 $(event.target).val(function (index, value) {
+                                                     let valueAux = value;
+                                                     if (!value.includes(",")) {
+                                                         valueAux = value.concat(",00");
+                                                     }
+                                                     else {
+                                                         valueAux = value;
+                                                     }
+
+                                                     if (value.charAt(0) == "0" && value.length == 1) {
+                                                         valueAux = value.concat(",00");
+                                                     }
+                                                     else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                         if(value.charAt(1) == "."){
+                                                             valueAux = value.slice(2);
+                                                         }
+                                                         else if(value.charAt(2) == "."){
+                                                             valueAux = value.slice(1);
+                                                         }
+                                                         else{
+                                                             valueAux = value.slice(1);
+                                                         }
+                                                     }
+
+                                                     for (var i = 0; i < valueAux.length; i++) {
+                                                         if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                             let addZero = "";
+                                                             if(valueAux[i] == ","){
+                                                                 addZero = "0";
+                                                             }
+                                                             valueAux = addZero + valueAux.slice(i);
+                                                             break;
+                                                         }
+                                                     }
+                                                     return valueAux;
+                                                 });
+                                             }
+                                         });
+                                     }
+                                 });
+
+                                document.querySelectorAll('.unitPrice').forEach(item => {
+                                     if (item != null) {
+                                         $(item).on({
+                                             "focus": function (event) {
+                                                 $(event.target).select();
+                                             },
+                                             "keyup": function (event) {
+                                                 $(event.target).val(function (index, value) {
+                                                     return value.replace(/\D/g, "")
+                                                     .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                     .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                 });
+                                             },
+                                             "change": function (event) {
+                                                 $(event.target).val(function (index, value) {
+                                                     let valueAux = value;
+                                                     if (!value.includes(",")) {
+                                                         valueAux = value.concat(",00");
+                                                     }
+                                                     else {
+                                                         valueAux = value;
+                                                     }
+
+                                                     if (value.charAt(0) == "0" && value.length == 1) {
+                                                         valueAux = value.concat(",00");
+                                                     }
+                                                     else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                         if(value.charAt(1) == "."){
+                                                             valueAux = value.slice(2);
+                                                         }
+                                                         else if(value.charAt(2) == "."){
+                                                             valueAux = value.slice(1);
+                                                         }
+                                                         else{
+                                                             valueAux = value.slice(1);
+                                                         }
+                                                     }
+
+                                                     for (var i = 0; i < valueAux.length; i++) {
+                                                         if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                             let addZero = "";
+                                                             if(valueAux[i] == ","){
+                                                                 addZero = "0";
+                                                             }
+                                                             valueAux = addZero + valueAux.slice(i);
+                                                             break;
+                                                         }
+                                                     }
+                                                     return valueAux;
+                                                 });
+                                             }
+                                         });
+                                     }
+                                 });
+
+                                document.querySelectorAll('.bonus').forEach(item => {
+                                     if (item != null) {
+                                         $(item).on({
+                                             "focus": function (event) {
+                                                 $(event.target).select();
+                                             },
+                                             "keyup": function (event) {
+                                                 $(event.target).val(function (index, value) {
+                                                     return value.replace(/\D/g, "")
+                                                     .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                     .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                 });
+                                             },
+                                             "change": function (event) {
+                                                 $(event.target).val(function (index, value) {
+                                                     let valueAux = value;
+                                                     if (!value.includes(",")) {
+                                                         valueAux = value.concat(",00");
+                                                     }
+                                                     else {
+                                                         valueAux = value;
+                                                     }
+
+                                                     if (value.charAt(0) == "0" && value.length == 1) {
+                                                         valueAux = value.concat(",00");
+                                                     }
+                                                     else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                         if(value.charAt(1) == "."){
+                                                             valueAux = value.slice(2);
+                                                         }
+                                                         else if(value.charAt(2) == "."){
+                                                             valueAux = value.slice(1);
+                                                         }
+                                                         else{
+                                                             valueAux = value.slice(1);
+                                                         }
+                                                     }
+
+                                                     for (var i = 0; i < valueAux.length; i++) {
+                                                         if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                             let addZero = "";
+                                                             if(valueAux[i] == ","){
+                                                                 addZero = "0";
+                                                             }
+                                                             valueAux = addZero + valueAux.slice(i);
+                                                             break;
+                                                         }
+                                                     }
+
+                                                     if(parseFloat(valueAux.replace(',','.')) > 100 || valueAux.indexOf('.') >= 1)
+                                                     {
+                                                         alert("La bonificación no puede ser mayor que 100%.");
+                                                         return "100,00";
+                                                     }
+                                                     else
+                                                     {
+                                                         return valueAux;
+                                                     }
+
+                                                 });
+                                             }
+                                         });
+                                     }
+                                 });
+
+                                document.querySelectorAll('.providerQuantity').forEach(item => {
+                                     item.addEventListener('change', (e) => {
+                                         getTotalForEachRow();
+                                         e.stopPropagation();
+                                         e.preventDefault();
+                                     });
+                                 });
+
+                                document.querySelectorAll('.priceQuantity').forEach(item => {
+                                     item.addEventListener('change', (e) => {
+                                         getTotalForEachRow();
+                                         e.stopPropagation();
+                                         e.preventDefault();
+                                     });
+                                 });
+
+                                document.querySelectorAll('.unitPrice').forEach(item => {
+                                     item.addEventListener('change', (e) => {
+                                         getTotalForEachRow();
+                                         e.stopPropagation();
+                                         e.preventDefault();
+                                     });
+                                 });
+
+                                document.querySelectorAll('.bonus').forEach(item => {
+                                     item.addEventListener('change', (e) => {
+                                         getTotalForEachRow();
+                                         e.stopPropagation();
+                                         e.preventDefault();
+                                     });
+                                 });
+
+                                document.querySelectorAll('.total').forEach(item => {
+                                     if (item != null) {
+                                         getTotalForAllTable();
+                                     }
+                                });
+
+                                $(".checkAvailable").on('change', function() {
+                                    if ($(this).is(':checked'))
+                                    {
+                                        $(this).attr('value', 'true');
+                                    }
+                                    else
+                                    {
+                                        $(this).attr('value', 'false');
+                                    }
+                                });
+
+                            }
+                        }
+                    }
+                },
+                complete: function(){
+                    $('#quoteRequestResponseDetailsTable tr td.d-none').each(function() {
+                        let tdElement = $(this);
+                        let missingProductId = $(this).find(".missingProductId").val();
+
+                        // Se obtiene la cantidad y unidad del proveedor, ademas, de la cantidad y unidad de cotizacion.
+                        $.ajax({
+                            url: '/Purchases/QuoteRequest/getUnitsAndQuantity',
+                            data: {
+                                providerId: providerId,
+                                missingProductId: missingProductId
+                            },
+                            type: 'get',
+                            dataType: 'json',
+                            contextType: "application/json",
+                            success: function (response) {
+                                if(response.isValid)
+                                {
+                                    if(response.productIdNotProvided == 0)
+                                    {
+                                        tdElement.next().next().next().next().next().children().val(format_number_to_decimal((response.providerQuantity), 2, ',', '.'));
+                                        tdElement.find(".providerUnitMeasureId").val(parseInt(response.providerUnitMeasureId));
+                                        tdElement.next().next().next().next().next().next().children().val(response.providerUnitMeasureDescription);
+
+                                        tdElement.next().next().next().next().next().next().next().children().val(format_number_to_decimal((response.quotationQuantity), 2, ',', '.'));
+                                        tdElement.find(".priceUnitMeasureId").val(parseInt(response.quotationUnitMeasureId));
+                                        tdElement.next().next().next().next().next().next().next().next().children().val(response.quotationUnitMeasureDescription);
+                                    }
+                                    else
+                                    {
+                                        // El proveedor seleccionado no provee alguno de los productos de la grilla.
+                                        tdElement.closest("tr").remove();
+                                    }
+                                }
+                            },
+                            complete: function(){
+
+                                // Cargo los select2 de productos en codigo de reemplazo, se carga con productos que provee el proveedor que seleccione.
+                                $('.alternativeProductIdselect2').each(function(index, element) {
+                                    if(!$(this).hasClass("select2-hidden-accessible")){
+                                        $(this).select2({
+                                            language: "es",
+                                            theme: "bootstrap4",
+                                            placeholder: "@localizer["Select product"]",
+                                            ajax: {
+                                                url: '/purchases/quoterequest/_LoadAlternativeProductsByProviderId',
+                                                data: function (params) {
+                                                    return {
+                                                        search: params.term,
+                                                        providerId: providerId
+                                                    };
+                                                },
+                                                processResults: function (data) {
+                                                    return {
+                                                        results: data.alternativeProducts
+                                                    };
+                                                }
+                                            }
+                                        });
+
+                                        $(this).next().removeAttr('style');
+                                    }
+                                });
+
+                                $('#table-div').show('slow');
+                            }
+                        });
+                    });
+
+                }
+            });
+
+        });
+
+        document.querySelectorAll('.providerQuantity').forEach(item => {
+            if (item != null) {
+                $(item).on({
+                    "focus": function (event) {
+                        $(event.target).select();
+                    },
+                    "keyup": function (event) {
+                        $(event.target).val(function (index, value) {
+                            return value.replace(/\D/g, "")
+                            .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                            .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                        });
+                    },
+                    "change": function (event) {
+                        $(event.target).val(function (index, value) {
+
+                            // Tengo que utilizar el valor que se escribio en el input y cambiar la cantidad en unidades de cotizacion.
+
+                            let missingProductId = 0;
+                            let alternativeProductId = 0;
+                            if($(event.target).parent().parent().find('td.d-none').children().hasClass('missingProductId'))
+                            {
+                                missingProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                            }
+                            else
+                            {
+                                alternativeProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                            }
+
+                            $.ajax({
+                                url: '/Purchases/QuoteRequest/convertQuotationQuantityFromProviderQuantity',
+                                data: {
+                                    providerQuantityValue: parseFloat($(event.target)[0].value.replaceAll('.', '').replaceAll(',', '.')).toFixed(2),
+                                    providerId: select2Providers.val(),
+                                    missingProductId: missingProductId,
+                                    alternativeProductId: alternativeProductId
+                                },
+                                type: 'get',
+                                dataType: 'json',
+                                contextType: "application/json",
+                                success: function (response) {
+                                    if(response.isValid)
+                                    {
+                                        // Seteo la cantidad en unidades de cotizacion obtenida.
+                                        $(event.target).parent().next().next().children()[0].value = format_number_to_decimal((response.quotationQuantity), 2, ',', '.');
+                                    }
+                                }
+                            });
+
+                            let valueAux = value;
+                            if (!value.includes(",")) {
+                                valueAux = value.concat(",00");
+                            }
+                            else {
+                                valueAux = value;
+                            }
+
+                            if (value.charAt(0) == "0" && value.length == 1) {
+                                valueAux = value.concat(",00");
+                            }
+                            else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                if(value.charAt(1) == "."){
+                                    valueAux = value.slice(2);
+                                }
+                                else if(value.charAt(2) == "."){
+                                    valueAux = value.slice(1);
+                                }
+                                else{
+                                    valueAux = value.slice(1);
+                                }
+                            }
+
+                            for (var i = 0; i < valueAux.length; i++) {
+                                if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                    let addZero = "";
+                                    if(valueAux[i] == ","){
+                                        addZero = "0";
+                                    }
+                                    valueAux = addZero + valueAux.slice(i);
+                                    break;
+                                }
+                            }
+                            return valueAux;
+                        });
+                    }
+                });
+            }
+        });
+
+        document.querySelectorAll('.priceQuantity').forEach(item => {
+            if (item != null) {
+                $(item).on({
+                    "focus": function (event) {
+                        $(event.target).select();
+                    },
+                    "keyup": function (event) {
+                        $(event.target).val(function (index, value) {
+                            return value.replace(/\D/g, "")
+                            .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                            .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                        });
+                    },
+                    "change": function (event) {
+                        $(event.target).val(function (index, value) {
+
+                            // Tengo que utilizar el valor que se escribio en el input y cambiar la cantidad en unidades de proveedor.
+
+                            let missingProductId = 0;
+                            let alternativeProductId = 0;
+                            if($(event.target).parent().parent().find('td.d-none').children().hasClass('missingProductId'))
+                            {
+                                missingProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                            }
+                            else
+                            {
+                                alternativeProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                            }
+
+                            $.ajax({
+                                url: '/Purchases/QuoteRequest/convertProviderQuantityFromQuotationQuantity',
+                                data: {
+                                    quotationQuantityValue: parseFloat($(event.target)[0].value.replaceAll('.', '').replaceAll(',', '.')).toFixed(2),
+                                    providerId: select2Providers.val(),
+                                    missingProductId: missingProductId,
+                                    alternativeProductId: alternativeProductId
+                                },
+                                type: 'get',
+                                dataType: 'json',
+                                contextType: "application/json",
+                                success: function (response) {
+                                    if(response.isValid)
+                                    {
+                                        // Seteo la cantidad en unidades de proveedor obtenida.
+                                        $(event.target).parent().prev().prev().children()[0].value = format_number_to_decimal((response.providerQuantity), 2, ',', '.');
+                                    }
+                                }
+                            });
+
+                            let valueAux = value;
+                            if (!value.includes(",")) {
+                                valueAux = value.concat(",00");
+                            }
+                            else {
+                                valueAux = value;
+                            }
+
+                            if (value.charAt(0) == "0" && value.length == 1) {
+                                valueAux = value.concat(",00");
+                            }
+                            else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                if(value.charAt(1) == "."){
+                                    valueAux = value.slice(2);
+                                }
+                                else if(value.charAt(2) == "."){
+                                    valueAux = value.slice(1);
+                                }
+                                else{
+                                    valueAux = value.slice(1);
+                                }
+                            }
+
+                            for (var i = 0; i < valueAux.length; i++) {
+                                if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                    let addZero = "";
+                                    if(valueAux[i] == ","){
+                                        addZero = "0";
+                                    }
+                                    valueAux = addZero + valueAux.slice(i);
+                                    break;
+                                }
+                            }
+                            return valueAux;
+                        });
+                    }
+                });
+            }
+        });
+
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            if (item != null) {
+                $(item).on({
+                    "focus": function (event) {
+                        $(event.target).select();
+                    },
+                    "keyup": function (event) {
+                        $(event.target).val(function (index, value) {
+                            return value.replace(/\D/g, "")
+                            .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                            .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                        });
+                    },
+                    "change": function (event) {
+                        $(event.target).val(function (index, value) {
+                            let valueAux = value;
+                            if (!value.includes(",")) {
+                                valueAux = value.concat(",00");
+                            }
+                            else {
+                                valueAux = value;
+                            }
+
+                            if (value.charAt(0) == "0" && value.length == 1) {
+                                valueAux = value.concat(",00");
+                            }
+                            else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                if(value.charAt(1) == "."){
+                                    valueAux = value.slice(2);
+                                }
+                                else if(value.charAt(2) == "."){
+                                    valueAux = value.slice(1);
+                                }
+                                else{
+                                    valueAux = value.slice(1);
+                                }
+                            }
+
+                            for (var i = 0; i < valueAux.length; i++) {
+                                if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                    let addZero = "";
+                                    if(valueAux[i] == ","){
+                                        addZero = "0";
+                                    }
+                                    valueAux = addZero + valueAux.slice(i);
+                                    break;
+                                }
+                            }
+                            return valueAux;
+                        });
+                    }
+                });
+            }
+        });
+
+        document.querySelectorAll('.bonus').forEach(item => {
+            if (item != null) {
+                $(item).on({
+                    "focus": function (event) {
+                        $(event.target).select();
+                    },
+                    "keyup": function (event) {
+                        $(event.target).val(function (index, value) {
+                            return value.replace(/\D/g, "")
+                            .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                            .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                        });
+                    },
+                    "change": function (event) {
+                        $(event.target).val(function (index, value) {
+                            let valueAux = value;
+                            if (!value.includes(",")) {
+                                valueAux = value.concat(",00");
+                            }
+                            else {
+                                valueAux = value;
+                            }
+
+                            if (value.charAt(0) == "0" && value.length == 1) {
+                                valueAux = value.concat(",00");
+                            }
+                            else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                if(value.charAt(1) == "."){
+                                    valueAux = value.slice(2);
+                                }
+                                else if(value.charAt(2) == "."){
+                                    valueAux = value.slice(1);
+                                }
+                                else{
+                                    valueAux = value.slice(1);
+                                }
+                            }
+
+                            for (var i = 0; i < valueAux.length; i++) {
+                                if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                    let addZero = "";
+                                    if(valueAux[i] == ","){
+                                        addZero = "0";
+                                    }
+                                    valueAux = addZero + valueAux.slice(i);
+                                    break;
+                                }
+                            }
+
+                            if(parseFloat(valueAux.replace(',','.')) > 100 || valueAux.indexOf('.') >= 1)
+                            {
+                                alert("La bonificación no puede ser mayor que 100%.");
+                                return "100,00";
+                            }
+                            else
+                            {
+                                return valueAux;
+                            }
+
+                        });
+                    }
+                });
+            }
+        });
+
+        document.querySelectorAll('.providerQuantity').forEach(item => {
+            item.addEventListener('change', (e) => {
+                getTotalForEachRow();
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+
+        document.querySelectorAll('.priceQuantity').forEach(item => {
+            item.addEventListener('change', (e) => {
+                getTotalForEachRow();
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            item.addEventListener('change', (e) => {
+                getTotalForEachRow();
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+
+        document.querySelectorAll('.bonus').forEach(item => {
+            item.addEventListener('change', (e) => {
+                getTotalForEachRow();
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+
+        document.querySelectorAll('.total').forEach(item => {
+            if (item != null) {
+                getTotalForAllTable();
+            }
+        });
+
+        $(".checkAvailable").on('change', function() {
+            $(this).parent().parent().parent().next().children().val('').trigger('change');
+            if ($(this).is(':checked'))
+            {
+                $(this).attr('value', 'true');
+            }
+            else
+            {
+                $(this).attr('value', 'false');
+            }
+        });
+
+        $("#create-form").submit(function (event) {
+            return jQueryModalPostModified(this);
+            event.preventDefault();
+        });
+
+        $('.alternativeProductIdselect2').each(function(index, element) {
+            $(this).next().removeAttr('style');
+        });
+
+    });
+
+    function getTotalForEachRow() {
+        $('#quoteRequestResponseDetailsTable > tbody  > tr').each(function () {
+
+            let priceQuantity = $(this).find("input.priceQuantity").val();
+            let unitPrice = $(this).find("input.unitPrice").val();
+            let bonus = $(this).find("input.bonus").val();
+
+            if(priceQuantity != "" && unitPrice != ""){
+
+                let totalValue = parseFloat(String(priceQuantity).replaceAll('.', '').replaceAll(',', '.')).toFixed(2) * parseFloat(String(unitPrice).replaceAll('.', '').replaceAll(',', '.').trim()).toFixed(2);
+
+                if(bonus == ""){
+                    bonus = 0;
+                }
+                totalValue = totalValue - (totalValue * parseFloat(String(bonus).replaceAll('.', '').replaceAll(',', '.').trim()).toFixed(2) / 100);
+
+                // For each row in table
+                $(this).find("input.total").val(format_number_to_decimal(totalValue, 2, ",", "."));
+
+                let totalInput = $(this).find("input.total").on('change', getTotalForAllTable());
+                totalInput.trigger('change');
+
+            }
+        });
+    }
+
+    function getTotalForAllTable() {
+
+        let totalRow = 0;
+        $('#quoteRequestResponseDetailsTable > tbody  > tr').each(function () {
+            if ($(this).find("input.total").val() != "") {
+                totalRow += +parseFloat(String($(this).find("input.total").val()).replaceAll('.', '').replaceAll(',', '.').trim()).toFixed(2);
+            }
+        });
+
+        let bonus = 0;
+        let iva = 0;
+        let totalValue = parseFloat(totalRow).toFixed(2);
+
+        if (document.getElementById('Bonus').value == "") {
+            bonus = 0;
+        }
+        else{
+            bonus = parseFloat(String(document.getElementById('Bonus').value).replaceAll('.', '').replaceAll(',', '.').trim()).toFixed(2);
+        }
+
+        totalValue = totalValue - (totalValue * parseFloat(bonus).toFixed(2) / 100);
+
+        // 21%
+        if($('#IVA').val() == 1){
+            iva = 21;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+        // 10,5%
+        else if($('#IVA').val() == 2){
+            iva = 10.5;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+        // 27%
+        else if($('#IVA').val() == 3){
+            iva = 27;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+        // 0%
+        else if($('#IVA').val() == 4){
+            iva = 0;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+
+        document.getElementById('Total').value = format_number_to_decimal(totalValue, 2, ",", ".");
+    }
+
+    jQueryModalPostModified = (form) => {
+
+        // Fran: 30/5/2023: Se agrega para bloquear la pagina y no permitir darle dos veces la boton de guardado.
+        showSpinner();
+
+        $("#Bonus").val($("#Bonus").val());
+        $("#Total").val($("#Total").val());
+
+        document.querySelectorAll('.priceQuantity').forEach(item => {
+            if (item != null) {
+                 if($(item).val() == ""){
+                     $(item).val("0,00");
+                 }
+            }
+        });
+
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            if (item != null) {
+                 if($(item).val() == ""){
+                     $(item).val("0,00");
+                 }
+            }
+        });
+
+        document.querySelectorAll('.bonus').forEach(item => {
+            if (item != null) {
+                if($(item).val() == ""){
+                    $(item).val("0,00");
+                }
+            }
+        });
+
+        document.querySelectorAll('.total').forEach(item => {
+            if (item != null) {
+                if($(item).val() == ""){
+                    $(item).val("0,00");
+                }
+            }
+        });
+
+        try {
+            $.ajax({
+                type: 'POST',
+                url: form.action,
+                data: new FormData(form),
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.isValid) {
+
+                        $('#form-modal #btn-save').attr('disabled', 'disabled');
+                        $('#form-modal #btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#form-modal #btn-save').text());
+                        $('#form-modal').modal('hide');
+                        refreshTable();
+
+                        // Fran: 30/5/2023: Se agrega para bloquear la pagina y no permitir darle dos veces la boton de guardado.
+                        hideSpinner();
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+</script>

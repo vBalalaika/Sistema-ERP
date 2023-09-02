@@ -1,0 +1,191 @@
+﻿@using ERP.Web.Areas.ProductMod.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model ProductStructureViewModel
+<div id="div-export-buttons">
+    <div class="btn-group">
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Create)).Result.Succeeded)
+        {
+            <a onclick="jQueryModalGet('/productmod/structure/OnGetCreateOrEdit?productId=@Model.Product.Id' + '&viewToRender=_ViewAll', '@localizer["Create structure"]')" class="btn btn-secondary text-white">
+                <i class="fa fa-plus-square"></i>
+            </a>
+        }
+        @*<a id="reload" class="btn btn-secondary text-white text-white">
+                <i class="fa fas fa-bolt"></i>
+            </a>*@
+    </div>
+</div>
+<table id="structureTable" class="table table-striped-blue w-100 nowrap" cellspacing="0">
+    <thead class="bg-thead text-white">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Configuration"]</th>
+            <th>@localizer["Supply voltage"]</th>
+            <th>@localizer["Base"]</th>
+            <th>@localizer["Standard"]</th>
+            <th>@localizer["Family/Heading"]</th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var structure in Model.Structures)
+        {
+            <tr>
+                <td hidden>
+                    @structure.Id
+                </td>
+                <td class="text-left">
+                    <div class="btn-group">
+                        <div class="d-flex animated--grow-in">
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.View)).Result.Succeeded)
+                            {
+                                <a asp-area="ProductMod" asp-controller="Structure" asp-action="LoadProduct" asp-route-productId="@structure.Product.Id" asp-route-structureId="@structure.Id" class="btn"><img class="action-img-icon" src="../../../images/Ver.svg" width="20" height="20" /></a>
+                            }
+                            else
+                            {
+                                <a asp-area="ProductMod" asp-controller="Structure" asp-action="LoadProduct" asp-route-productId="@structure.Product.Id" asp-route-structureId="@structure.Id" class="btn disabled"><img class="action-img-icon" src="../../../images/Ver.svg" width="20" height="20" /></a>
+                            }
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Edit)).Result.Succeeded)
+                            {
+                                <a onclick="jQueryModalGet('/productmod/structure/OnGetCreateOrEdit?structureId=@structure.Id' + '&productId=@structure.Product.Id' + '&viewToRender=_ViewAll', '@localizer["Edit structure"]')" class="btn"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /> </a>
+                            }
+                            else
+                            {
+                                <a onclick="jQueryModalGet('/productmod/structure/OnGetCreateOrEdit?structureId=@structure.Id' + '&productId=@structure.Product.Id' + '&viewToRender=_ViewAll', '@localizer["Edit structure"]')" class="btn disabled"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /> </a>
+                            }
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Delete)).Result.Succeeded)
+                            {
+                                <form id="form_delete_@structure.Id" asp-area="ProductMod" asp-controller="Structure" method="post" asp-action="OnPostDelete" asp-route-structureId="@structure.Id" asp-route-productId="@structure.ProductId" onsubmit="return jQueryModalDelete(this, '@localizer["Are you sure to delete this record?"]')">
+                                    <a href="javascript:$('#form_delete_@structure.Id').submit();" class="btn"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </form>
+                            }
+                            else
+                            {
+                                <a href="javascript:$('#form_delete_@structure.Id').submit();" class="btn disabled"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                            }
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    @structure.Product.Code
+                </td>
+                <td>
+                    @structure.Product.Description
+                </td>
+                <td>
+                    @structure.Description
+                </td>
+                <td>
+                    @if (structure.SupplyVoltage != null)
+                    {
+                        @structure.SupplyVoltage.Description
+                    }
+                </td>
+                <td>
+                    <input type="checkbox" checked="@structure.IsBase" onclick="return false;" />
+                </td>
+                <td>
+                    <input type="checkbox" checked="@structure.IsStandard" onclick="return false;" />
+                </td>
+                <td>
+                    @structure.Product.SubCategory.Description
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Configuration"]</th>
+            <th>@localizer["Supply voltage"]</th>
+            <th>@localizer["Base"]</th>
+            <th>@localizer["Standard"]</th>
+            <th>@localizer["Family/Heading"]</th>
+        </tr>
+    </tfoot>
+</table>
+<script>
+    $(document).ready(function () {
+        $('#structureTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Stock"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let structureTable = $("#structureTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            scrollY: '65vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            /*stateSave: true,
+            stateLoadParams: function (settings, data) {
+                for (i = 0; i < data.columns["length"]; i++) {
+                    var col_search_val = data.columns[i].search.search;
+                    if (col_search_val != "") {
+                        $("input", $('#structureTable tfoot th')[i]).val(col_search_val);
+                        $("input", $('#structureTable tfoot th')[i]).css("color", "red");
+                    }
+                }
+            },*/
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img src="../../../images/Excel.svg" width="20" height="20" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Datos de Estructura',
+                    exportOptions: {
+                        columns: [2, 3, 4, 5, 6, 7, 8],
+                        format: {
+                            body: function (data, row, column, node) {
+                                if (column === 4) {
+                                    var newData = "";
+                                    if (data.includes("checked")) {
+                                        newData = "Sí";
+                                    } else {
+                                        newData = "No";
+                                    }
+                                    return newData;
+                                }
+                                else if (column === 5) {
+                                    var newData = "";
+                                    if (data.includes("checked")) {
+                                        newData = "Sí";
+                                    } else {
+                                        newData = "No";
+                                    }
+                                    return newData;
+                                } else {
+                                    return data;
+                                }
+                            }
+                        }
+                    }
+                }
+            ]
+        });
+
+        structureTable.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(structureTable.table().container()).on('keyup', 'tfoot input', function () {
+            structureTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+    });
+</script>

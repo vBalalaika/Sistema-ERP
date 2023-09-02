@@ -1,0 +1,33 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Sub Categories"];
+    //ViewData["Caption"] = localizer["Manage Sub Categories here"];
+}
+@using ERP.Web.Areas.ProductMod.Models
+@model SubCategoryViewModel
+
+    <head>
+        <link href="~/css/Lists/lists.css" rel="stylesheet" />
+    </head>
+
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+        </div>
+    </div>
+    @section Scripts
+{
+        <script src="~/js/site.js"></script>
+        <script>
+        $(document).ready(function () {
+            //$("#subCategoryTable").DataTable({ "oLanguage": @localizer["LanguageDataTable"] });
+            loadData();
+            $('#reload').on('click', function () {
+                loadData();
+            });
+        });
+        function loadData() {
+            $('#viewAll').load('/productmod/subcategory/LoadAll');
+        }
+        </script>
+    }

@@ -1,0 +1,295 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Purchases.Models.MissingProduct
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Edit missing product"];
+}
+@model MissingProductViewModel
+
+<head>
+    <link rel="stylesheet" href="~/css/Purchases/MissingProducts/missingProducts.css" />
+</head>
+<body>
+    <form id="edit-form" method="post" asp-area="Purchases" asp-controller="MissingProduct" asp-action="OnPostEdit" asp-route-id="@Model.Id" enctype="multipart/form-data">
+
+        <div class="form-row">
+            <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+            <input type="hidden" asp-for="UserName" name="UserName" class="form-control">
+            <input type="hidden" asp-for="ProductId" name="ProductId" class="form-control">
+            <input type="hidden" asp-for="StateMissingProductId" name="StateMissingProductId" class="form-control">
+            <input type="hidden" asp-for="ProviderId" name="ProviderId" class="form-control">
+            <input type="hidden" asp-for="QuantityToOrderUnitMeasureId" name="QuantityToOrderUnitMeasureId" class="form-control">
+            <input type="hidden" asp-for="StorageUnitMeasureId" name="StorageUnitMeasureId" class="form-control">
+
+            <div class="col-md-12 mb-3">
+                <label asp-for="CreateDate" class="control-label">@localizer["Date"]</label>
+                <input asp-for="CreateDate" name="CreateDate" type="date" class="form-control" id="CreateDate">
+                <span asp-validation-for="CreateDate" class="text-danger"></span>
+            </div>
+
+            <div id="table-div" class="col-md-12">
+                <table id="missingProductTable" class="table table-responsive table-striped-blue nowrap" width="100%">
+                    <thead class="bg-thead">
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Code"]</th>
+                            <th width="50%">@localizer["Description"]</th>
+                            <th width="15%" class="text-right">@localizer["Quantity to order"]</th>
+                            <th width="15%" class="text-left">@localizer["Unit"]</th>
+                            <th class="text-right">@localizer["Quantity"]</th>
+                            <th width="20%" class="text-left">@localizer["Storage unit measure"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td hidden>
+                                @Model.Id
+                            </td>
+                            <td>
+                                @Model.Product.Code
+                            </td>
+                            <td>
+                                @Model.Product.Description
+                            </td>
+                            <td class="pr-2">
+                                <input id="QuantityToOrder" type="text" asp-for="QuantityToOrder" name="QuantityToOrder" class="form-control text-right" onkeypress="return validateIsNumber(event);" value="@Math.Round(Model.QuantityToOrder, 2)">
+                            </td>
+                            <td class="text-left pl-2">
+                                @Model.QuantityToOrderUnitMeasure.Description
+                            </td>
+                            <td class="text-right pr-2">
+                                <input id="Quantity" type="text" asp-for="Quantity" name="Quantity" tabindex="-1" class="form-control custom-form-control text-right" readonly value="@Math.Round(Model.Quantity, 2)">
+                            </td>
+                            <td class="text-left pl-2">
+                                @Model.StorageUnitMeasure.Description
+                            </td>
+                        </tr>                        
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="col-md-12 mb-2">
+                <label asp-for="Comments" class="control-label">@localizer["Comment"]</label>
+                <textarea tabindex="3" asp-for="Comments" name="Comments" class="form-control" id="Comments" rows="5"></textarea>
+            </div>
+
+        </div>
+
+        <div id="buttons-div" class="form-group justify-content-between">
+            <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+            <button type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+        </div>
+    </form>
+</body>
+
+
+<script type="text/javascript" language="javascript">
+    $.validator.unobtrusive.parse(document);
+    $(document).ready(function () {
+
+        $("#QuantityToOrder").on({
+            "focus": function (event) {
+                $(event.target).select();
+            },
+            "keyup": function (event) {
+                $(event.target).val(function (index, value) {
+                    return value.replace(/\D/g, "")
+                        //.replace(/^0+/, '0')
+                        .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                        .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                });
+            },
+            "change": function (event) {
+                $(event.target).val(function (index, value) {
+                    let valueAux = value;
+                    if (!value.includes(",")) {
+                        valueAux = value.concat(",00");
+                    }
+                    else {
+                        valueAux = value;
+                    }
+
+                    if (value.charAt(0) == "0" && value.length == 1) {
+                        valueAux = value.concat(",00");
+                    }
+                    else if (value.charAt(0) == "0" && value.charAt(1) != ",") {
+                        if (value.charAt(1) == ".") {
+                            valueAux = value.slice(2);
+                        }
+                        else if (value.charAt(2) == ".") {
+                            valueAux = value.slice(1);
+                        }
+                        else {
+                            valueAux = value.slice(1);
+                        }
+                    }
+
+                    for (var i = 0; i < valueAux.length; i++) {
+                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                            let addZero = "";
+                            if (valueAux[i] == ",") {
+                                addZero = "0";
+                            }
+                            valueAux = addZero + valueAux.slice(i);
+                            break;
+                        }
+                    }
+
+                    return valueAux;
+                });
+
+                getStorageUnitMeasureQuantity();
+            }
+        });
+
+        $('#edit-form').on('submit', function () {
+            return jQueryModalPostWithRefresh(this, $('#missingProductsTable').DataTable());
+        });
+    });
+
+    function getStorageUnitMeasureQuantity(){
+        $.ajax({
+            url: '/purchases/missingproduct/GetProductById',
+            method: 'get',
+            data: { id: @Model.ProductId },
+            dataType: 'json',
+            success: function (response) {
+                if (response.isValid) {
+
+                    let quantityToOrder = parseFloat($('#QuantityToOrder').val().replaceAll('.', '').replaceAll(',', '.')).toFixed(2);
+                    let quantityToOrderUnitMeasureId = @Model.QuantityToOrderUnitMeasureId;
+                    let quantityToOrderUnitMeasureDescription = "@Model.QuantityToOrderUnitMeasure.Description";
+                    let storageUnitMeasureId = @Model.StorageUnitMeasureId;
+                    let storageUnitMeasureDescription = "@Model.StorageUnitMeasure.Description";
+
+                    // En la grilla se autocompleta la cantidad equivalente en unidad de almacenamiento
+                    let storageQuantity = 0;
+
+                    // La "Unidad de almacenamiento" puede ser:
+
+                    // Si la unidad de almacenamiento es igual a la unidad de produccion del producto no convierto nada
+                    if (storageUnitMeasureId == quantityToOrderUnitMeasureId) {
+                        storageQuantity = quantityToOrder;
+                    }
+                    else {
+
+                        // Barras o Rollos
+                        if (storageUnitMeasureId == 22 || storageUnitMeasureId == 23) {
+                            // Se completa el campo StockLength
+                            if (response.product.stockLengthUnitMeasure != null && response.product.stockLength != 0 && response.product.stockLength != null) {
+                                storageQuantity = quantityToOrder / parseFloat(response.product.stockLength).toFixed(2);
+                            }
+                            else {
+                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                return;
+                            }
+
+                            // Si es Barras o Rollos o Bobinas redondeo al entero superior
+                            if (storageUnitMeasureId == 22 || storageUnitMeasureId == 23 || storageUnitMeasureId == 32) {
+                                storageQuantity = Math.ceil(storageQuantity);
+                            }
+                        }
+
+                        // Cajas
+                        else if (storageUnitMeasureId == 33) {
+                            // Se completa el campo StockLength
+                            if (response.product.stockLengthUnitMeasure != null && response.product.stockLength != 0 && response.product.stockLength != null) {
+                                storageQuantity = quantityToOrder / parseFloat(response.product.stockLength).toFixed(2);
+                            }
+                            // o el campo StockQuantity
+                            else if (response.product.stockQuantityUnitMeasure != null && response.product.stockQuantity != 0 && response.product.stockQuantity != null) {
+                                storageQuantity = quantityToOrder / parseFloat(response.product.stockQuantity).toFixed(2);
+                            }
+                            else {
+                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                return;
+                            }
+
+                            // Redondeo al entero superior
+                            storageQuantity = Math.ceil(storageQuantity);
+
+                        }
+
+                        // Hojas
+                        else if (storageUnitMeasureId == 31) {
+                            // Se completa el campo StockLength y StockWidth
+                            if (response.product.stockLengthUnitMeasure != null && response.product.stockLength != 0 && response.product.stockLength != null && response.product.stockWidthUnitMeasure != null && response.product.stockWidth != 0 && response.product.stockWidth != null) {
+                                storageQuantity = quantityToOrder / (parseFloat(response.product.stockLength).toFixed(2) * parseFloat(response.product.stockWidth).toFixed(2));
+                            }
+                            else {
+                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                return;
+                            }
+
+                            // Redondeo al entero superior
+                            storageQuantity = Math.ceil(storageQuantity);
+                        }
+
+                        // Bidones
+                        else if (storageUnitMeasureId == 32) {
+                            // Se completa el campo StockQuantity
+                            if (response.product.stockQuantityUnitMeasure != null && response.product.stockQuantity != 0 && response.product.stockQuantity != null) {
+                                storageQuantity = quantityToOrder / parseFloat(response.product.stockQuantity).toFixed(2);
+                            }
+                            else {
+                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                return;
+                            }
+
+                            // Redondeo al entero superior
+                            storageQuantity = Math.ceil(storageQuantity);
+                        }
+
+                        // Latas
+                        else if (storageUnitMeasureId == 37) {
+                            // Se completa el campo StockQuantity
+                            if (response.product.stockQuantityUnitMeasure != null && response.product.stockQuantity != 0 && response.product.stockQuantity != null) {
+                                storageQuantity = quantityToOrder / parseFloat(response.product.stockQuantity).toFixed(2);
+                            }
+                            else {
+                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                return;
+                            }
+
+                            // Redondeo al entero superior
+                            storageQuantity = Math.ceil(storageQuantity);
+                        }
+
+                        // Tubos
+                        else if (storageUnitMeasureId == 38) {
+                            // Se completa el campo StockQuantity
+                            if (response.product.stockQuantityUnitMeasure != null && response.product.stockQuantity != 0 && response.product.stockQuantity != null) {
+                                storageQuantity = quantityToOrder / parseFloat(response.product.stockQuantity).toFixed(2);
+                            }
+                            else {
+                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                return;
+                            }
+
+                            // Redondeo al entero superior
+                            storageQuantity = Math.ceil(storageQuantity);
+                        }
+
+                        // Unidades
+                        else if (storageUnitMeasureId == 19) {
+                            // Se completa el campo StockQuantity
+                            if (response.product.stockQuantityUnitMeasure != null && response.product.stockQuantity != 0 && response.product.stockQuantity != null) {
+                                storageQuantity = quantityToOrder / parseFloat(response.product.stockQuantity).toFixed(2);
+                            }
+                            else {
+                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                return;
+                            }
+
+                            // Redondeo al entero superior
+                            storageQuantity = Math.ceil(storageQuantity);
+                        }
+
+                    }
+
+                    $('#Quantity').val(format_number_to_decimal((storageQuantity), 2, ',', '.'));
+                }
+            }
+        });
+    }
+</script>

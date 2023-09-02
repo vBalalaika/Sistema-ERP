@@ -1,0 +1,285 @@
+﻿@using ERP.Web.Areas.ProductMod.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IList<ArchiveViewModel>
+
+
+<style>
+ /*   .add,
+    .edit,
+    .save,
+    .delete {
+        outline: none;
+        background: none;
+        border: none;
+    }
+
+    .edit,
+    .save,
+    .delete {
+        padding: 5px 10px;
+        cursor: pointer;
+    }
+
+    .add {
+        float: right;
+        background: transparent;
+        border: 1px solid #ffffff;
+        color: #ffffff;
+        font-size: 13px;
+        padding: 0;
+        padding: 3px 5px;
+        cursor: pointer;
+    }
+
+        .add:hover {
+            background: #ffffff;
+            color: #00adee;
+        }
+
+    .save {
+        display: none;
+        background: #ffffff;
+        color: #ffffff;
+    }
+
+        .save:hover {
+            background: #ffffff;
+        }*/
+
+</style>
+
+<form id="create-form" method="post" asp-controller="Product" asp-action="SaveFilesByProduct" onsubmit="return jQueryModalPost(this);" enctype="multipart/form-data">
+    <div class="row d-flex text-left col-md-12 display mb-2">
+        <label class="card-title text-uppercase">@localizer["Archives"]</label>
+    </div>
+    <div>
+        <div class="col-12">
+            <table id="filesTable" class="table table-striped table-hover w-100 nowrap">
+                @*Header*@
+                <thead class="bg-thead">
+                    <tr>
+
+                        <th width="10%">@localizer["Type"]</th>
+                        <th width ="75%">@localizer["Path"]</th>
+                        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Delete)).Result.Succeeded || (AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Edit)).Result.Succeeded)
+                        {
+                            <th width="10%">@localizer["Actions"]<a class="btn btn-outline-secondary  btn-sm ml-2 add"> + </a></th>
+                        }
+                        else
+                        {
+                            <th width="10%">@localizer["Actions"]<a class="btn btn-outline-secondary btn-sm ml-2"> + </a></th>
+                        }
+                    </tr>
+                </thead>
+                @*Body*@
+                <tbody id="editorRows">
+                    @if (Model != null)
+                    {
+
+                        @for (int i = 0; i < Model.Count; i++)
+                        {
+                            @*With Permissions*@
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Delete)).Result.Succeeded || (AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Edit)).Result.Succeeded)
+                            {
+                                <tr>
+                                    <input id="productId" type="hidden" asp-for="@Model[i].ProductId" value="@Model[i].ProductId" readonly />
+                                    <input id="fileId" type="hidden" asp-for="@Model[i].Id" value="@Model[i].Id" readonly />
+                                    <input type="hidden" asp-for="@Model[i].ConcurrencyToken" value="@Model[i].ConcurrencyToken" readonly />
+                                    <td>
+                                        @if (Model[i].ArchiveType != null)
+                                        {
+                                            <select asp-for="@Model[i].ArchiveTypeId" class="form-control" id="ArchiveType">
+                                                <option value="" selected> @Model[i].ArchiveType.Description</option>
+                                            </select>
+                                            // TODO: MODELO de TIPOS
+                                        }
+                                    </td>
+                                    <td class="data">
+                                        <textarea type="text" asp-for="@Model[i].PathUrl" value="@Model[i].PathUrl" class="form-control" id="fname"></textarea>
+                                    </td>
+                                    <td class="text-left">
+                                        <div class="btn-group">
+                                            <div class="d-flex animated--grow-in">
+                                                @{
+                                                    var path = Model[i].PathUrl.Replace(@"\\172.16.50.240\ARCHIVOS\SIMPLEMAK\OFICINA TECNICA", "/files");
+                                                    var filename = Model[i].PathUrl.Split("\\").Last();
+                                                }
+                                                <a href="http:@path" target="_blank" alt="@filename" class="btn action-btn"><img class="action-img-icon" src="../../../images/Ver.svg" width="20" height="20" /></a>
+                                                @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Edit)).Result.Succeeded)
+                                                {
+                                                    <button id="editFiles" class="btn edit"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></button>
+                                                    <button id="saveFiles" class="btn save"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></button>
+                                                }
+                                                @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Delete)).Result.Succeeded)
+                                                {
+                                                    <a id="deleteFiles" class="btn btn-outline-danger d-block m-auto delete"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20"/></a>
+                                                }
+                                            </div>
+                                        </div>
+                                    </td>
+                                <tr>
+                                </tr>
+                                </tr>
+                            }
+                            @*With-Out Permissions*@
+                            else
+                            {
+                                <tr>
+                                    <td>
+                                        @if (@Model[i].ArchiveType != null)
+                                        {
+                                            @Model[i].ArchiveType.Description
+                                        }
+                                    </td>
+                                    <td>
+                                        @Model[i].PathUrl
+                                    </td>
+                                    <td class="text-left">
+                                        <div class="btn-group">
+                                            <div class="d-flex animated--grow-in">
+                                                @{
+                                                    var path = Model[i].PathUrl.Replace(@"\\172.16.50.240\ARCHIVOS\SIMPLEMAK\OFICINA TECNICA", "/files");
+                                                    var filename = Model[i].PathUrl.Split("\\").Last();
+                                                }
+                                                <a href="http:@path" target="_blank" alt="@filename" class="btn action-btn"><img class="action-img-icon" src="../../../images/Ver.svg" width="20" height="20" /></a>
+                                                @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Edit)).Result.Succeeded is false)
+                                                {
+                                                    @*       <button id="editFiles" class="btn edit"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></button>*@
+                                                    @* <button id="saveFiles" class="btn save"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></button>*@
+                                                }
+                                                @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.Delete)).Result.Succeeded is false)
+                                                {
+                                                    <a id="deleteFiles" class="btn btn-outline-danger d-block m-auto delete disabled"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                                }
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                    }
+                </tbody>
+            </table>
+            <div id="buttons-div" class="form-group justify-content-between">
+                <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+                <button type="submit" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+            </div>
+
+        </div>
+    </div>
+</form>
+<script>
+    $(document).ready(function () {
+        var rowIndex = 0;
+        $('.add').click(function () {
+
+
+            rowIndex = $('#filesTable').find('tr').length-2;
+            if (rowIndex == -2) rowIndex = 1
+
+
+            var inputProductId = $("#productId").val()
+            if (typeof inputProductId === "undefined"){
+                inputProductId = $("#productbyajax").val()}
+
+
+            let trForTable = `<tr id="${rowIndex}">`;
+
+            trForTable +=
+                `<input type= "hidden" name="[${rowIndex}].Id" value="0" readonly/>` +
+                `<input type= "hidden" name="[${rowIndex}].ProductID" value="${inputProductId}" readonly/>` +
+                `<input type= "hidden" name="[${rowIndex}].ConcurrencyToken" value = "0" readonly/>`;
+
+            trForTable += `<td>` +
+                `<select class="form-control" name="[${rowIndex}].ArchiveTypeId"  name="ArchiveType id = "ArchiveType">` +
+                `<option value = "" selected hidden> </option>` +
+                `<option value = "1" > PDF </option>` +
+                `<option value = "2" > Planos </option>` +
+                `<option value = "3" > 3D </option>` +
+                `</select>` +
+                `</td>`;
+
+            //trForTable += `<td>` + `</td>`; // TODO: Agregar dinamicamente cuando se escribe.
+
+            trForTable += `<td>` +
+                `<textarea id="fname" class="form-control" type="text" name="[${rowIndex}].PathUrl" value =""/></textarea>` +
+                `</td>`;
+
+            trForTable += `<td class="text-left">` +
+                `<div class="btn-group">` +
+                `<div class="d-flex animated--grow-in">` +
+                `<a class="btn btn-outline-danger d-block m-auto disable"><img class="action-img-icon" src="../../../images/Ver.svg" width="20" height="20" /></a>` +
+                `<a id="deleteFiles" class="btn btn-outline-danger d-block m-auto delete"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>` +
+                `</div>` +
+                `</div>` +
+                `</td>` +
+                `</tr>`
+
+            $("#filesTable tbody").append(trForTable);
+            rowIndex += 1;
+            console.log("------ Row Index after ++");
+            console.log(rowIndex);
+            console.log("------  ");
+        }
+
+
+        );
+
+
+
+    });
+
+    $(document).on('click', '#editFiles', function () {
+        $(this).parent().parent().parent().siblings('td.data').each(function () {
+            $(this).find('input').prop('disabled', false)
+            var edited = $(this).find('input').addClass('edited')
+            var content = $(this).html().replace(/\s+/g, '');
+        });
+
+        $(this).siblings('#saveFiles').show();
+        $(this).parent().parent().siblings('.delete').hide();
+        $(this).hide();
+    });
+
+    $(document).on('click', '#deleteFiles', function () {
+        var button = $(this)
+        var id = $(button).parent().parent().parent().siblings('#fileId').val();
+
+        function deleteFile(id) {
+            if (confirm('@localizer["Are you sure to delete this file?"]')) {
+                let url = "/ProductMOD/Product/DeleteFilesById?id=" + id;
+                $.ajax({
+                    url: url,
+                    type: "POST",
+                    success: function (data) {
+                        if (data) {
+                        }
+                        filesTable.ajax.reload(null, false);
+                    }
+                });
+                $(button).parents('tr').remove();
+            }
+        }
+        deleteFile(id)
+    });
+
+    $(document).on('click', '#saveFiles', function () {
+        saveRegister.preventDefault();
+
+        $('.edited').prop('disabled', true)
+        console.log(edited)
+
+        $('.edited').removeClass('edited')
+        window.location.reload();
+
+
+        $(this).siblings('.edit').show();
+        $(this).parent().parent().siblings('.delete').show();
+        $(this).hide();
+    });
+
+
+
+
+</script>

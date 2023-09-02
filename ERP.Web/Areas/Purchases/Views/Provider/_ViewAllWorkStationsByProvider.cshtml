@@ -1,0 +1,188 @@
+﻿@using ERP.Web.Areas.Purchases.Models.Providers
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<RelProviderStationViewModel>
+@{
+    int ProviderId = 0;
+    var ProviderName = "";
+    if (ViewBag.ProviderId != null)
+    {
+        ProviderId = ViewBag.ProviderId;
+        if (ViewBag.ProviderName != null)
+        {
+            ProviderName = ViewBag.ProviderName;
+        }
+    }
+    else if (Model.Count() > 0)
+    {
+        ProviderId = Model.First().ProviderId;
+        ProviderName = Model.First().Provider.getBussinessNameOrName.ToString();
+    }
+}
+
+<div id="div-export-buttons">
+    <div class="btn-group">
+        <a id="btn-back" class="btn btn-secondary text-white" asp-action="Index" asp-controller="Provider" asp-area="Purchases">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Providers.Create)).Result.Succeeded)
+        {
+            <a id="btn-create" class="btn bg-secondary">
+                <i class="fa fa-plus-square"></i>
+            </a>
+        }
+    </div>
+</div>
+<table id="relProviderStationsTable" class="table table-striped-blue nowrap" width="100%">
+    <thead class="bg-thead">
+        <tr>
+            <th hidden>@localizer["ProviderId"]</th>
+            <th hidden>@localizer["RelProviderStationId"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Work Station"]</th>
+            <th>@localizer["Quotation unit"]</th>
+            <th>@localizer["Pesos price"]</th>
+            <th>@localizer["Dollar price"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var relProviderStation in Model)
+        {
+            <tr>
+                <td hidden>
+                    @{ ProviderId = relProviderStation.ProviderId; }
+                </td>
+                <td hidden>
+                    @relProviderStation.Id
+                </td>
+                <td>
+                    <div class="btn-group">
+                        <div class="d-flex animated--grow-in">
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Providers.Edit)).Result.Succeeded)
+                            {
+                                <a class="btn action-btn" title="@localizer["Edit"]" onclick="jQueryModalGet('/purchases/provider/OnGetCreateOrEditProviderStation?id=@relProviderStation.Id','@localizer["Edit"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Edit"]" onclick="jQueryModalGet('/purchases/provider/OnGetCreateOrEditProviderStation?id=@relProviderStation.Id','@localizer["Edit"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Providers.Delete)).Result.Succeeded)
+                            {
+                                <form id="form_delete_@relProviderStation.Id" asp-area="Purchases" asp-controller="Provider" method="post" asp-action="OnPostDeleteProviderStation" asp-route-id="@relProviderStation.Id" asp-route-providerId="@relProviderStation.ProviderId" onsubmit="return jQueryModalDeleteModify(this, '@localizer["Are you sure to delete this record?"]')">
+                                    <a class="btn action-btn" title="@localizer["Delete"]" href="javascript:$('#form_delete_@relProviderStation.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </form>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Delete"]" href="javascript:$('#form_delete_@relProviderStation.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                            }
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    @{
+                        if (relProviderStation.Station != null)
+                        {
+                            @relProviderStation.Station.AbreviationDescription
+                        }
+                    }
+                </td>
+                <td>
+                    @{
+                        if (relProviderStation.PriceUnitMeasure != null)
+                        {
+                            @relProviderStation.PriceUnitMeasure.Description
+                        }
+                    }
+                </td>
+                <td>
+                    @Math.Round(relProviderStation.PesosPrice, 2)
+                </td>
+                <td>
+                    @Math.Round(relProviderStation.DollarPrice, 2)
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["ProviderId"]</th>
+            <th hidden>@localizer["RelProviderStationId"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Work Station"]</th>
+            <th>@localizer["Quotation unit"]</th>
+            <th>@localizer["Pesos price"]</th>
+            <th>@localizer["Dollar price"]</th>
+        </tr>
+    </tfoot>
+</table>
+
+<script>
+    $(document).ready(function () {
+
+        $('#relProviderStationsTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let relProviderStationsTable = $("#relProviderStationsTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                },
+                {
+                    "targets": [1],
+                    "visible": false,
+                    "searchable": false
+                }
+            ],
+            scrollY: '60vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img class="table-img-icon" src="../../../images/Excel.svg" width="25" height="25" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Datos de puestos de trabajo para: ' + "@ProviderName",
+                    exportOptions: {
+                        columns: [3]
+                    },
+                    action: function (e, dt, node, config) {
+                        if (dt.data().count() == 0) {
+                            alert("La grilla no posee ningún dato para exportar.");
+                            loadData();
+                        } else {
+                            $.fn.dataTable.ext.buttons.excelHtml5.action.call(this, e, dt, node, config);
+                        }
+                    }
+                }]
+        });
+
+        relProviderStationsTable.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(relProviderStationsTable.table().container()).on('keyup', 'tfoot input', function () {
+            relProviderStationsTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+        $('#btn-create').on('click', function () {
+            jQueryModalGet('/purchases/provider/OnGetCreateOrEditProviderStation?providerId=@ProviderId', '@localizer["Work station by provider"]');
+        });
+
+    });
+</script>

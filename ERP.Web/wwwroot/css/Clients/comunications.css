@@ -1,0 +1,28 @@
+﻿#div-country-time {
+    border: 3px solid;
+    border-radius: 15px;
+    border-color: var(--info);
+}
+
+#comunicationsTable_filter {
+    display: none
+}
+
+#buttonReminderDiv {
+    align-self: flex-end;
+    padding-bottom: 2%;
+    padding-top: 2.2%;
+    text-align: start;
+}
+
+#btn-export-dataTable-excel {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+/* If device screen is less than or equal to 1366px do ... */
+@media only screen and (max-width: 1920px) and (min-width: 1523px) {
+    #contactLabel {
+        width: 100%;
+    }
+}

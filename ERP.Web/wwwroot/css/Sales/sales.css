@@ -1,0 +1,108 @@
+﻿#saleOrdersTable_filter, #productionOrdersTable_filter, #logTable_filter {
+    display: none;
+}
+
+#btnChangeClient, #btn-create-client {
+    width: 100%
+}
+
+#divCheckSimplemak, #divCheckImported {
+    align-self: flex-end;
+    padding-bottom: 2%;
+    padding-top: 2%;
+    text-align: start;
+}
+
+#unitPriceTh {
+    width: 9.6%;
+}
+
+#deliveryDateTh {
+    width: 17%;
+}
+
+.moneyInput {
+    width: 93%;
+}
+
+#dateFromFilter, #dateToFilter {
+    width: 67%;
+}
+
+#labelStockComponent {
+    font-size: 115% !important;
+}
+
+@media only screen and (min-width: 1200px) {
+    .col-xl-6 {
+        max-width: 25% !important
+    }
+
+    .col-xl-4 {
+        max-width: 50% !important
+    }
+
+    #otherChecksDiv {
+        padding-top: 3.4% !important;
+    }
+}
+
+@media only screen and (min-width: 1366px) {
+    .col-xl-6 {
+        max-width: 22% !important
+    }
+
+    .col-xl-4 {
+        max-width: 25% !important
+    }
+
+    .col-xl-5 {
+        max-width: 34% !important
+    }
+
+    #otherChecksDiv {
+        padding-top: 0% !important;
+    }
+}
+
+@media only screen and (min-width: 1920px) {
+    .col-xl-6 {
+        max-width: 14% !important
+    }
+
+    .col-xl-4 {
+        max-width: 15% !important
+    }
+
+    .col-xl-5 {
+        max-width: 21% !important
+    }
+
+    #otherChecksDiv {
+        padding-top: 31px !important;
+    }
+}
+
+.dataTables_scrollBody {
+    height: 43vh !important;
+}
+
+
+#divNumberOrder {
+    margin-left: 25%;
+}
+
+.form-check-label-custom {
+    font-weight: 700;
+    font-size: 80%;
+    margin-bottom: 0rem !important
+}
+
+
+.custom-control-label {
+    padding-top: 3px
+}
+
+.divRadioBtn {
+    padding-top: 4px
+}

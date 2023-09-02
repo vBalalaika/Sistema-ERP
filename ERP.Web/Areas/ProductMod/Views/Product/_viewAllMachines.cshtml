@@ -1,0 +1,212 @@
+﻿@using ERP.Web.Areas.ProductMod.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<ProductViewModel>
+@{
+    var isComponenteComprado = !Model.Any(x => x.SubCategory.Category.Description != "Componentes Comprados");
+}
+<div id="div-export-buttons">
+    <div class="btn-group">
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Products.Create)).Result.Succeeded)
+        {
+            <a id="btn-create" asp-area="ProductMod" asp-controller="Product" asp-action="OnGetCreateOrEdit" class="btn btn-primary text-white">
+                <i class="fa fa-plus-square"></i> 
+            </a>
+        }
+        <a id="reload" class="btn btn-primary text-white">
+            <i class="fa fas fa-bolt"></i>
+            @localizer["Reload"]
+        </a>
+    </div> 
+</div>
+<table id="productTableMachines" class="table table-striped-blue w-100 nowrap" cellspacing="0">
+    <thead class="bg-thead text-white">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th class="text-center">@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Family/Heading"]</th>
+            <th>@localizer["Road map"]</th>
+            <th class="text-center">@localizer["Stock"]</th>
+            @if (isComponenteComprado)
+            {
+                <th>@localizer["Unit"]</th>
+            }
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var product in Model)
+        {
+            <tr>
+                <td hidden>
+                    @product.Id
+                </td>
+                    <td class="text-left">
+                        <div class="btn-group">
+                            <div class="d-flex  animated--grow-in">
+                                @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Structure.View)).Result.Succeeded)
+                                {
+                                    //Structure standar
+                                    @if (product.Structures.Any(x => x.IsStandard))
+                                    {
+                                        <a title="@localizer["Structure"] @localizer["Standard"]" asp-area="ProductMod" asp-controller="Structure" asp-action="LoadProduct" asp-route-productId="@product.Id" asp-route-isStandard="true" class="btn">
+                                            <img class="action-img-icon" src="../../../images/Estructura estandar.svg" width="20" height="20" />
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <a title="@localizer["Structure"] @localizer["Standard"]" asp-area="ProductMod" asp-controller="Structure" asp-action="Index" asp-route-productId="@product.Id" class="btn">
+                                            <img class="action-img-icon" src="../../../images/Estructura estandar.svg" width="20" height="20" />
+                                        </a>
+                                    }
+                                    //Structure List
+                                    <a title="@localizer["Product structures"]" asp-area="ProductMod" asp-controller="Structure" asp-action="Index" asp-route-productId="@product.Id" class="btn"><img class="action-img-icon" src="../../../images/Configuraciones.svg" width="20" height="20" /></a>
+                                }
+                                @if (product.Archives.Count > 0){
+                                    @foreach (var row in product.Archives)
+                                    {
+                                        var path = @row.PathUrl.Replace(@"\\172.16.50.240\ARCHIVOS\SIMPLEMAK\OFICINA TECNICA", "/files");
+                                        
+                                        if(@row.ArchiveTypeId == 1) //PLANOS
+                                        {
+                                            <a href="http:@path" target="_blank" title="@localizer["Planos"]" class="btn"><img class="action-img-icon" src="../../../images/Plano.svg" width="20" height="20" /></a>
+                                        }
+                                        else if (@row.ArchiveTypeId == 3) //3D
+                                        {
+                                            <a href="http:@path" target="_blank" title="@localizer["3D"]" class="btn"><img class="action-img-icon" src="../../../images/3D.svg" width="20" height="20" /></a>
+                                        }
+                                    }
+                                }
+                                @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Providers.View)).Result.Succeeded && @product.SubCategory.Category.Description == "Componentes Comprados")
+                                {
+                                    <a title="@localizer["Providers"]" asp-area="ProductMod" asp-controller="" asp-action="" class="btn"><img class="action-img-icon" src="../../../images/Proveedores.svg" width="20" height="20" /></a>
+                                }
+                                @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Products.Edit)).Result.Succeeded)
+                                {
+                                    <a title="@localizer["Edit"]" asp-area="ProductMod" asp-controller="Product" asp-action="OnGetCreateOrEdit" asp-route-id=@product.Id class="btn"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                                }
+                                @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Products.Delete)).Result.Succeeded)
+                                {
+                                    <form id="form_delete_@product.Id" asp-area="ProductMod" asp-controller="Product" method="post" asp-action="OnPostDelete" asp-route-id="@product.Id" asp-route-categoryId="@product.CategoryIdFilter" asp-route-producedBySmak="@product.ProducedBySmak" onsubmit="return jQueryModalDelete(this, '@localizer["Are you sure to delete this record?"]')">
+                                        <a title="@localizer["Delete"]" href="javascript:$('#form_delete_@product.Id').submit();" class="btn"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </td>
+                <td class="text-center">
+                    @product.Code
+                </td>
+                <td>
+                    @product.Description
+                </td>
+                <td>
+                    @{
+                        if (product.SubCategory != null)
+                        {
+                            @product.SubCategory.Description
+                        }
+                    }
+                </td>
+                <td>
+                    @product.Roadmap
+                </td>
+                <td class="text-center">
+                    @{
+                        if (product.ProductFeature != null)
+                        {
+                            @if (@product.ProductFeature.StoredStock)
+                            {
+                                <i class="fa fa-check-circle" style="color: #77DD77" aria-hidden="true"></i>
+                            }
+                            else
+                            {
+                                <i class="fa fa-times-circle" style="color: #FF6961 " aria-hidden="true"></i>
+                            }
+                        }
+                    }
+                </td>
+                @if (isComponenteComprado)
+                {
+                    <td>
+                        @if (@product.UnitMeasure != null)
+                        {
+                            @product.UnitMeasure.Description
+                        }
+                    </td>
+                }
+
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Family/Heading"]</th>
+            <th>@localizer["HDR"]</th>
+            <th>@localizer["Stock"]</th>
+            @if (isComponenteComprado)
+            {
+                <th>
+                    @localizer["Unit"]
+                </th>
+            }
+
+        </tr>
+    </tfoot>
+</table>
+<script>
+    $(document).ready(function () {
+        //Busqueda en footers de tablas
+        $('#productTableMachines tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+        let productTableMachines = $("#productTableMachines").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "columnDefs": [{ "targets": [0], "visible": false, "searchable": false }],
+            "order": [[2, "asc"]],
+            scrollY: '60vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            /*stateSave: true,
+            stateLoadParams: function (settings, data) {
+                for (i = 0; i < data.columns["length"]; i++) {
+                    var col_search_val = data.columns[i].search.search;
+                    if (col_search_val != "") {
+                        $("input", $('#productTableMachines tfoot th')[i]).val(col_search_val);
+                    }
+                }
+            },*/
+            "buttons": [{
+                extend: 'excelHtml5',
+                    text: 'Excel <i class="far fa-file-excel"></i>',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Datos de productos',
+                    exportOptions: { columns: [2, 3, 4, 5, 6,] } //TODO ver metodo para agregar una columna isCompronenteComprado.       
+            }]
+        });
+        productTableMachines.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(productTableMachines.table().container()).on('keyup', 'tfoot input', function () {
+            productTableMachines
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+    });
+</script>

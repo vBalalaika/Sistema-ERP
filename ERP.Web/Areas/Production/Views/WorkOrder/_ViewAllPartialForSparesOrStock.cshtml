@@ -1,0 +1,517 @@
+﻿@using ERP.Web.Areas.Production.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model List<WorkOrderViewModel>
+@{
+    var activityColor = "";
+
+    var workOrderIds = String.Join(",",Model.Select(w => w.Id.ToString()).ToList());
+    var productDescriptions = "Varios";
+    var productNumbers = "";
+    foreach (var wo in Model)
+    {
+        //productDescriptions += wo.OrderDetail.Product.Description + " - ";
+        productNumbers += wo.OrderDetail.ProductNumber + " - ";
+    }
+}
+
+<head>
+    <style>
+        .select2 {
+            width: 100% !important;
+        }
+    </style>
+</head>
+<div class="col text-left  w-100 mb-4">
+    <h3 class="text-uppercase">@localizer["Product detail"]</h3>
+</div>
+<div class="row justify-content-between mx-3">
+    <div class="row">
+        <h6 class="mr-2 border">@localizer["Product"]: @productDescriptions.TrimEnd(' ').TrimEnd('-').TrimEnd(' ')</h6>
+        <h6 class="border d-none">@localizer["N° Product"]: @productNumbers.TrimEnd(' ').TrimEnd('-').TrimEnd(' ')</h6>
+
+    </div>
+    <div class="row">
+        <h6 class="mr-2 border">@localizer["N° Work order"]: @Model.First().WorkOrderHeader.WorkOrderHeaderNumber</h6>
+        <h6 class="border">@localizer["Total advance"]: @Model.First().TotalAdvance %</h6>
+    </div>
+</div>
+
+<div class="col-12 mt-3 mt-1 align-items-end">
+    <div class="col-lg-6 ml-2 mb-2">
+        <div class="row input-group">
+            <div class="col-8 px-0">
+                <label style="font-size:18px;font-weight:600"> @localizer["Add new item"]</label>
+                @Html.DropDownListFor(m => m.First().ProductSelectList, Model.First().ProductSelectList, "Seleccionar un producto", new { @class = "form-control w-100" })
+            </div>
+            <div class="col-3">
+                <label class="mr-2" style="font-size:18px;font-weight:600"> @localizer["Quantity"]</label>
+                <input type="number" name="itemQuantity" class="form-control text-center" id="NewItemQuantity" min="1" value="1">
+            </div>
+            <div class="col-1 d-flex align-items-end px-0">
+                <a id="btnAddItem" class="btn btn-primary text-white ml-2" title="@localizer[" Add item"]">
+                    <i class="fa fas fa-plus"></i>
+                </a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="input-group mt-2">
+                <div class="input-group">
+                    <select class="form-control select2bs4" id="StructuresByProduct">
+                        <option value="" selected>----------</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="div-export-buttons" class="col-12 align-self-center " style="height:100%">
+        <div class="btn-group align-bottom ">
+            <a id="btn-send-to-shipments" class="btn btn-secondary text-white" title="@localizer["To shipments"]">
+                <img id="img_providers" class="tables-img-icon" src="../../../images/Proveedores.svg" width="30" height="30" />
+            </a>
+        </div>
+    </div>
+</div>
+<table id="productStructureTable" class="table table-striped w-100  table-hover nowrap" cellspacing="0">
+    <thead class="bg-thead text-white">
+        <tr>
+            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.WorkOrderItems.Delete)).Result.Succeeded)
+            {
+                <th>@localizer["Actions"]</th>
+            }
+            <th>@localizer["Level"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["Stock"]</th>
+            <th>@localizer["Outsourced"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var wo in Model)
+        {
+            foreach (var item in wo.WorkOrderItems)
+            {
+                <tr style="height:40.4px">
+                    <td class="text-left">
+                        <div class="btn-group">
+                            <div class="d-flex animated--grow-in">
+                                @if ((AuthorizationService.AuthorizeAsync(User, Permissions.WorkOrderItems.Delete)).Result.Succeeded)
+                                {
+                                    <form id="form_delete_@item.Id" asp-area="Production" asp-controller="WorkOrder" method="post" asp-action="OnPostDeleteItem" asp-route-idWorkOrder="@item.WorkOrderId" asp-route-idItem="@item.Id" asp-route-isSparesOrStock="true" asp-route-workOrderIds="@workOrderIds" onsubmit="return jQueryModalDeleteModify(this, '@localizer["Are you sure to delete this record?"]')">
+                                        <a class="btn action-btn" title="@localizer[" Delete"]" href="javascript:$('#form_delete_@item.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                    </form>
+
+                                    if (item.isActive)
+                                    {
+                                        <a onclick="ChangeItemState(@item.WorkOrderId,@item.Id,false)" class="btn action-btn" title="@localizer["Desactivate item"]">
+                                            <img class="action-img-icon" src="../../../images/font-awesome-solid.svg" width="20" height="20" />
+                                        </a>
+
+                                        if (item.AllStationsOutsourced)
+                                        {
+
+                                            <a class="btn action-btn">
+                                                <div class="custom-control custom-checkbox small">
+                                                    <input class="checkSelectedRow custom-control-input" checked disabled type="checkbox" value="" id="checkSelectedRow_@item.Id">
+                                                    <label class="custom-control-label" for="checkSelectedRow_@item.Id"></label>
+                                                </div>
+                                            </a>
+                                        }
+                                        else
+                                        {
+                                            <a class="btn action-btn">
+                                                <div class="custom-control custom-checkbox small">
+                                                    <input class="checkSelectedRow custom-control-input" type="checkbox" value="" id="checkSelectedRow_@item.Id">
+                                                    <label class="custom-control-label" for="checkSelectedRow_@item.Id"></label>
+                                                </div>
+                                            </a>
+                                        }
+
+                                    }
+                                    else
+                                    {
+                                        <a onclick="ChangeItemState(@item.WorkOrderId,@item.Id,true)" class="btn action-btn" title="@localizer["Activate item"]">
+                                            <img class="action-img-icon" src="../../../images/flag-checkered-solid.svg" width="20" height="20" />
+                                        </a>
+                                    }
+
+                                }
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        @item.Level
+                    </td>
+                    <td>
+                        <div style="margin-left:@(item.SpacingPixels)px;">
+                            @if (item.Product != null)
+                            {
+                                @(item.Product.Code)
+                            }
+                            else
+                            {
+                                @(item.Structure.Product.Code)
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        <div style="margin-left:@(item.SpacingPixels)px;">
+                            @if (item.Product != null)
+                            {
+                                @item.Product.Description
+                            }
+                            else
+                            {
+                                @(item.Structure.Product.Description + " - (" + item.Structure.Description + ')' );
+                            }
+                        </div>
+                    </td>
+                    <td>
+                        @item.Quantity
+                    </td>
+                    <td>
+                        <div class="row">
+
+                            @foreach (var rps in item.Product.RelProductStations.OrderBy(ps => ps.Order))
+                            {
+                                foreach (var activity in item.WorkActivities)
+                                {
+                                    if (activity.ProductStation.Station.Abbreviation == rps.Station.Abbreviation)
+                                    {
+                                        activityColor = activity.Color;
+                                    }
+                                }
+
+
+                                <div class="px-1" style="border-radius: 30px; display: inline-block; background-color: @activityColor"> @rps.Station.Abbreviation </div> if (!rps.Equals(item.Product.RelProductStations.Last()))
+                                {
+                                    <div>//</div>
+                                }
+
+                            }
+
+                        </div>
+                    </td>
+                    <td>
+                        @if (item.Product != null)
+                        {
+                            @if (item.Product.ProductFeature.StoredStock)
+                            {
+                                <i class="fa fa-check-circle" style="color: #77DD77" aria-hidden="true"></i>
+                            }
+                            else
+                            {
+                                <i class="fa fa-times-circle" style="color: #FF6961 " aria-hidden="true"></i>
+                            }
+                        }
+                        else
+                        {
+                            @if (item.Structure.Product.ProductFeature.StoredStock)
+                            {
+                                <i class="fa fa-check-circle" style="color: #77DD77" aria-hidden="true"></i>
+                            }
+                            else
+                            {
+                                <i class="fa fa-times-circle" style="color: #FF6961 " aria-hidden="true"></i>
+                            }
+                        }
+
+
+                    </td>
+
+                    <td>
+                        @if (item.StationOutsourced.ToString() == "")
+                        {
+                            @localizer["Not outsourced yet."]
+                        }
+                        else
+                        {
+                            @item.StationOutsourced.ToString()
+                        }
+                    </td>
+
+                </tr>
+            }
+        }
+
+    </tbody>
+    <tfoot>
+        <tr>
+            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.WorkOrderItems.Delete)).Result.Succeeded)
+            {
+                <th>@localizer["Actions"]</th>
+            }
+            <th>@localizer["Level"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["Stock"]</th>
+            <th>@localizer["Outsourced"]</th>
+        </tr>
+    </tfoot>
+</table>
+<script>
+    $(document).ready(function () {
+
+        let allWoIIds = new Set();
+
+        //snipet de codigo para orden del level en la datatable
+        jQuery.extend(jQuery.fn.dataTableExt.oSort, {
+            'chapter-pre': function (a) {
+                var i, item;
+                var m = a.split('.'),
+                    x = '',
+                    xa = '';
+
+                for (i = 0; i < 10; i++) {
+                    if (i < m.length) {
+                        item = m[i];
+
+                          if (item.length == 1) {
+                            x += '0000000000' + item;
+                        }
+                        else if (item.length == 2) {
+                            x += '000000000' + item;
+                        }
+                        else if (item.length == 3) {
+                            x += '00000000' + item;
+                        }
+                        else if (item.length == 4) {
+                            x += '0000000' + item;
+                        }
+                        else if (item.length == 5) {
+                            x += '000000' + item;
+                        }
+                        else if (item.length == 6) {
+                            x += '00000' + item;
+                        }
+                        else if (item.length == 7) {
+                            x += '0000' + item;
+                        }
+                        else if (item.length == 8) {
+                            x += '000' + item;
+                        }
+                        else if (item.length == 9) {
+                            x += '00' + item;
+                        }
+                        else if (item.length == 10) {
+                            x += '0' + item;
+                        }
+                        else {
+                            x += item;
+                        }
+                    } else {
+                        x += '0000000000';
+                    }
+                }
+
+                return x;
+            },
+
+            'chapter-asc': function (a, b) {
+                return a < b ? -1 : a > b ? 1 : 0;
+            },
+
+            'chapter-desc': function (a, b) {
+                return a < b ? 1 : a > b ? -1 : 0;
+            }
+        });
+
+        $('#productStructureTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Stock"]" && title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let productStructureTable = $("#productStructureTable").DataTable({
+            "order": [[1, "asc"]],
+            "columnDefs": [{
+                "type": "chapter",
+                "targets": 1
+            }],
+
+            "oLanguage": @localizer["LanguageDataTable"],
+            "scrollY": '55vh',
+            "scrollX": true,
+            "scrollCollapse": true,
+            "scroller": true,
+            "sDom": 'Brtip',
+            "buttons": [
+                {
+                    className: 'rounded-lg',
+                    extend: 'excelHtml5',
+                    text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Datos de Estructura',
+                    exportOptions: {
+                        columns: [1, 2, 3, 4, 5, 6]
+                    }
+                }
+            ],
+            "initComplete": function () {
+                //$('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+            },
+            "drawCallback": function () {
+                // Obtengo todos los checks con la clase checkSelectedRow
+
+                document.querySelectorAll('.checkSelectedRow').forEach(function (item) {
+                    item.addEventListener('change', function () {
+
+                        let workOrderItemId = item.getAttribute('id').slice(17);
+
+                        if ($('#' + item.getAttribute('id')).is(':checked')) {
+                            allWoIIds.add(workOrderItemId);
+                        } else {
+                            allWoIIds.delete(workOrderItemId);
+                        }
+
+                    });
+                });
+            }
+        });
+
+        productStructureTable.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(productStructureTable.table().container()).on('keyup', 'tfoot input', function () {
+            productStructureTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+        $("#ProductSelectList").select2({
+            placeholder: "Seleccionar producto",
+            language: {
+                noResults: function (params) {
+                    return 'No se encontraron resultados';
+                }
+            },
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text))
+        });
+
+        $("#StructuresByProduct").select2({
+            placeholder: "Seleccionar una configuración",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text))
+        });
+
+        $("#btnAddItem").on('click', async function () {
+            var ProductId = $('#ProductSelectList').val();// Gets the selected value of the dropdown
+            var StructureId = $('#StructuresByProduct').val();
+            var Quantity = $('#NewItemQuantity').val();
+            if (ProductId == "" || Quantity == "") {
+                alert("Debe seleccionar un producto e ingresar una cantidad para agregar")
+            }
+            else {
+                StructureId = StructureId == null ? 0 : StructureId;
+                var Level = @Model.First().maxLevelChilds;
+                $.ajax({
+                    async: true,
+                    type: "POST",
+                    url: '/production/workorder/additem?productId=' + ProductId + '&structureId=' + StructureId + '&maxLevel=' + Level + '&workOrderId=' + @Model.First().Id + '&quantity=' + Quantity + '',
+                    success: function () {
+                        loadData();
+                    }
+                })
+            }
+        });
+
+        //ProductStructure "change"
+        $('#ProductSelectList').on('select2:select', function (e) {
+            var productId = $("#ProductSelectList").val();
+            if (productId != undefined) {
+                if (productId != "") {
+                    $.ajax({
+                        async: true,
+                        type: "GET",
+                        url: '/productmod/structure/GetStructuresByProduct?productId=' + productId,
+                        success: function (result) {
+                            if (result.isValid) {
+
+                                $("#StructuresByProduct").empty().trigger("change");
+
+                                result.structures.forEach(function (structure) {
+                                    if (structure.isStandard) {
+                                        structure.description += "-(Estándar)";
+                                    }
+                                    if (structure.isBase) {
+                                        structure.description += "-(Base)";
+                                    }
+                                    var option = new Option(structure.description, structure.id, false, structure.isStandard);
+                                    $('#StructuresByProduct').append(option).trigger('change');
+
+                                });
+                            }
+                        }
+                    });
+                }
+
+            }
+        });
+
+        $('#btn-send-to-shipments').click(function () {
+
+            if (allWoIIds.size > 0) {
+
+                $.ajax({
+                    url: "/Logistics/Shipping/GetWorkActivitiesToShipments",
+                    type: "POST",
+                    data: {
+                        woiIds: Array.from(allWoIIds),
+                        isSparesOrStock: true,
+                        workOrderIds: '@workOrderIds'
+                    },
+                    dataType: "json",
+                    traditional: true,
+                    success: function (res) {
+                        $('#form-modal .modal-header').html('<h5 class="modal-title">' + "@localizer["To shipments"]" + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+                        $('#form-modal .modal-body').html(res.html);
+                        $('#form-modal').modal('show');
+                    },
+                    complete: function () {
+                        allWoIIds = new Set();
+                        document.querySelectorAll('.checkSelectedRow').forEach(function (item) {
+                            if ($('#' + item.getAttribute('id')).is(':checked') && !$('#' + item.getAttribute('id')).is(':disabled')) {
+                                $('#' + item.getAttribute('id')).prop('checked', false);
+                            }
+                        });
+                    }
+                });
+
+            } else {
+                alert("¡ Debe seleccionar al menos un ítem para ejecutar esta acción !");
+            }
+        });
+
+    });
+
+    function ChangeItemState(workOrderId, workOrderItemId, state) {
+        if (confirm('@localizer["This action will change item state. Do you like to continue?"]')) {
+            let url = '/production/workorder/ChangeWorkOrderItemState?workOrderId=' + workOrderId + '&workOrderItemId=' + workOrderItemId + '&state=' + state + '&isSparesOrStock=' + true + "&workOrderIds=" + '@workOrderIds' + '';
+            $.ajax({
+                url: url,
+                type: "POST",
+                success: function (response) {
+                    if (response.isValid) {
+                        $("#viewAll").html(response.html);
+                    }
+                }
+            });
+        }
+    }
+</script>

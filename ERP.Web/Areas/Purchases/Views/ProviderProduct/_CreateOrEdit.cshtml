@@ -1,0 +1,573 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Purchases.Models.Providers
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Product by provider"];
+}
+@model RelProviderProductViewModel
+@{
+    int unitMeasureId = 19;
+    if (Model.Product != null)
+    {
+        unitMeasureId = Model.Product.UnitMeasureId.Value;
+    }
+}
+
+<head>
+    <link rel="stylesheet" href="~/css/Purchases/Providers/providers.css" />
+</head>
+
+<body>
+    <form id="create-form" method="post" asp-controller="ProviderProduct" asp-action="OnPostCreateOrEdit" asp-route-id="@Model.Id" asp-route-providerId="@Model.ProviderId" onsubmit="return modalPost(this);" enctype="multipart/form-data">
+
+        <div class="form-row">
+            <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+            <input type="hidden" asp-for="ProviderId" name="ProviderId" class="form-control">
+
+            <div class="col-md-6 mb-3 border-bottom">
+
+                <div class="form-row">
+
+                    @if(Model.Id == 0)
+                    {
+                        <div class="col-md-12 mb-4">
+                            <label asp-for="ProductId" class="control-label">@localizer["Product"]</label>
+                            <select tabindex="1" class="form-control select2bs4" id="Products" asp-for="ProductId" asp-items="@Model.Products">
+                                <option value="-1">@localizer["Select product"]</option>
+                            </select>                            
+                        </div> 
+                    }
+                    else
+                    {
+                        <div class="col-md-12 mb-4">
+                            <label asp-for="ProductId" class="control-label">@localizer["Product"]</label>
+                            <select tabindex="1" disabled class="form-control select2bs4" id="Products" asp-for="ProductId" asp-items="@Model.Products">
+                                <option value="-1">@localizer["Select product"]</option>
+                            </select>
+                            <input type="hidden" asp-for="ProductId" name="ProductId" class="form-control">
+                        </div>
+                    }
+
+                </div>
+
+                <div class="form-row mt-1">
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="Brand" class="control-label">@localizer["Brand"]</label>
+                        <input type="text" name="Brand" asp-for="Brand" class="form-control" />
+                        <span asp-validation-for="Brand" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label asp-for="ProviderCode" class="control-label">@localizer["Provider code"]</label>
+                        <input type="text" name="ProviderCode" asp-for="ProviderCode" class="form-control" />
+                        <span asp-validation-for="ProviderCode" class="text-danger"></span>
+                    </div>
+
+                </div>
+
+            </div>
+            <div class="col-md-6 mb-3 border-2 border-bottom">
+                <div class="col-md-12 mb-3">
+                    <label asp-for="Observations" class="control-label">@localizer["Observations"]</label>
+                    <textarea asp-for="Observations" name="Observations" class="form-control" id="Observations" rows="5"></textarea>
+                </div>
+
+            </div>
+
+            <div class="col-md-3 border-bottom">
+                <label class="font-weight-normal">@localizer["Provider presentation"]</label>
+                <div class="form-row">
+                    <div class="col-md-12 mb-3">
+                        <label asp-for="UnitMeasureId" class="control-label">@localizer["Unit measure"]</label>
+                        <select name="UnitMeasureId" class="form-control select2bs4" id="UnitsMeasure" asp-for="UnitMeasureId" asp-items="@Model.UnitsMeasure.Where(u => u.Value == "1" || u.Value == "2" || u.Value == "16" || u.Value == "17" || u.Value == "18" || u.Value == "23" || u.Value == "22" || u.Value == "31" || u.Value == "32" || u.Value == "33" || u.Value == "36" || u.Value == "37" || u.Value == "19" || u.Value == "38")">
+                             <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                        <span asp-validation-for="UnitMeasureId" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-9 border-bottom">
+                <label class="font-weight-normal">@localizer["Equivalence with production"]</label>
+                <div class="form-row">
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="Width" class="control-label">@localizer["Width"]</label>
+                        <input id="Width" type="text" name="Width" asp-for="Width" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="0" />
+                        <span asp-validation-for="Width" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="WidthUnitMeasureId" class="control-label">@localizer["Unit measure"]</label>
+                        <select name="WidthUnitMeasureId" class="form-control select2bs4" id="WidthUnitsMeasure" asp-for="WidthUnitMeasureId" asp-items="@Model.UnitsMeasure.Where(u => u.Value == "2")">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                        <span asp-validation-for="WidthUnitMeasureId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="PresentationQuantity" class="control-label">@localizer["Quantity"]</label>
+                        <input id="PresentationQuantity" type="text" name="PresentationQuantity" asp-for="PresentationQuantity" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="0" />
+                        <span asp-validation-for="PresentationQuantity" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="PresentationUnitMeasureId" class="control-label">@localizer["Unit measure"]</label>
+                        <select name="PresentationUnitMeasureId" class="form-control select2bs4" id="PresentationUnitsMeasure" asp-for="PresentationUnitMeasureId" asp-items="@Model.UnitsMeasure.Where(u => u.Value == "19" || u.Value == "17" || u.Value == "18" || u.Value == "39" || u.Value == "26")">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                        <span asp-validation-for="PresentationUnitMeasureId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="Lenght" class="control-label">@localizer["Lenght"]</label>
+                        <input id="Lenght" type="text" name="Lenght" asp-for="Lenght" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="0" />
+                        <span asp-validation-for="Lenght" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="LengthUnitMeasureId" class="control-label">@localizer["Unit measure"]</label>
+                        <select name="LengthUnitMeasureId" class="form-control select2bs4" id="LengthUnitsMeasure" asp-for="LengthUnitMeasureId" asp-items="@Model.UnitsMeasure.Where(u => u.Value == "2")">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                        <span asp-validation-for="LengthUnitMeasureId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="Weight" class="control-label">@localizer["Weight"]</label>
+                        <input id="Weight" type="text" name="Weight" asp-for="Weight" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="0" />
+                        <span asp-validation-for="Weight" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="WeightUnitMeasureId" class="control-label">@localizer["Unit measure"]</label>
+                        <select name="WeightUnitMeasureId" class="form-control select2bs4" id="WeightUnitsMeasure" asp-for="WeightUnitMeasureId" asp-items="@Model.UnitsMeasure.Where(u => u.Value == "1")">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                        <span asp-validation-for="WeightUnitMeasureId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="Height" class="control-label">@localizer["Height"]</label>
+                        <input id="Height" type="text" name="Height" asp-for="Height" class="form-control text-right" onkeypress="return validateIsNumber(event);" placeholder="0" />
+                        <span asp-validation-for="Height" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label asp-for="HeightUnitMeasureId" class="control-label">@localizer["Unit measure"]</label>
+                        <select name="HeightUnitMeasureId" class="form-control select2bs4" id="HeightUnitsMeasure" asp-for="HeightUnitMeasureId" asp-items="@Model.UnitsMeasure.Where(u => u.Value == "2")">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                        <span asp-validation-for="HeightUnitMeasureId" class="text-danger"></span>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="col-md-12 mt-3">
+                <label class="font-weight-normal">@localizer["Price per:"]</label>
+                <div class="form-row">
+
+                    <div class="col-md-2 mb-3">
+                        <label asp-for="PriceUnitMeasureId" class="control-label">@localizer["Quotation unit measure"]</label>
+                        <select name="PriceUnitMeasureId" class="form-control select2bs4" id="PriceUnitMeasures" asp-for="PriceUnitMeasureId" asp-items="@Model.UnitsMeasure.Where(u => u.Value == "1" || u.Value == "2" || u.Value == "16" || u.Value == "17" || u.Value == "18" || u.Value == "23" || u.Value == "22" || u.Value == "31" || u.Value == "32" || u.Value == "33" || u.Value == "36" || u.Value == "37" || u.Value == "19" || u.Value == "38")">
+                            <option value="">@localizer["Select unit measure"]</option>
+                        </select>
+                        <span asp-validation-for="PriceUnitMeasureId" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label asp-for="PesosPrice" class="control-label">@localizer["Pesos price"]</label>
+                        <input id="PesosPrice" type="text" name="PesosPrice" asp-for="PesosPrice" class="form-control" onkeypress="return validateIsNumber(event);" />
+                        <span asp-validation-for="PesosPrice" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-2 mb-3">
+                        <label asp-for="DollarPrice" class="control-label">@localizer["Dollar price"]</label>
+                        <input id="DollarPrice" type="text" name="DollarPrice" asp-for="DollarPrice" class="form-control" onkeypress="return validateIsNumber(event);" />
+                        <span asp-validation-for="DollarPrice" class="text-danger"></span>
+                    </div>
+
+                    <div class="col-md-6 mb-3">
+                        <label hidden id="lblActualizacionDolar" class="control-label">@localizer["Update schedule 4:00 p.m."]</label>
+                        <div id="divTableDollarExchange" class="table-sm mt-1 ml-1">
+                            <table id="DollarExchangeTable" class="w-50">
+                                <thead class="bg-thead">
+                                    <tr>
+                                        <th></th>
+                                        <th></th>
+                                        <th>@localizer["Purchase"]</th>
+                                        <th>@localizer["Sale"]</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td id="date" class="w-auto"></td>
+                                        <td class="w-auto">@localizer["Dollar"]</td>
+                                        <td id="purchasePrice" class="w-auto"></td>
+                                        <td id="salePrice" class="w-auto"></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div id="buttons-div" class="form-group justify-content-between">
+            @if (Model.viewDetails)
+            {
+                <button type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+            }
+            else
+            {
+                <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+                <button type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+            }
+        </div>
+    </form>
+</body>
+
+<script src="~/js/site.js"></script>
+<script type="text/javascript" language="javascript">
+    $.validator.unobtrusive.parse(document);
+    $(document).ready(function () {
+        /* Format decimals */
+        const decimalInputsIds = ['PesosPrice', 'DollarPrice', 'PresentationMeasure', 'Width', 'Lenght', 'Weight', 'Height', 'PresentationQuantity'];
+
+        let productsSelect = $('#Products');
+        let unitsSelect = $('#UnitsMeasure');
+        let WidthUnitsSelect = $('#WidthUnitsMeasure');
+        let LengthUnitsSelect = $('#LengthUnitsMeasure');
+        let WeightUnitsSelect = $('#WeightUnitsMeasure');
+        let HeightUnitsSelect = $('#HeightUnitsMeasure');
+        let PresentationUnitsMeasure = $('#PresentationUnitsMeasure');
+        let PriceUnitMeasures = $('#PriceUnitMeasures');
+
+      
+        let pesosPrice = document.getElementById('PesosPrice');
+        let dollarPrice = document.getElementById('DollarPrice');
+        let presentationMeasure = document.getElementById('PresentationMeasure');
+        let width = document.getElementById('Width');
+        let lenght = document.getElementById('Lenght');
+        let weight = document.getElementById('Weight');
+        let height = document.getElementById('Height');
+        let presentationQuantity = document.getElementById('PresentationQuantity');
+
+        let purchasePrice = document.getElementById('purchasePrice');
+        let salePrice = document.getElementById('salePrice');
+        let date = document.getElementById('date');
+
+        if ((pesosPrice != null && $('#PesosPrice').val().trim() != "0,00") || (dollarPrice != null && $('#DollarPrice').val().trim() != "0,00")) {
+            $('#DollarExchangeTable').prop('hidden', false);
+            $('#lblActualizacionDolar').prop('hidden', false);
+
+            $.ajax({
+                url: '/purchases/providerproduct/GetDollarQuotation',
+                method: 'get',
+                dataType: 'json',
+                success: function (response) {
+
+                    date.innerHTML = "";
+                    date.innerHTML = response.date;
+
+                    purchasePrice.innerHTML = "";
+                    purchasePrice.innerHTML = format_number_to_decimal((response.purchasePrice), 2, ',', '.');
+                    salePrice.innerHTML = "";
+                    salePrice.innerHTML = format_number_to_decimal((response.salePrice), 2, ',', '.');
+                }
+            });
+
+        } else {
+            $('#DollarExchangeTable').prop('hidden', true);
+        }
+
+        if(@Model.Id != 0){
+            getValueForPesosAndDollar();
+        }
+
+        $('#PesosPrice').change(function () {
+
+            let chars = { '.': '', ',': '.' };
+
+            if ($('#PesosPrice').val().trim() != 0) {
+
+                $.ajax({
+                    url: '/purchases/providerproduct/GetDollarQuotation',
+                    method: 'get',
+                    data: { pesosInput: pesosPrice.value.replace(/[.,]/g, c => chars[c]), dollarInput: 0 },
+                    dataType: 'json',
+                    success: function (response) {
+                        dollarPrice.value = format_number_to_decimal((response.pesosToDollar), 2, ',', '.'); 
+
+                        if (response.salePrice == 0 && response.purchasePrice == 0) {
+                            $('#DollarExchangeTable').prop('hidden', true);
+                            $('#lblActualizacionDolar').prop('hidden', true);
+                        } else {
+                            $('#DollarExchangeTable').prop('hidden', false);
+                            $('#lblActualizacionDolar').prop('hidden', false);
+                        }
+
+                        date.innerHTML = "";
+                        date.innerHTML = response.date;
+
+                        purchasePrice.innerHTML = "";
+                        purchasePrice.innerHTML = format_number_to_decimal((response.purchasePrice), 2, ',', '.');
+                        salePrice.innerHTML = "";
+                        salePrice.innerHTML = format_number_to_decimal((response.salePrice), 2, ',', '.');
+                    }
+                });
+
+            }
+        });
+
+        $('#DollarPrice').change(function () {
+
+            let chars = { '.': '', ',': '.' };
+
+            if ($('#DollarPrice').val().trim() != 0) {
+
+                $.ajax({
+                    url: '/purchases/providerproduct/GetDollarQuotation',
+                    method: 'get',
+                    data: { pesosInput: 0, dollarInput: dollarPrice.value.replace(/[.,]/g, c => chars[c]) },
+                    dataType: 'json',
+                    success: function (response) {
+
+                        pesosPrice.value = format_number_to_decimal((response.dollarToPesos), 2, ',', '.');
+
+                        if (response.salePrice == 0 && response.purchasePrice == 0) {
+                            $('#DollarExchangeTable').prop('hidden', true);
+                            $('#lblActualizacionDolar').prop('hidden', true);
+                        } else {
+                            $('#DollarExchangeTable').prop('hidden', false);
+                            $('#lblActualizacionDolar').prop('hidden', false);
+                        }
+
+                        date.innerHTML = "";
+                        date.innerHTML = response.date;
+
+                        purchasePrice.innerHTML = "";
+                        purchasePrice.innerHTML = format_number_to_decimal((response.purchasePrice), 2, ',', '.');
+                        salePrice.innerHTML = "";
+                        salePrice.innerHTML = format_number_to_decimal((response.salePrice), 2, ',', '.');
+                    }
+                });
+
+            }
+        });
+
+        productsSelect.select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        unitsSelect.select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select unit measure"]",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        WidthUnitsSelect.select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select unit measure"]",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        WeightUnitsSelect.select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select unit measure"]",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        HeightUnitsSelect.select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select unit measure"]",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        LengthUnitsSelect.select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select unit measure"]",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        PresentationUnitsMeasure.select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select unit measure"]",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        PriceUnitMeasures.select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select unit measure"]",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        validateDecimalsNumbersOnInput(decimalInputsIds);
+
+    });
+
+    modalPost = form => {
+        try {
+            let relProviderProductsTable = $('#relProviderProductsTable').DataTable();
+            $.ajax({
+                type: 'POST',
+                url: form.action,
+                data: new FormData(form),
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.isValid) {
+                        relProviderProductsTable.clear().draw();
+                        if("@Model.editFromAllProductsProviders" == "True")
+                        {
+                            $('#viewAll').load('/purchases/providerproduct/LoadAllProviderProducts');
+                        }
+                        else
+                        {
+                            $('#viewAll').load('/purchases/providerproduct/LoadAll?id=@Model.ProviderId');
+                        }
+                        
+                        $('#form-modal').modal('hide');
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+    function getValueForPesosAndDollar(){
+        let chars = { '.': '', ',': '.' };
+        if ($('#DollarPrice').val().trim() != 0) {
+            $.ajax({
+                url: '/purchases/providerproduct/GetDollarQuotation',
+                method: 'get',
+                data: { pesosInput: 0, dollarInput: $('#DollarPrice').val().replace(/[.,]/g, c => chars[c]) },
+                dataType: 'json',
+                success: function (response) {
+                    $('#PesosPrice').val(format_number_to_decimal((response.dollarToPesos), 2, ',', '.'));
+                }
+            });
+        }
+    }
+</script>

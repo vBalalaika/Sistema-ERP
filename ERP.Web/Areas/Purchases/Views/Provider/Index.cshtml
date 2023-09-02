@@ -1,0 +1,43 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Providers"];
+}
+@using ERP.Web.Areas.Purchases.Models.Providers
+@model ProviderViewModel
+
+<head>
+    <link rel="stylesheet" href="~/css/Purchases/Providers/providers.css" />
+</head>
+<body>
+
+    <div class="card">
+
+        <div id="viewAll" class="card-body table-responsive">
+
+        </div>
+
+    </div>
+</body>
+
+@section Scripts
+{
+    <script src="~/js/site.js"></script>
+    <script>
+
+        $(document).ready(function () {
+
+            let providersTable = $("#providersTable").DataTable({
+                "oLanguage": @localizer["LanguageDataTable"],
+            });
+
+            loadData();
+
+        });
+
+        function loadData() {
+            $('#viewAll').load('/purchases/provider/LoadAll');
+        }
+
+    </script>
+}

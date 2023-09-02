@@ -1,0 +1,72 @@
+﻿.nav-sidebar .menu-open > .nav-treeview {
+    padding-left: 10px;
+    display: block;
+}
+/*esconder scrollbar en sidebar*/
+aside
+::-webkit-scrollbar {
+    display: none;
+}
+
+#AccessoryProductsTable thead th,
+#ProvidersTable thead th,
+#RelProductStationsTable thead th {
+    padding-bottom: 0.4375rem !important;
+}
+
+/*.collapse.colapsableTab {
+    margin: 5px;
+    border: 2px solid gray;
+    border-radius: 5px;
+}*/
+
+#divChecks {
+    border: 1px solid;
+    border-color: lightgrey;
+    border-radius: 10px;
+    padding-bottom: 10px;
+    display: block;
+}
+
+.form-control.order {
+    text-align: center
+}
+
+#StoredStock_td, #UnitMeasure_td {
+    text-align: center;
+}
+
+#productTable_filter, #productTableComponents_0_filter, #productTableComponents_3_filter, #productTableMachines_filter, #structureTable_filter, #ProvidersTable_filter {
+    display: none
+}
+
+@media only screen and (max-width: 767px) {
+    #div-export-buttons {
+        display: contents;
+        text-align: center;
+    }
+
+    #btn-create, #reload {
+        width: 100%;
+        flex: 1 1 auto;
+        float: none;
+        text-align: center;
+        margin-bottom: 0.5em;
+    }
+
+    div.dt-buttons {
+        float: none;
+        width: 100%;
+        text-align: center;
+        margin-bottom: .5em;
+    }
+}
+
+.dataTables_scrollBody {
+    height: 50vh !important;
+}
+
+.heightAutoClassForDataTable {
+    height: auto !important;
+    min-height: auto !important;
+}

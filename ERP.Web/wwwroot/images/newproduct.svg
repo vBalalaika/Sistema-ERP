@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW 2018 (64 Bit Versión de evaluación) -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="23.259mm" height="17.7909mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 739.83 565.9"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <font id="FontID0" horiz-adv-x="659" font-variant="normal" class="str4" style="fill-rule:nonzero" font-style="normal" font-weight="400">
+	<font-face 
+		font-family="Berlin Sans FB">
+		<font-face-src>
+			<font-face-name name="Berlin Sans FB"/>
+		</font-face-src>
+	</font-face>
+   <missing-glyph><path d="M0 0z"/></missing-glyph>
+   <glyph unicode="+" horiz-adv-x="403" d="M383.333 336.167c0,-5.33314 -2.49655,-32.3299 -7.3286,-81.1694 -1.0022,-2.66657 -3.33769,-3.99986 -6.83644,-3.99986 -15.9994,0 -37.332,0.501101 -64.1677,1.5033 -32.1689,1.0022 -53.5014,1.5033 -63.9977,1.5033 0,-16.6705 0.501101,-41.5019 1.49435,-74.5029 1.0022,-33.0011 1.5033,-57.8324 1.5033,-74.5029 0,-12.6617 -16.5005,-18.9971 -49.1705,-18.9971 -21.4936,0 -35.8287,1.99545 -42.8262,5.83424 -3.0066,1.99545 -4.67097,5.99531 -5.00206,12.1606 -0.671117,18.666 -0.501101,43.5063 0.501101,74.834 0.993253,38.0031 1.49435,63.1655 1.49435,75.174 -8.8319,0 -29.3323,-0.501101 -61.8322,-1.5033 -25.3324,-1.0022 -45.9939,-1.5033 -61.8322,-1.5033 -5.50316,0 -8.3308,2.33549 -8.3308,6.83644 0,2.33549 1.49435,15.3283 4.33094,39.1664 0,13.0018 0.671117,26.9968 2.0044,42.003 2.32654,3.65982 5.99531,5.33314 11.1674,5.33314 -9.34195,0 28.8312,-1.0022 114.493,-3.33769 0,15.9994 -0.161068,40.1686 -0.501101,72.6685 -0.331084,32.5 -0.492152,56.8302 -0.492152,72.9996 0,5.50316 3.15872,8.3308 9.333,8.3308 7.99971,0 20.5004,0.170016 37.162,0.671117 16.6705,0.501101 29.1712,0.832185 37.332,0.832185 7.99971,0 12.1696,-4.67097 12.1696,-13.6639 0,-15.6683 -0.501101,-39.1664 -1.5033,-70.6731 -0.993253,-31.4978 -1.49435,-55.1658 -1.49435,-71.1652 14.6661,0 36.8309,0.170016 66.4943,0.501101 29.6723,0.331084 51.8371,0.501101 66.5032,0.501101 6.16533,0 9.333,-2.0044 9.333,-5.83424z"/>
+  </font>
+  <style type="text/css">
+   <![CDATA[
+    @font-face { font-family:"Berlin Sans FB";font-variant:normal;font-style:normal;font-weight:normal;src:url("#FontID0") format(svg)}
+    .str4 {stroke-width:6.82;stroke-miterlimit:22.9256}
+    .str1 {stroke:#FEFEFE;stroke-width:31.81;stroke-miterlimit:22.9256}
+    .str3 {stroke:#FEFEFE;stroke-width:15.9;stroke-miterlimit:22.9256}
+    .str5 {stroke:#FEFEFE;stroke-width:2.42;stroke-miterlimit:22.9256}
+    .str0 {stroke:#FEFEFE;stroke-width:31.81;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .str2 {stroke:#FEFEFE;stroke-width:31.81;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .fil0 {fill:none}
+    .fil1 {fill:#FEFEFE}
+    .fnt0 {font-weight:normal;font-size:355.47px;font-family:'Berlin Sans FB'}
+   ]]>
+  </style>
+ </defs>
+ <g id="Capa_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <g id="_2418761648320">
+   <polyline class="fil0 str0" points="366.9,218.8 473.12,267.12 472.82,550 202.14,426.87 202.44,143.99 297.12,187.06 "/>
+   <rect class="fil0 str0" transform="matrix(0.639164 -0.317967 -0 0.448598 472.816 265.899)" width="392.87" height="633.3"/>
+   <polyline class="fil0 str1" points="202.44,143.99 458.47,56.27 542.14,82.97 723.92,140.98 "/>
+   <polyline class="fil0 str2" points="546.78,84.45 297.12,187.06 297.12,290.94 "/>
+   <polyline class="fil0 str0" points="616.37,108.12 366.9,218.8 366.9,319.78 329.86,279.77 297.12,290.94 "/>
+   <rect class="fil0 str3" transform="matrix(0.610228 0.265996 -0 0.610228 362.243 415.544)" width="114.67" height="82.06"/>
+   <line class="fil0 str3" x1="370.76" y1="220.56" x2="297.12" y2= "187.06" />
+   <text x="-4.83" y="177.7"  class="fil1 str5 fnt0">+</text>
+  </g>
+ </g>
+</svg>

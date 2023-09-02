@@ -1,0 +1,597 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Clients.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+@model ClientViewModel
+@{
+    int stateId = 0;
+    int cityId = 0;
+    if (Model.State != null)
+    {
+        stateId = Model.State.Id;
+    }
+    if (Model.City != null)
+    {
+        cityId = Model.City.Id;
+    }
+
+}
+
+<form id="create-form" method="post" asp-controller="Client" asp-action="OnPostCreateOrEdit" asp-route-id="@Model.Id" enctype="multipart/form-data">
+
+    <div id="parent-div" class="form-row">
+        <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+        <div class="col-md-6 mb-3">
+            <label asp-for="BusinessName" class="control-label">@localizer["Business name"]</label>
+            <input type="text" name="BusinessName" asp-for="BusinessName" class="form-control" />
+            <span asp-validation-for="BusinessName" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label asp-for="ContactName" class="control-label">@localizer["Contact name"]</label>
+            <input asp-for="ContactName" type="text" name="ContactName" class="form-control" />
+            <span asp-validation-for="ContactName" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="DocumentTypeId" class="control-label">@localizer["Document type"]</label>
+            <select name="DocumentTypeId" class="form-control select2bs4" id="DocumentTypesId" asp-for="DocumentTypeId" asp-items="@Model.DocumentTypes">
+                <option value="-1">@localizer["Select document type"]</option>
+            </select>
+            <span asp-validation-for="DocumentTypeId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="DocumentNumber" class="control-label">@localizer["Document number"]</label>
+            <input asp-for="DocumentNumber" type="text" name="DocumentNumber" class="form-control" />
+            <span asp-validation-for="DocumentNumber" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="ClientDocument" class="control-label">@localizer["Client document"]</label>
+            <input asp-for="ClientDocument" type="text" name="ClientDocument" class="form-control" />
+            <span asp-validation-for="ClientDocument" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="CellPhoneNumber" class="control-label">@localizer["Phone number"]</label>
+            <input asp-for="CellPhoneNumber" type="text" name="CellPhoneNumber" class="form-control" />
+            <span asp-validation-for="CellPhoneNumber" class="text-danger"></span>
+        </div>
+
+        <div id="inputBox" class="col-md-6 mb-3">
+            <label asp-for="Email" class="control-label">@localizer["Email"]</label>
+            <input id="email" asp-for="Email" type="email" name="Email" class="form-control" />
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="CountryId" class="control-label">@localizer["Country"]</label>
+            <select name="CountryId" class="form-control select2bs4" id="Countries" asp-for="CountryId" asp-items="@Model.Countries">
+                <option value="-1">@localizer["Select country"]</option>
+            </select>
+            <span asp-validation-for="CountryId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="StateId" class="control-label">@localizer["State"]</label>
+            <select name="StateId" class="form-control select2bs4" id="States" asp-for="StateId">
+            </select>
+            <span asp-validation-for="StateId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-4 mb-3">
+            <label asp-for="CityId" class="control-label">@localizer["City"]</label>
+            <select name="CityId" class="form-control select2bs4" id="Cities" asp-for="CityId">
+            </select>
+            <span asp-validation-for="CityId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-5 mb-3">
+            <label asp-for="Address" class="control-label">@localizer["Address"]</label>
+            <input asp-for="Address" type="text" name="Address" class="form-control" />
+            <span asp-validation-for="Address" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 mb-3 w-100">
+            <label asp-for="PostalCode" class="control-label">@localizer["Postal code"]</label>
+            <input asp-for="PostalCode" type="text" name="PostalCode" id="ZipCode" class="form-control w-25" readonly />
+            <span asp-validation-for="PostalCode" class="text-danger"></span>
+        </div>
+                
+        <div class="col-md-3 mb-3">
+            <label asp-for="BranchCompany" class="control-label">@localizer["Branch company"]</label>
+            <select name="BranchCompany" class="form-control select2bs4" id="BranchCompany" asp-for="BranchCompany">
+                <option value="-1">@localizer["Select branch"]</option>
+                <option value="Bolsas">@localizer["Bolsas"]</option>
+                <option value="Big bags">Big bags</option>
+                <option value="Both">@localizer["Both"]</option>
+            </select>
+            <span asp-validation-for="BranchCompany" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label asp-for="IndustryServed" class="control-label">@localizer["Industry served"]</label>
+            <input asp-for="IndustryServed" id="IndustryServed" type="text" name="IndustryServed" class="form-control" />
+            <span asp-validation-for="IndustryServed" class="text-danger"></span>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <label asp-for="SizeCompany" class="control-label">@localizer["Size company"]</label>
+            <select name="SizeCompany" class="form-control select2bs4" id="SizeCompany" asp-for="SizeCompany">
+                <option value="-1">@localizer["Select size"]</option>
+                <option value="Small">@localizer["Small"]</option>
+                <option value="Middle">@localizer["Middle"]</option>
+                <option value="Big">@localizer["Big"]</option>
+            </select>
+            <span asp-validation-for="SizeCompany" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label asp-for="ProductionLevel" class="control-label">@localizer["Production level"]</label>
+            <select name="ProductionLevel" class="form-control select2bs4" id="ProductionLevel" asp-for="ProductionLevel">
+                <option value="-1">@localizer["Select level"]</option>
+                <option value="Low">@localizer["Low"]</option>
+                <option value="Medium">@localizer["Medium"]</option>
+                <option value="High">@localizer["High"]</option>
+            </select>
+            <span asp-validation-for="BranchCompany" class="text-danger"></span>
+        </div>
+        
+        <div class="col-md-12 mb-3">
+            <label asp-for="Comments" class="control-label">@localizer["Comments"]</label>
+            <textarea asp-for="Comments" name="Comments" class="form-control" id="Comments" rows="5"></textarea>
+        </div>
+
+        <div hidden id="div-check" class="form-group">
+            <div class="form-check">
+                <input asp-for="IsActive" name="IsActive" class="form-check-input" type="checkbox" id="IsActive" checked>
+                <label asp-for="IsActive" class="control-label" for="IsActive">@localizer["Active"]</label>
+            </div>
+        </div>
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+@*        @if (Model.Id != 0)
+        { 
+            <a id="btnCreateCommunication" class="btn btn-secondary" asp-controller="Client" asp-action="_ViewAllComunications" asp-route-clientId="@Model.Id" title="@localizer["List of comunications"]" style="cursor:pointer"><img class="white-img-icon" src="../../../images/Comunicaciones.svg" width="50" height="25" /></a>
+            
+            <a id="btnCreateReminder" class="btn btn-secondary" onclick="jQueryModalGet('/clients/client/OnGetCreateReminderByClientId?id=@Model.Id','@localizer["New reminder"]')" title="@localizer["Add reminder"]" style="cursor:pointer"><img class="white-img-icon" src="../../../images/Recordatorio.svg" width="50" height="25" /></a>            
+        }
+        else
+        {   
+            <a id="btnCreateCommunication" class="btn btn-secondaryl" title="@localizer["List of comunications"]" style="cursor:pointer"><img class="white-img-icon" src="../../../images/Comunicaciones.svg" width="50" height="25" /></a>
+            
+            <a id="btnCreateReminder" class="btn btn-secondary" title="@localizer["Add reminder"]" style="cursor:pointer"><img class="white-img-icon" src="../../../images/Recordatorio.svg" width="50" height="25" /></a>        
+        }*@
+        <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+        <button type="submit" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+    </div>
+
+</form>
+
+<script type="text/javascript" language="javascript">
+    $.validator.unobtrusive.parse(document);
+    $(document).ready(function () {
+
+        let stateId = @stateId;
+        let cityId = @cityId;
+
+        let countriesSelect = $('#Countries');
+        let statesSelect = $('#States');
+        let citiesSelect = $('#Cities');
+        let documentTypesSelect = $('#DocumentTypesId');
+        let operationStatesSelect = $('#OperationStatesId');
+        let branchCompanySelect = $('#BranchCompany');
+        let sizeCompanySelect = $('#SizeCompany');
+        let productionLevelSelect = $('#ProductionLevel');
+
+        if (@Model.Id == 0) {
+            if (statesSelect.length > 0) {
+                $.ajax({
+                    url: '/clients/client/GetStatesByCountryId',
+                    method: 'get',
+                    data: { countryId: countriesSelect.val() },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.length > 0) {
+                            statesSelect.empty();
+                            statesSelect.append($('<option/>', { value: -1, text: '@localizer["Select state"]' }));
+                        } else {
+                            statesSelect.empty();
+                        }
+                        citiesSelect.empty();
+                        document.getElementById("ZipCode").value = "";
+                        $.each(data, function (index, item) {
+                            statesSelect.append($('<option/>', { value: item.id, text: item.name }));
+                        });
+                    }
+                });
+            }
+        } else {
+            if (statesSelect.length > 0) {
+                $.ajax({
+                    url: '/clients/client/GetStatesByCountryId',
+                    method: 'get',
+                    data: { countryId: countriesSelect.val() },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.length > 0) {
+                            statesSelect.empty();
+                            statesSelect.append($('<option/>', { value: -1, text: '@localizer["Select state"]' }));
+                        } else {
+                            statesSelect.empty();
+                        }
+                        $.each(data, function (index, item) {
+                            statesSelect.append($('<option/>', { value: item.id, text: item.name }));
+                        });
+
+                        //After fill states on select2
+                        if (stateId != 0) {
+                            statesSelect.val(stateId);
+                            statesSelect.trigger('change');
+
+                            $.ajax({
+                                url: '/clients/client/GetCitiesByStateId',
+                                method: 'get',
+                                data: { stateId: stateId },
+                                dataType: 'json',
+                                success: function (data) {
+                                    if (data.length > 0) {
+                                        citiesSelect.empty();
+                                        citiesSelect.append($('<option/>', { value: -1, text: '@localizer["Select city"]' }));
+                                    } else {
+                                        citiesSelect.empty();
+                                    }
+                                    $.each(data, function (index, item) {
+                                        citiesSelect.append($('<option/>', { value: item.id, text: item.name }));
+                                    });
+
+                                    // After fill cities on select2
+                                    if (cityId != 0) {
+                                        citiesSelect.val(cityId);
+                                        citiesSelect.trigger('change');
+
+                                        if (countriesSelect.val() == 61) {
+                                            $.ajax({
+                                                url: '/clients/client/GetPostalCodeByCityId',
+                                                method: 'get',
+                                                data: { cityId: cityId },
+                                                dataType: 'json',
+                                                success: function (data) {
+                                                    if (data != "") {
+                                                        document.getElementById("ZipCode").value = data;
+                                                    }
+                                                    else {
+                                                        document.getElementById("ZipCode").removeAttribute("readonly");
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    }
+                                }
+                            })
+                        }
+                    }
+                });
+            }
+        }
+
+        branchCompanySelect.select2({
+            placeholder: "@localizer["Select branch"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+        productionLevelSelect.select2({
+            placeholder: "@localizer["Select level"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        sizeCompanySelect.select2({
+            placeholder: "@localizer["Select size"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        countriesSelect.select2({
+            placeholder: "@localizer["Select country"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        statesSelect.select2({
+            placeholder: "@localizer["Select state"]",
+            theme: "bootstrap4",
+            tags: true,
+        }).on('select2:close', function () {
+            let element = $(this);
+            let new_element = $.trim(element.val());
+
+            if (new_element != '') {
+                if (!$.isNumeric(new_element)) {
+                    $.ajax({
+                        url: '/clients/client/AddStateFromSelect2',
+                        method: 'POST',
+                        data: {
+                            Name: new_element,
+                            CountryId: $('#Countries').find(":selected").val()
+                        },
+                        success: function (response) {
+                            if (response.isValid) {
+                                element.append('<option value="' + response.id + '">' + new_element + '</option>').val(response.id);
+                            }
+                        }
+                    })
+                }
+            }
+        });
+
+        citiesSelect.select2({
+            placeholder: "@localizer["Select city"]",
+            theme: "bootstrap4",
+            tags: true,
+        }).on('select2:close', function () {
+            let element = $(this);
+            let new_element = $.trim(element.val());
+
+            if (new_element != '') {
+                if (!$.isNumeric(new_element)) {
+                    $.ajax({
+                        url: '/clients/client/AddCityFromSelect2',
+                        method: 'POST',
+                        data: {
+                            Name: new_element,
+                            StateId: $('#States').find(":selected").val()
+                        },
+                        success: function (response) {
+                            if (response.isValid) {
+                                element.append('<option value="' + response.id + '">' + new_element + '</option>').val(response.id);
+                            }
+                        }
+                    })
+                }
+            }
+        });
+
+        documentTypesSelect.select2({
+            placeholder: "@localizer["Select document type"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        operationStatesSelect.select2({
+            placeholder: "@localizer["Select operation state"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        countriesSelect.change(function () {
+            $.ajax({
+                url: '/clients/client/GetStatesByCountryId',
+                method: 'get',
+                data: { countryId: $(this).val() },
+                dataType: 'json',
+                success: function (data) {
+
+                    if (data.length > 0) {
+                        statesSelect.empty();
+                        statesSelect.prop('disabled', false);
+                        statesSelect.append($('<option/>', { value: -1, text: '@localizer["Select state"]' }));
+                    } else {
+                        statesSelect.empty();
+                        statesSelect.prop('disabled', true);
+                    }
+
+                    citiesSelect.empty();
+                    document.getElementById("ZipCode").value = "";
+
+                    $.each(data, function (index, item) {
+                        statesSelect.append($('<option/>', { value: item.id, text: item.name }));
+                    });
+                }
+            });
+        });
+
+        statesSelect.change(function () {
+            $.ajax({
+                url: '/clients/client/GetCitiesByStateId',
+                method: 'get',
+                data: { stateId: $(this).val() },
+                dataType: 'json',
+                success: function (data) {
+
+                    if (data.length > 0) {
+                        citiesSelect.empty();
+                        citiesSelect.prop('disabled', false);
+                        citiesSelect.append($('<option/>', { value: -1, text: '@localizer["Select city"]' }));
+                    } else {
+                        citiesSelect.empty();
+                    }
+                    document.getElementById("ZipCode").value = "";
+                    $.each(data, function (index, item) {
+                        citiesSelect.append($('<option/>', { value: item.id, text: item.name }));
+                    });
+                }
+            });
+        });
+
+        citiesSelect.change(function () {
+            if(!Number.isInteger($(this).val())){
+                $.ajax({
+                    url: '/clients/client/GetPostalCodeByCityId',
+                    method: 'get',
+                    data: { cityId: $(this).val() },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data != "") {
+                            document.getElementById("ZipCode").value = data;
+                        } 
+                        else {
+                            $('#ZipCode').val('');
+                            document.getElementById("ZipCode").removeAttribute("readonly");
+                        }
+                    }
+                });
+            }
+        });
+
+        $('#ZipCode').change(function(){
+            if(citiesSelect.val() != -1 && citiesSelect.val() != 0){
+                $.ajax({
+                    url: '/clients/client/AddPostalCodeByCityId',
+                    method: 'GET',
+                    data: { cityId: citiesSelect.val(), PostalCode: $(this).val() },
+                    dataType: 'json',
+                    success: function (data) {
+                    }
+                });
+            }
+        });
+
+        $( "#create-form" ).submit(function( event ) {
+
+            if("@Model.calledFromAnotherArea" == "True")
+            {
+                return jQueryModalPostWithoutRefresh(this);
+            }
+            else
+            {
+                return jQueryModalPostModified(this);
+            }
+            
+            event.preventDefault();
+        });
+
+    });
+
+    jQueryModalPostModified = form => {
+        try {
+            $.ajax({
+                type: 'POST',
+                url: form.action,
+                data: new FormData(form),
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.isValid) {
+                        $('#viewAll').html(res.html)
+
+                        $('#btn-save').attr('disabled', 'disabled');
+                        $('#btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#btn-save').text());
+
+                        $('#divCommunication').removeAttr('hidden');
+                        $('#divReminder').removeAttr('hidden');
+
+                        $('#btnCreateCommunication').attr('onclick', 'location.href="/clients/client/_viewallcomunications?clientId=' + res.clientId +'"');
+                        $('#btnCreateReminder').attr('onclick', "jQueryModalGet('/clients/client/OnGetCreateReminderByClientId?id=" + res.clientId + "','@localizer["New reminder"]')")
+
+                        $('#form-modal').modal('hide');
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+</script>

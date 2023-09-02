@@ -1,0 +1,137 @@
+﻿@using ERP.Web.Areas.ProductMod.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<ProductViewModel>
+<div id="div-export-buttons">
+    <div class="btn-group">
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Products.Create)).Result.Succeeded)
+        {
+            <a asp-area="ProductMod" asp-controller="Product" asp-action="OnGetCreateOrEdit" class="btn btn-primary text-white">
+                <i class="fa fa-plus-square"></i> 
+            </a>
+        }
+        <a id="reload" class="btn btn-primary text-white">
+            <i class="fa fas fa-bolt"></i>
+            @localizer["Reload"]
+        </a>
+    </div>
+</div>
+<table id="productTable" class="table table-striped-blue w-100 nowrap">
+    <thead class="bg-thead">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Family/Heading"]</th>
+
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var product in Model)
+        {
+            <tr>
+                <td hidden>
+                    @product.Id
+                </td>
+                <td class="text-left">
+                    <div class="btn-group">
+                        <div class="d-flex animated--grow-in">
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Products.Edit)).Result.Succeeded)
+                            {
+                                <a class="btn action-btn" title="@localizer["Edit"]" asp-area="ProductMod" asp-controller="Product" asp-action="OnGetCreateOrEdit" asp-route-id=@product.Id><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Edit"]" asp-area="ProductMod" asp-controller="Product" asp-action="OnGetCreateOrEdit" asp-route-id=@product.Id><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Products.Delete)).Result.Succeeded)
+                            {
+                                <form id="form_delete_@product.Id" asp-area="ProductMod" asp-controller="Product" method="post" asp-action="OnPostDelete" asp-route-id="@product.Id" asp-route-categoryId="@product.CategoryIdFilter" asp-route-producedBySmak="@product.ProducedBySmak" onsubmit="return jQueryModalDelete(this, '@localizer["Are you sure to delete this record?"]')">
+                                    <a class="btn action-btn" title="@localizer["Delete"]" href="javascript:$('#form_delete_@product.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </form>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Delete"]" href="javascript:$('#form_delete_@product.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a> 
+                            }
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    @product.Code
+                </td>
+                <td>
+                    @product.Description
+                </td>
+                <td>
+                    @product.SubCategory.Description
+                </td>
+
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Family/Heading"]</th>
+        </tr>
+    </tfoot>
+</table>
+<script>
+    $(document).ready(function () {
+        //Busqueda en footers de tablas
+        $('#productTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+        let productTable = $("#productTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "columnDefs": [{ "targets": [0], "visible": false, "searchable": false }],
+            "order": [[2, "asc"]],
+            scrollY: '60vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            /*stateSave: true,
+            stateLoadParams: function (settings, data) {
+                for (i = 0; i < data.columns["length"]; i++) {
+                    var col_search_val = data.columns[i].search.search;
+                    if (col_search_val != "") {
+                        $("input", $('#productTable tfoot th')[i]).val(col_search_val);
+                    }
+                }
+            },*/
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: 'Excel <i class="far fa-file-excel"></i>',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Datos de productos',
+                    exportOptions: {
+                        columns: [2, 3, 4]
+                    }
+                }]
+        });
+        productTable.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(productTable.table().container()).on('keyup', 'tfoot input', function () {
+            productTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+    });
+</script>

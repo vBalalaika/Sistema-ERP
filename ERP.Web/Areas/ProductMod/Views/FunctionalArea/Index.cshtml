@@ -1,0 +1,34 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Functional Areas"];
+}
+@using ERP.Web.Areas.ProductMod.Models
+@model FunctionalAreaViewModel
+
+<head>
+    <link href="~/css/Lists/lists.css" rel="stylesheet" />
+</head>
+
+<div class="card">
+
+    <div id="viewAll" class="card-body table-responsive">
+    </div>
+
+</div>
+@section Scripts
+{
+    <script src="~/js/site.js"></script>
+    <script>
+        $(document).ready(function () {
+            $("#functionalareaTable").DataTable({ "oLanguage": @localizer["LanguageDataTable"] });
+            loadData();
+            $('#reload').on('click', function () {
+                loadData();
+            });
+        });
+        function loadData() {
+            $('#viewAll').load('/productmod/functionalarea/LoadAll');
+        }
+    </script>
+}

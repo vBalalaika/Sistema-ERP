@@ -1,0 +1,332 @@
+﻿@using ERP.Web.Areas.Production.Models
+@using ERP.Application.Enums
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model WorkActivitiesViewModel
+
+<div class="form-row d-flex justify-content-center">
+    <div id="div-export-buttons">
+        <div class="btn-group">
+            <a id="btn-back" class="btn btn-secondary text-white" title="@localizer["Back"]">
+                <img class="tables-img-icon" src="~/images/Back blanco.svg" width="30" height="30" />
+            </a>
+            <a id="btn-view-advance-detail" class="btn btn-secondary text-white" title="@localizer["Product progress detail"]">
+                <img class="tables-img-icon" src="~/images/Avance blanco.svg" width="30" height="30" />
+            </a>
+            @if (User.IsInRole(Roles.SuperAdmin.ToString()))
+            {
+                <a id="btn-get-OT" class="btn btn-secondary" title="@localizer["Work order"]">
+                    <img class="tables-img-icon" src="~/images/OT.svg" width="30" height="30" />
+                </a>
+            }
+        </div>
+    </div>
+</div>
+<table id="activitiesTableLaser" class="table table-striped-blue w-100 nowrap" cellspacing="0">
+    <thead class="bg-thead">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Raw material description"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Width"]</th>
+            <th>@localizer["Length"]</th>
+            <th>@localizer["Archives"]</th>
+            <th>@localizer["Next station"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["Start"]</th>
+            <th>@localizer["End"]</th>
+            <th>@localizer["Time"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var activitygroup in Model.ActivitiesGroups)
+        {
+            @foreach (var subgroup in activitygroup.SubGroups)
+            {
+                @foreach (var activity in subgroup.Activities)
+                {
+                    @if (activity.Id == subgroup.Activities.First().Id)
+                    {
+                        var disablePlay = subgroup.Activities.First().DisablePlayBtn != null ? activitygroup.Activities.First().DisablePlayBtn : activitygroup.Activities.First().DisablePlay;
+                        var disablePause = subgroup.Activities.First().DisablePauseBtn != null ? activitygroup.Activities.First().DisablePauseBtn : activitygroup.Activities.First().DisablePause;
+                        var disableStop = subgroup.Activities.First().DisableStopBtn != null ? activitygroup.Activities.First().DisableStopBtn : activitygroup.Activities.First().DisableStop;
+
+                        <tr>
+                            <td hidden>
+                                @activity.Id
+                            </td>
+                            <td class="text-left">
+                                <div class="btn-group">
+                                    <div class="d-flex animated--grow-in">
+                                        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.WorkActivities.Edit)).Result.Succeeded)
+                                        {
+                                            <a class="btn @disablePlay action-btn" title="@localizer["Play"]" onclick="PostAction('@activitygroup.ActivitiesIds', 'play')"><img class="action-img-icon" src="../../../images/play.svg" width="20" height="20" /></a>
+                                            <a class="btn @disablePause action-btn" title="@localizer["Pause"]" onclick="PostAction('@activitygroup.ActivitiesIds', 'pause')"><img class="action-img-icon" src="../../../images/pausa.svg" width="20" height="20" /></a>
+                                            <a class="btn @disableStop action-btn" title="@localizer["Stop"]" onclick="PostAction('@activitygroup.ActivitiesIds', 'stop')"><img class="action-img-icon" src="../../../images/stop.svg" width="20" height="20" /></a>
+                                        }
+                                        else
+                                        {
+                                            <a class="btn action-btn disabled" title="@localizer["Play"]" onclick="PostAction('@activitygroup.ActivitiesIds', 'play')"><img class="action-img-icon" src="../../../images/play.svg" width="20" height="20" /></a>
+                                            <a class="btn action-btn disabled" title="@localizer["Pause"]" onclick="PostAction('@activitygroup.ActivitiesIds', 'pause')"><img class="action-img-icon" src="../../../images/pausa.svg" width="20" height="20" /></a>
+                                            <a class="btn action-btn disabled" title="@localizer["Stop"]" onclick="PostAction('@activitygroup.ActivitiesIds', 'stop')"><img class="action-img-icon" src="../../../images/stop.svg" width="20" height="20" /></a>
+                                        }
+                                    </div>
+                                </div>
+                            </td>                               
+                            <td>
+                                @activitygroup.Activities.First().WorkOrderItem.Product.ProductFeature.RawMaterialDescription
+                            </td>
+                            <td>
+                                @subgroup.Activities.First().WorkOrderItem.Product.Code
+                            </td>
+
+                            <td>
+                                @subgroup.Activities.First().WorkOrderItem.Product.Description
+                            </td>
+                            <td>
+                                @subgroup.Quantity
+                            </td>
+
+                            <td>
+                                @subgroup.Activities.First().WorkOrderItem.Product.ProductFeature.ComponentWidhtPiece
+                            </td>
+                            <td>
+                                @subgroup.Activities.First().WorkOrderItem.Product.ProductFeature.ComponentLongPiece
+                            </td>
+                            <td class="text-center">
+                                @if (subgroup.Activities.First().WorkOrderItem.Product.Archives.Count > 0)
+                                {
+                                    @*@foreach (var row in @subgroup.Activities.First().WorkOrderItem.Product.Archives)
+                                    {
+                                        var path = @row.PathUrl.Replace(@"\\172.16.50.240\ARCHIVOS\SIMPLEMAK\OFICINA TECNICA", "/files");
+                                        if (@row.ArchiveTypeId == 1) //PLANOS
+                                        {
+                                            <a href="http:@path" target="_blank" title="@localizer["Planos"]" class="btn action-btn"><img class="action-img-icon" src="../../../images/Plano.svg" width="20" height="20" /></a>
+                                        }
+                                        else if (@row.ArchiveTypeId == 3) //3D
+                                        {
+                                            <a href="http:@path" target="_blank" title="@localizer["3D"]" class="btn action-btn"><img class="action-img-icon" src="../../../images/3D.svg" width="20" height="20" /></a>
+                                        }
+                                    }*@
+
+                                    // Fran:
+                                    <a title="@localizer["Files"]" class="btn action-btn" onclick="jQueryModalGet('/productmod/product/GetFilesByProduct?id=@subgroup.Activities.First().WorkOrderItem.Product.Id','@subgroup.Activities.First().WorkOrderItem.Product.CodeAndDescription')"><img class="action-img-icon" src="../../../images/Archivos.svg" width="20" height="20" /></a>
+                                }
+                                else
+                                {
+                                    <a title="@localizer["Files"]" class="btn action-btn disabled"><img class="action-img-icon" src="../../../images/Archivos.svg" width="20" height="20" /></a>
+                                }
+                            </td>
+                            <td>
+                                @subgroup.Activities.First().NextStation
+                            </td>
+                            <td>
+                                <div class="row pl-3">
+                                    @foreach (var rps in activity.WorkOrderItem.Product.RelProductStations.OrderBy(ps => ps.Order))
+                                    {
+                                        <div class="pl-1 pr-1"> @rps.Station.Abbreviation </div> 
+                                        if (!rps.Equals(activity.WorkOrderItem.Product.RelProductStations.Last()))
+                                        {
+                                            <div class="pl-1 pr-1"><i class="fa fa-arrow-right" aria-hidden="true"></i></div>
+                                        }
+                                    }
+                                </div>
+                            </td>
+                            <td>
+                                @if (activitygroup.FirstActionGroup != null)
+                                {
+                                    @activitygroup.FirstActionGroup.StartDate;
+                                }
+                            </td>
+                            <td>
+                                @if (activitygroup.StopActionGroup != null)
+                                {
+                                    @activitygroup.StopActionGroup.StartDate;
+                                }
+                            </td>
+                            <td>
+                                @activitygroup.TotalTimeAllRelativeActivities
+                                @*@if (activity.TotalTime != new TimeSpan(0, 0, 0, 0))
+                                {
+                                    @activity.TotalTimeString
+                                }*@
+                            </td>
+                        </tr>
+                    }
+                }
+            }
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Raw material description"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Width"]</th>
+            <th>@localizer["Length"]</th>
+            <th>@localizer["Archives"]</th>
+            <th>@localizer["Next station"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["Start"]</th>
+            <th>@localizer["End"]</th>
+            <th>@localizer["Time"]</th>
+        </tr>
+    </tfoot>
+</table>
+<input type="hidden" id="start_datetime" value="@Model.StartDate" />
+<input type="hidden" id="activity_percentage" value="@Model.TotalAdvance" />
+<script>
+    $(document).ready(function () {
+        var total_advance = $("#activity_percentage").val();
+        var pbTotalAdvance = $("#pb_totalAdvance");
+        var start_date = $("#start_date");
+        var start_datetime = $("#start_datetime");
+        var end_date = $("#end_date");
+        var total_time = $("#total_time");
+
+        pbTotalAdvance
+            .width(`${total_advance}%`)
+            .html(`${total_advance}%`);
+        if (total_advance == 100) {
+            pbTotalAdvance.removeClass('bg-warning');
+            pbTotalAdvance.addClass('bg-success');
+ 
+            end_date.html("<b>@localizer["End"]: </b> @Model.EndDate");
+            total_time.html("<b>@localizer["Total time"]: </b>@Model.TotalTime");
+        } else {
+            if (!pbTotalAdvance.hasClass('bg-warning')) {
+                pbTotalAdvance.addClass('bg-warning');
+            }
+        }
+
+        if(start_datetime.attr('value') != undefined){
+            start_date.html("<b>@localizer["Start"]: </b>" + start_datetime.val());
+        }
+
+        PostAction = (ids, action) => {
+            try {
+                setPageScrollPos($('.dataTables_scrollBody').scrollTop());
+                $.ajax({
+                    type: 'POST',
+                    url: "/production/workactivity/newAction?activitiesIds=" + ids + "&actionName=" + action + "",
+                    contentType: false,
+                    processData: false,
+                    success: function (res) {
+                        if (res.isValid) {
+                            loadData();
+                        }
+                    },
+                    error: function (err) {
+                        console.log(err)
+                    }
+                })
+
+                return false;
+            } catch (ex) {
+                console.log(ex)
+            }
+        }
+
+        $('#activitiesTableLaser tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]" && title != "@localizer["Files"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let activitiesTableLaser = $("#activitiesTableLaser").DataTable({
+            "columnDefs": [{
+                "type": "chapter",
+                "targets": 0
+            }],
+            "sDom": 'Brtip',
+            "oLanguage": @localizer["LanguageDataTable"],
+            scrollY: '65vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            rowsGroup: [2,1],
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img src="../../../images/Excel.svg" width="30" height="30" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: "Trabajo de puesto: "+ '@Model.Station.AbreviationDescription',
+                        exportOptions: {
+                        columns: [2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13]
+                    }
+                }
+            ],
+            initComplete: function () {
+                //$('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+            },
+            drawCallback: function () {
+                $('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+            }
+        });
+
+        activitiesTableLaser.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(activitiesTableLaser.table().container()).on('keyup', 'tfoot input', function () {
+            activitiesTableLaser
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+        $('#btn-get-OT').on('click', function(){
+            url = "/production/workorderheader/OnGetWorkOrderHeader?idWorkOrder=" + @Model.urlIds;
+            jQueryModalGet(url, '@localizer["View work order"]');
+        });
+
+        $('#btn-back').on('click', function(){
+            // For refresh page when btn back is pressed.
+            location.replace(document.referrer);
+            //window.history.go(-1); 
+            //return false;
+        });
+
+        $('#btn-view-advance-detail').on('click', function(){
+            window.location.href = '/production/workorder/loadworkorder?workorderId=' + @Model.WorkOrders.First().Id;
+        });
+
+    });
+
+    /*function searchFunctionHtmlFooter(attrId) {
+
+        let input, filter, table, tr, td, i;
+        input = document.getElementById(attrId);
+        filter = input.value.toUpperCase();
+        table = document.getElementById("activitiesTableLaser");
+        tr = table.getElementsByTagName("tr");
+
+        for (i = 0; i < tr.length; i++) {
+
+            td = tr[i].getElementsByTagName("td")[attrId.substr(attrId.length - 1)];
+            console.log(td);
+            if (td) {
+                if (td.innerHTML.toUpperCase().indexOf(filter) > -1) {
+
+                    tr[i].style.display = "";
+
+                } else {
+
+                    tr[i].style.display = "none";
+
+                }
+            }
+        }
+    }*/
+</script>

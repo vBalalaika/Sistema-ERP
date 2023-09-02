@@ -1,0 +1,500 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Purchases.Models.MissingProduct
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model MissingProductViewModel
+
+<div class="form-row">
+    <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+    <input type="hidden" asp-for="UserName" name="UserName" class="form-control">
+    <input type="hidden" asp-for="CreateDate" name="CreateDate" class="form-control">
+    <input type="hidden" asp-for="StateMissingProductId" name="StateMissingProductId" class="form-control">
+
+    <div class="col-md-2 mb-3">
+        <label asp-for="CreateDate" class="control-label">@localizer["Date"]</label>
+        <input asp-for="CreateDate" name="CreateDate" type="date" class="form-control" id="CreateDate">
+        <span asp-validation-for="CreateDate" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-5 mb-3">
+        <label class="control-label">@localizer["Products"]</label>
+        <select class="form-control select2bs4" id="Products">
+        </select>
+    </div>
+
+    <div class="col-md-2 mb-3">
+        <label asp-for="Quantity" class="control-label">@localizer["Quantity to order"]</label>
+        <input id="Quantity" type="text" name="Quantity" asp-for="Quantity" class="form-control text-center" onkeypress="return validateIsNumber(event);" />
+        <span asp-validation-for="Quantity" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-2 mb-3">
+        <label class="control-label">@localizer["Unit"]</label>
+        <select class="form-control select2bs4" id="UnitMeasures" asp-items="@Model.UnitMeasures">
+            <option value="">@localizer["Select unit"]</option>
+        </select>
+    </div>
+
+    <div class="col-md-1 mb-3">
+        <label class="control-label">@localizer["Add"]</label>
+        <button id="btn-add-missingproduct" type="button" class="form-control btn btn-primary"><i class="fa fa-plus-circle" aria-hidden="true"></i></button>
+    </div>
+
+    <div id="table-div" class="col-md-12">
+        <table id="missingProductTable" class="table table-responsive table-striped-blue nowrap" width="100%">
+            <thead class="bg-thead">
+                <tr>
+                    <th hidden>@localizer["Id"]</th>
+                    <th>@localizer["Code"]</th>
+                    <th width="100%">@localizer["Description"]</th>
+                    <th>@localizer["Quantity to order"]</th>
+                    <th hidden></th>
+                    <th>@localizer["Unit"]</th>
+                    <th>@localizer["Quantity"]</th>
+                    <th hidden></th>
+                    <th>@localizer["Storage unit measure"]</th>
+                    <th>@localizer["Delete"]</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<div id="buttons-div" class="form-group justify-content-between">
+    <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+    <button id="btn-cancel" type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+</div>
+
+<script type="text/javascript" language="javascript">
+    $.validator.unobtrusive.parse(document);
+    $(document).ready(function () {
+
+        let quantityInput = "Quantity";
+        let decimalInputsIds = [quantityInput];
+
+        let select2Products = $('#Products');
+        let select2UnitMeasures = $('#UnitMeasures');
+
+        select2Products.select2({
+            language: "es",
+            theme: "bootstrap4",
+            placeholder: "@localizer["Write to search ..."]",
+            ajax: {
+                url: '/Purchases/MissingProduct/LoadProductsSelect2',
+                data: function (params) {
+                    return {
+                        search: params.term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.products
+                    };
+                }
+            }
+        });
+
+        select2UnitMeasures.select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select unit"]",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        select2UnitMeasures.prop('disabled', true);
+
+        validateDecimalsNumbersOnInput(decimalInputsIds);
+
+        $("#table-div").hide();
+
+        select2Products.change(function () {
+            if (select2Products.val() != null) {
+                $.ajax({
+                    url: '/purchases/missingproduct/GetProductById',
+                    method: 'get',
+                    data: { 
+                        id: select2Products.val(),
+                        btnAdd: false
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.isValid) {
+                            if (response.product.quantityToOrderUnitMeasure != null) 
+                            {
+                                $('#Quantity').val(format_number_to_decimal((response.product.quantityToOrder), 2, ',', '.'));
+                                select2UnitMeasures.val(response.product.quantityToOrderUnitMeasureId).trigger('change');
+                            }
+                            else 
+                            {
+                                if (response.product.unitMeasure != null) {
+                                    select2UnitMeasures.val(response.product.unitMeasureId).trigger('change');
+                                }
+                                else {
+                                    select2UnitMeasures.val('').trigger('change');
+                                }
+
+                                alert("Al producto le faltan completar datos de stock, si se va a almacenar como tal, por favor, complete los datos en esa sección.");
+                               
+                            }
+                        }
+                    }
+                });
+            }
+        });
+
+        let missingProductTable = $("#missingProductTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "paging": false,
+            "columnDefs": [
+                // Id
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "orderable": false
+                },
+                {
+                    "targets": [1],
+                    "orderable": false
+                },
+                {
+                    "targets": [2],
+                    "orderable": false,
+                    "className": "w-100",
+                },
+                // Cantidad a pedir
+                {
+                    "targets": [3],
+                    "className": "quantity_column",
+                    "orderable": false
+                },
+                // Unidad Id
+                {
+                    "targets": [4],
+                    "visible": false,
+                    "orderable": false
+                },
+                // Unidad
+                {
+                    "targets": [5],
+                    "className": "unitmeasure_column",
+                    "orderable": false
+                },
+                // Cantidad a convertir
+                {
+                    "targets": [6],
+                    "className": "quantity_column",
+                    "orderable": false
+                },
+                // Unidad Id
+                {
+                    "targets": [7],
+                    "visible": false,
+                    "orderable": false
+                },
+                // Unidad de almacenamiento
+                {
+                    "targets": [8],
+                    "className": "unitmeasure_column",
+                    "orderable": false
+                },
+                // Boton eliminar
+                {
+                    "targets": [9],
+                    "className": "delete_column",
+                    "orderable": false
+                }
+            ]
+        });
+
+        $('#btn-add-missingproduct').on('click', function () {
+
+            if (select2Products.val() == null) {
+                $.ajax({
+                    url: '/purchases/missingproduct/ShowAlerts',
+                    method: 'get',
+                    data: { inputDetail: "product_notselected" },
+                    dataType: 'json',
+                    success: function (response) {
+
+                    }
+                });
+            } 
+            else if ($('#Quantity').val() == '0,00') {
+                $.ajax({
+                    url: '/purchases/missingproduct/ShowAlerts',
+                    method: 'get',
+                    data: { inputDetail: "quantity_zero" },
+                    dataType: 'json',
+                    success: function (response) {
+
+                    }
+                });
+            }
+            else if ($('#Quantity').val() == '') {
+                $.ajax({
+                    url: '/purchases/missingproduct/ShowAlerts',
+                    method: 'get',
+                    data: { inputDetail: "quantity_empty" },
+                    dataType: 'json',
+                    success: function (response) {
+
+                    }
+                });
+            }
+            else {
+
+                $.ajax({
+                    url: '/purchases/missingproduct/GetProductById',
+                    method: 'get',
+                    data: { 
+                        id: select2Products.val(),
+                        btnAdd: true
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.isValid) {
+
+                            if(response.canBeCreated)
+                            {
+                                // Valido que no se haya agregado ese producto en la grilla
+                                let exists = false;
+                                missingProductTable.rows().data().each(function (value, index) {
+                                    if (value[0] == response.product.id) {
+                                        exists = true;
+                                    }
+                                });
+
+                                if (exists) {
+                                    alert("El producto que desea agregar ya se encuentra en la lista.");
+                                }
+                                else {
+
+                                    let quantityToOrderUnitMeasureId = 19;
+                                    let quantityToOrderUnitMeasureDescription = "Unidades";
+
+                                    let storageUnitMeasureId = 19;
+                                    let storageUnitMeasureDescription = "Unidades";
+
+                                    // Por defecto se utiliza la unidad de produccion del producto.
+
+                                    if (response.product.unitMeasure != null) 
+                                    {
+                                        quantityToOrderUnitMeasureId = response.product.unitMeasureId;
+                                        quantityToOrderUnitMeasureDescription = response.product.unitMeasure.description;
+                                        storageUnitMeasureId = response.product.unitMeasureId;
+                                        storageUnitMeasureDescription = response.product.unitMeasure.description;
+                                    }
+
+                                    // En la grilla se autocompleta la cantidad equivalente en unidad de almacenamiento
+                                    let quantity = 0;
+
+                                    if (response.product.quantityToOrderUnitMeasure != null) {
+                                        quantityToOrderUnitMeasureId = response.product.quantityToOrderUnitMeasureId;
+                                        quantityToOrderUnitMeasureDescription = response.product.quantityToOrderUnitMeasure.description;
+                                    }
+
+                                    if (response.product.storageUnitMeasure != null) {
+                                        storageUnitMeasureId = response.product.storageUnitMeasureId;
+                                        storageUnitMeasureDescription = response.product.storageUnitMeasure.description;
+                                    }
+
+                                    // La "Unidad de almacenamiento" puede ser:
+
+                                    // Si la unidad de almacenamiento es igual a la unidad de produccion del producto no convierto nada
+                                    //if (storageUnitMeasureId == response.product.unitMeasureId) {
+                                    // Si la unidad de almacenamiento es igual a la unidad de la cantidad a pedir del producto no convierto nada
+                                    if (storageUnitMeasureId == quantityToOrderUnitMeasureId) {
+                                        quantity = parseFloat($('#Quantity').val().replaceAll('.', '').replaceAll(',', '.')).toFixed(2);
+                                    }
+                                    else {
+
+                                        // Barras o Rollos
+                                        if (storageUnitMeasureId == 22 || storageUnitMeasureId == 23) {
+                                            // Se completa el campo StockLength
+                                            if (response.product.stockLengthUnitMeasure != null && response.product.stockLength != 0 && response.product.stockLength != null) {
+                                                quantity = parseFloat($('#Quantity').val().replaceAll('.', '').replaceAll(',', '.')).toFixed(2) / parseFloat(response.product.stockLength).toFixed(2);
+                                            }
+                                            else {
+                                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                                return;
+                                            }
+
+                                            // Si es Barras o Rollos redondeo al entero superior
+                                            if (storageUnitMeasureId == 22 || storageUnitMeasureId == 23) {
+                                                quantity = Math.ceil(quantity);
+                                            }
+                                        }
+
+                                        // Cajas
+                                        else if (storageUnitMeasureId == 33) {
+                                            // Se completa el campo StockLength
+                                            if (response.product.stockLengthUnitMeasure != null && response.product.stockLength != 0 && response.product.stockLength != null) {
+                                                quantity = parseFloat($('#Quantity').val().replaceAll('.', '').replaceAll(',', '.')).toFixed(2) / parseFloat(response.product.stockLength).toFixed(2);
+                                            }
+                                            // o el campo StockQuantity
+                                            else if (response.product.stockQuantityUnitMeasure != null && response.product.stockQuantity != 0 && response.product.stockQuantity != null) {
+                                                quantity = parseFloat($('#Quantity').val().replaceAll('.', '').replaceAll(',', '.')).toFixed(2) / parseFloat(response.product.stockQuantity).toFixed(2);
+                                            }
+                                            else {
+                                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                                return;
+                                            }
+
+                                            // Redondeo al entero superior
+                                            quantity = Math.ceil(quantity);
+
+                                        }
+
+                                        // Hojas
+                                        else if (storageUnitMeasureId == 31) {
+                                            // Se completa el campo StockLength y StockWidth
+                                            if (response.product.stockLengthUnitMeasure != null && response.product.stockLength != 0 && response.product.stockLength != null && response.product.stockWidthUnitMeasure != null && response.product.stockWidth != 0 && response.product.stockWidth != null) {
+                                                quantity = parseFloat($('#Quantity').val().replaceAll('.', '').replaceAll(',', '.')).toFixed(2) / (parseFloat(response.product.stockLength).toFixed(2) * parseFloat(response.product.stockWidth).toFixed(2));
+                                            }
+                                            else {
+                                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                                return;
+                                            }
+
+                                            // Redondeo al entero superior
+                                            quantity = Math.ceil(quantity);
+                                        }
+
+                                        // Bidones
+                                        else if (storageUnitMeasureId == 32) {
+                                            // Se completa el campo StockQuantity
+                                            if (response.product.stockQuantityUnitMeasure != null && response.product.stockQuantity != 0 && response.product.stockQuantity != null) {
+                                                quantity = parseFloat($('#Quantity').val().replaceAll('.', '').replaceAll(',', '.')).toFixed(2) / parseFloat(response.product.stockQuantity).toFixed(2);
+                                            }
+                                            else {
+                                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                                return;
+                                            }
+
+                                            // Redondeo al entero superior
+                                            quantity = Math.ceil(quantity);
+                                        }
+
+                                        // Latas
+                                        else if (storageUnitMeasureId == 37) {
+                                            // Se completa el campo StockQuantity
+                                            if (response.product.stockQuantityUnitMeasure != null && response.product.stockQuantity != 0 && response.product.stockQuantity != null) {
+                                                quantity = parseFloat($('#Quantity').val().replaceAll('.', '').replaceAll(',', '.')).toFixed(2) / parseFloat(response.product.stockQuantity).toFixed(2);
+                                            }
+                                            else {
+                                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                                return;
+                                            }
+
+                                            // Redondeo al entero superior
+                                            quantity = Math.ceil(quantity);
+                                        }
+
+                                        // Tubos
+                                        else if (storageUnitMeasureId == 38) {
+                                            // Se completa el campo StockQuantity
+                                            if (response.product.stockQuantityUnitMeasure != null && response.product.stockQuantity != 0 && response.product.stockQuantity != null) {
+                                                quantity = parseFloat($('#Quantity').val().replaceAll('.', '').replaceAll(',', '.')).toFixed(2) / parseFloat(response.product.stockQuantity).toFixed(2);
+                                            }
+                                            else {
+                                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                                return;
+                                            }
+
+                                            // Redondeo al entero superior
+                                            quantity = Math.ceil(quantity);
+                                        }
+
+                                        // Unidades
+                                        else if (storageUnitMeasureId == 19) {
+                                            // Se completa el campo StockQuantity
+                                            if (response.product.stockQuantityUnitMeasure != null && response.product.stockQuantity != 0 && response.product.stockQuantity != null) {
+                                                quantity = parseFloat($('#Quantity').val().replaceAll('.', '').replaceAll(',', '.')).toFixed(2) / parseFloat(response.product.stockQuantity).toFixed(2);
+                                            }
+                                            else {
+                                                alert("Atención, no se pudo convertir la cantidad utilizando la información almacenada.");
+                                                return;
+                                            }
+
+                                            // Redondeo al entero superior
+                                            quantity = Math.ceil(quantity);
+                                        }
+
+                                    }
+
+                                    missingProductTable.row.add([
+                                        response.product.id,
+                                        response.product.code,
+                                        response.product.description,
+                                        $('#Quantity').val(),
+                                        quantityToOrderUnitMeasureId,
+                                        quantityToOrderUnitMeasureDescription,
+                                        format_number_to_decimal((quantity), 2, ',', '.'),
+                                        storageUnitMeasureId,
+                                        storageUnitMeasureDescription,
+                                        '<button class="btn btn-remove d-block m-auto"> <img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /> </button>',
+                                    ]).draw(false);
+
+                                    $("#table-div").show("slow");
+
+                                }
+                            }
+                        }
+
+                        select2Products.empty().trigger('change');
+                        select2UnitMeasures.prop('disabled', true);
+                        select2UnitMeasures.val('').trigger('change');
+                        $('#Quantity').val('0,00');
+                    }
+                });
+
+            }
+        });
+
+        $('#missingProductTable tbody').on('click', 'button', function () {
+            missingProductTable
+                .row($(this).parents('tr'))
+                .remove()
+                .draw();
+
+            if(missingProductTable.column(0).data().length == 0){
+                 $("#table-div").hide('slow');
+            }
+        });
+
+        $('#btn-save').on('click', function () {
+            let data = missingProductTable.rows().data();
+            data.each(function (value, index) {
+
+                $.ajax({
+                    url: '/purchases/missingproduct/OnPostCreate',
+                    method: 'post',
+                    data: {
+                        productId: value[0],
+                        quantityToOrder: value[3],
+                        quantityToOrderUnitMeasureId: value[4],
+                        quantity: value[6],
+                        storageUnitMeasureId: value[7]
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (index == data.length - 1) {
+
+                            $('#form-modal #btn-save').attr('disabled', 'disabled');
+                            $('#form-modal #btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#form-modal #btn-save').text());
+
+                            $('#missingProductsTable').DataTable().ajax.reload();
+                            $('#form-modal').modal('hide');
+                        }
+                    }
+                });
+
+            });
+        });
+
+    });
+
+</script>

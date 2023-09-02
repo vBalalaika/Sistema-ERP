@@ -1,0 +1,305 @@
+﻿@using ERP.Web.Areas.Purchases.Models.Providers
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<RelProviderProductViewModel>
+@{
+    int ProviderId = 0;
+    if (ViewBag.ProviderId != null)
+    {
+        ProviderId = ViewBag.ProviderId;
+    }
+}
+
+<div id="div-export-buttons">
+    <div class="btn-group">
+        <a id="btn-back" class="btn btn-secondary text-white" asp-action="Index" asp-controller="Provider" asp-area="Purchases">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Providers.Create)).Result.Succeeded)
+        {
+            <a id="btn-create" class="btn bg-secondary">
+                <i class="fa fa-plus-square"></i>
+            </a>
+        }
+    </div>
+</div>
+<table id="relProviderProductsTable" class="table table-striped-blue nowrap" width="100%">
+    <thead class="bg-thead">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Product code"]</th>
+            <th>@localizer["Product description"]</th>
+            <th>@localizer["Pesos price"]</th>
+            <th>@localizer["Dollar price"]</th>
+            <th>@localizer["Brand"]</th>
+            <th>@localizer["Provider code"]</th>
+            <th>@localizer["Presentation unit"]</th>
+            <th>@localizer["Width"]</th>
+            <th>@localizer["Unit measure"]</th>
+            <th>@localizer["Lenght"]</th>
+            <th>@localizer["Unit measure"]</th>
+            <th>@localizer["Height"]</th>
+            <th>@localizer["Unit measure"]</th>
+            <th>@localizer["Weight"]</th>
+            <th>@localizer["Unit measure"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var relProviderProduct in Model)
+        {
+            <tr>
+                <td hidden>
+                    @{ ProviderId = relProviderProduct.ProviderId; }
+                </td>
+                <td hidden>
+                    @relProviderProduct.Id
+                </td>
+                <td>
+                    <div class="btn-group">
+                        <div class="d-flex animated--grow-in">
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Providers.Edit)).Result.Succeeded)
+                            {
+                                <a class="btn action-btn" title="@localizer["Edit"]" onclick="jQueryModalGet('/purchases/providerproduct/OnGetCreateOrEdit?id=@relProviderProduct.Id','@localizer["Edit"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Edit"]" onclick="jQueryModalGet('/purchases/providerproduct/OnGetCreateOrEdit?id=@relProviderProduct.Id','@localizer["Edit"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Providers.Delete)).Result.Succeeded)
+                            {
+                                <form id="form_delete_@relProviderProduct.Id" asp-area="Purchases" asp-controller="ProviderProduct" method="post" asp-action="OnPostDelete" asp-route-id="@relProviderProduct.Id" asp-route-providerId="@relProviderProduct.ProviderId" onsubmit="return jQueryModalDelete(this, '@localizer["Are you sure to delete this record?"]')">
+                                    <a class="btn action-btn" title="@localizer["Delete"]" href="javascript:$('#form_delete_@relProviderProduct.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </form>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Delete"]" href="javascript:$('#form_delete_@relProviderProduct.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                            }
+                        </div>
+                    </div>
+                </td>
+                <td class="text-center">
+                    @{
+                        if (relProviderProduct.Product != null)
+                        {
+                            @relProviderProduct.Product.Code;
+                        }
+                    }
+                </td>
+                <td>
+                    @{
+                        if (relProviderProduct.Product != null)
+                        {
+                            @relProviderProduct.Product.Description;
+                        }
+                    }
+                </td>
+                <td class="text-center">
+                    @Math.Round(relProviderProduct.PesosPrice, 2)
+                </td>
+                <td class="text-center">
+                    @Math.Round(relProviderProduct.DollarPrice, 2)
+                </td>
+                <td>
+                    @relProviderProduct.Brand
+                </td>
+                <td>
+                    @relProviderProduct.ProviderCode
+                </td>
+                <td class="text-center">
+                    @{
+                        if (relProviderProduct.UnitMeasure != null)
+                        {
+                            @relProviderProduct.UnitMeasure.Description;
+                        }
+                    }
+                </td>
+                <td class="text-center">
+                    @Math.Round(relProviderProduct.Width ?? 0, 2)
+                </td>
+                <td class="text-center">
+                    @{
+                        if (relProviderProduct.WidthUnitMeasure != null)
+                        {
+                            @relProviderProduct.WidthUnitMeasure.Description;
+                        }
+                    }
+                </td>
+                <td class="text-center">
+                    @Math.Round(relProviderProduct.Lenght ?? 0, 2)
+                </td>
+                <td class="text-center">
+                    @{
+                        if (relProviderProduct.LengthUnitMeasure != null)
+                        {
+                            @relProviderProduct.LengthUnitMeasure.Description;
+                        }
+                    }
+                </td>
+                <td class="text-center">
+                    @Math.Round(relProviderProduct.Height ?? 0, 2)
+                </td>
+                <td class="text-center">
+                    @{
+                        if (relProviderProduct.HeightUnitMeasure != null)
+                        {
+                            @relProviderProduct.HeightUnitMeasure.Description;
+                        }
+                    }
+                </td>
+                <td class="text-center">
+                    @Math.Round(relProviderProduct.Weight ?? 0, 2)
+                </td>
+                <td class="text-center">
+                    @{
+                        if (relProviderProduct.WeightUnitMeasure != null)
+                        {
+                            @relProviderProduct.WeightUnitMeasure.Description;
+                        }
+                    }
+                </td>
+
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Product code"]</th>
+            <th>@localizer["Product description"]</th>
+            <th>@localizer["Pesos price"]</th>
+            <th>@localizer["Dollar price"]</th>
+            <th>@localizer["Brand"]</th>
+            <th>@localizer["Provider code"]</th>
+            <th>@localizer["Presentation unit"]</th>
+            <th>@localizer["Width"]</th>
+            <th>@localizer["Unit measure"]</th>
+            <th>@localizer["Lenght"]</th>
+            <th>@localizer["Unit measure"]</th>
+            <th>@localizer["Height"]</th>
+            <th>@localizer["Unit measure"]</th>
+            <th>@localizer["Weight"]</th>
+            <th>@localizer["Unit measure"]</th>
+        </tr>
+    </tfoot>
+</table>
+
+<script>
+    $(document).ready(function () {
+
+        $('#relProviderProductsTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let relProviderProductsTable = $("#relProviderProductsTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }
+            ],
+            scrollY: '60vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            //stateSave: true,
+            //stateLoadParams: function (settings, data) {
+            //    for (i = 0; i < data.columns["length"]; i++) {
+            //        var col_search_val = data.columns[i].search.search;
+            //        if (col_search_val != "") {
+            //            $("input", $('#relProviderProductsTable tfoot th')[i]).val(col_search_val);
+            //        }
+            //    }
+            //},
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Datos de productos por proveedor',
+                    exportOptions: {
+                        columns: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17],
+                        format: {
+                            body: function (data, row, column, node) {
+                                return reformatExportData(data, row, column, node);
+                            }
+                        }
+                    },
+                    customize: function (xlsx) {
+                        addCustomNumberFormat(xlsx, '#,##0.0##');
+                        formatTargetColumn(xlsx, 'C');
+                        formatTargetColumn(xlsx, 'D');
+                        formatTargetColumn(xlsx, 'H');
+                        formatTargetColumn(xlsx, 'J');
+                        formatTargetColumn(xlsx, 'L');
+                        formatTargetColumn(xlsx, 'N');
+                    }
+                }]
+        });
+
+        relProviderProductsTable.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(relProviderProductsTable.table().container()).on('keyup', 'tfoot input', function () {
+            relProviderProductsTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+        $('#btn-create').on('click', function () {
+            jQueryModalGet('/purchases/providerproduct/OnGetCreateOrEdit?providerId=@ViewBag.ProviderId', '@localizer["Product by provider"]');
+        });
+    });
+
+    function reformatExportData(data, row, column, node) {
+        if (column === 2) {
+            // replace spaces with nothing; replace commas with points.
+            var newData = data.replace(',', '.').replaceAll(' ', '');
+            return newData;
+        }
+        else if (column == 3) {
+            // replace spaces with nothing; replace commas with points.
+            var newData = data.replace(',', '.').replaceAll(' ', '');
+            return newData;
+        }
+        else if (column === 7) {
+            // replace spaces with nothing; replace commas with points.
+            var newData = data.replace(',', '.').replaceAll(' ', '');
+            return newData;
+        }
+        else if (column === 9) {
+            // replace spaces with nothing; replace commas with points.
+            var newData = data.replace(',', '.').replaceAll(' ', '');
+            return newData;
+        }
+        else if (column === 11) {
+            // replace spaces with nothing; replace commas with points.
+            var newData = data.replace(',', '.').replaceAll(' ', '');
+            return newData;
+        }
+        else if (column === 13) {
+            // replace spaces with nothing; replace commas with points.
+            var newData = data.replace(',', '.').replaceAll(' ', '');
+            return newData;
+        }
+        else {
+            return data;
+        }
+    }
+
+</script>

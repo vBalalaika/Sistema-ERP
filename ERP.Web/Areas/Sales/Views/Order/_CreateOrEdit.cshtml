@@ -1,0 +1,3146 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Sales.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model OrderHeaderViewModel
+@{
+    int indexForTable = 1;
+
+    var classIsSale = "";
+    if (Model.isSale && !Model.onlySpares)
+    {
+        classIsSale = "";
+    }
+    else
+    {
+        classIsSale = "d-none";
+    }
+}
+
+<form id="create-form" method="post" asp-controller="Order" asp-action="OnPostCreateOrEdit" asp-route-id="@Model.Id" onsubmit="return jQueryModalPostSaleAndProductionOrders(this);" enctype="multipart/form-data">
+    
+    <input type="hidden" asp-for="SaleOperationId" name="SaleOperationId" class="form-control" id="saleOperationIdValue">
+
+    @if (Model.Id == 0)
+    {
+        @Html.HiddenFor(x => x.ConcurrencyToken)
+        @Html.HiddenFor(x => x.isSale)
+        @Html.HiddenFor(x => x.onlySpares)
+
+        <input type="hidden" asp-for="User" name="User" class="form-control">
+
+        @if (Model.isSale)
+        {
+            <div class="form-row pb-3">
+
+                <div class="col-md-2 mb-3">
+                    <label asp-for="OrderDate" class="control-label">@localizer["Date"]</label>
+                    <input asp-for="OrderDate" name="OrderDate" type="date" class="form-control" id="OrderDate">
+                    <span asp-validation-for="OrderDate" class="text-danger"></span>
+                </div>
+                <div class="col-md-9 mb-3">
+                    <label asp-for="ClientId" class="control-label">@localizer["Client"] - @localizer["Business name"]</label>
+                    <select name="ClientId" class="form-control select2bs4" id="Clients" asp-for="ClientId" asp-items="@Model.Clients">
+                        <option value="">@localizer["Select client"]</option>
+                    </select>
+                    <span asp-validation-for="ClientId" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mb-3">
+                    <label class="control-label">@localizer["New client"]</label>
+                    <button id="btn-create-client" class="btn btn-secondary" type="button"><img class="tables-img-icon" src="~/images/newclient.svg" width="25" height="25" /></button>
+                </div>
+
+                <div id="divEmail" class="col-md-3 mb-3 display-none-custom">
+                    <label class="control-label">@localizer["Email"]</label>
+                    <input id="ClientEmail" name="ClientEmail" type="text" class="form-control" readonly>
+                </div>
+
+                <div id="divCity" class="col-md-3 mb-3 display-none-custom">
+                    <label class="control-label">@localizer["City"]</label>
+                    <input id="ClientCity" name="ClientCity" type="text" class="form-control" readonly>
+                </div>
+                <div id="divState" class="col-md-3 mb-3 display-none-custom">
+                    <label class="control-label">@localizer["Client state"]</label>
+                    <input id="ClientState" name="ClientState" type="text" class="form-control" readonly>
+                </div>
+                <div id="divCountry" class="col-md-3 mb-3 display-none-custom">
+                    <label class="control-label">@localizer["Country"]</label>
+                    <input id="ClientCountry" name="ClientCountry" type="text" class="form-control" readonly>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="form-row pb-3">
+                <div class="col-md-2 mb-3">
+                    <label asp-for="OrderDate" class="control-label">@localizer["Date"]</label>
+                    <input asp-for="OrderDate" name="OrderDate" type="date" class="form-control" id="OrderDate">
+                    <span asp-validation-for="OrderDate" class="text-danger"></span>
+                </div>
+            </div>
+        }
+
+        @if (Model.isSale)
+        {
+            <div class="form-row pt-3">
+                <div class="col-md-12">
+                    <label class="font-weight-light">Operación</label>
+                </div>
+            </div>
+            
+            <div id="divSaleOperation" class="form-row col-md-12 d-flex mb-3">
+                <div class="col-md-2 pt-3">
+                    <a class="btn btn-group pl-0">
+                    <div class="pr-3 custom-control custom-checkbox small" id="newOperationDiv">
+                        @if(Model.SaleOperation == null)
+                        {
+                            <input checked id="newCheck" class="custom-control-input" type="checkbox" name="NewOperation" asp-for="NewOperation">
+                        }
+                        else
+                        {
+                            <input id="newCheck" class="custom-control-input" type="checkbox" name="NewOperation" asp-for="NewOperation">
+                        }
+                        <label for="newCheck" class="custom-control-label">@localizer["New"]</label>
+                    </div>
+                    <div class="pr-2 custom-control custom-checkbox small">
+                        @if(Model.SaleOperation != null)
+                        {
+                            <input checked id="existingCheck" class="custom-control-input" type="checkbox" name="ExistingOperation" asp-for="ExistingOperation">
+                        }
+                        else
+                        {
+                            <input id="existingCheck" class="custom-control-input" type="checkbox" name="ExistingOperation" asp-for="ExistingOperation">
+                        }
+                        <label for="existingCheck" class="custom-control-label">@localizer["Existing"]</label>
+                    </div>
+                </a>
+            </div>
+            
+            <div id="divInputSaleOperation" class="col-md-4 pt-3">
+                <div id="selectSaleOperation_div" class="d-none">
+                    <select name="SelectExistingSaleOperation" class="form-control select2bs4" id="saleOperations">
+                    </select>
+                </div>
+                <div id="createNewSaleOperation_div">
+                    <input type="text" class="form-control" name="CreateNewSaleOperation" id="CreateNewSaleOperation" value="@localizer["New operation"]" disabled>
+                </div>
+            </div>
+        </div>
+        }
+
+        <div class="form-row pt-3 border-top border-secondary">
+            <div class="col-md-2">
+                <label class="font-weight-light">Agregar productos</label>
+            </div>
+            <div id="divCheckStock" class="form-row col-md-10 d-flex mb-3">
+                <div class="form-check form-check-inline pr-4 @classIsSale">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkStock">
+                        <label class="custom-control-label" for="checkStock">@localizer["In stock"]</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-3 pb-3">
+
+            @*<div id="divCheckStock" class="form-row col-md-12 d-flex mb-3">
+                <div class="form-check form-check-inline pr-4 @classIsSale">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkStock">
+                        <label class="custom-control-label" for="checkStock">@localizer["In stock"]</label>
+                    </div>
+                </div>
+            </div>*@
+
+            <div id="divExistingProduct" class="form-row">
+                <div id="selectDivExistingProduct" class="col-md-10 mb-3 d-none">
+                    <label class="control-label">@localizer["Products"]</label>
+                    <select class="form-control select2bs4" id="select2ProductNumbers">
+                        <option value="-1">@localizer["Select stock product"]</option>
+                    </select>
+                </div>
+                <div id="divBtnAddExisting" class="col-md-2 mb-3 pr-0 d-none">
+                    <label class="control-label">@localizer["Add"]</label>
+                    <button id="btn-add-existing-detail" type="button" class="form-control btn btn-primary" disabled><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+
+            <div id="divNewProduct" class="form-row">
+
+                <label class="pr-5">Origen de producto</label>
+                <label class="pr-5"></label>
+                @if (Model.onlySpares)
+                {
+                    <label class="pl-5 d-none">@localizer["Sale category"]</label>
+                }
+                else
+                {
+                    <label class="pl-5">@localizer["Sale category"]</label>
+                }
+                <div class="col-md-12 d-flex mb-3 pl-2">
+                    <div class="form-check form-check-inline pr-4">
+                        <div class="custom-control custom-checkbox small">
+                            <input class="custom-control-input" type="checkbox" id="CheckSimplemak" checked>
+                            <label class="custom-control-label" for="CheckSimplemak">@localizer["Simplemak"]</label>
+                        </div>
+                    </div>
+                    <div class="form-check form-check-inline pr-5">
+                        <div class="custom-control custom-checkbox small">
+                            <input class="custom-control-input" type="checkbox" id="CheckImported">
+                            <label class="custom-control-label" for="CheckImported">@localizer["Imported"]</label>
+                        </div>
+                    </div>
+
+                    @if (!Model.onlySpares)
+                    {
+                        <div class="form-check form-check-inline pr-4">
+                            <div class="custom-control custom-checkbox small">
+                                <input class="custom-control-input" type="checkbox" id="CheckMachines" checked>
+                                <label class="custom-control-label" for="CheckMachines">@localizer["Machines"]</label>
+                            </div>
+                        </div>
+                        <div class="form-check form-check-inline pr-4">
+                            <div class="custom-control custom-checkbox small">
+                                <input class="custom-control-input" type="checkbox" id="CheckAccesories">
+                                <label class="custom-control-label" for="CheckAccesories">@localizer["Accesories"]</label>
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.isSale)
+                    {
+                        if (Model.onlySpares)
+                        {
+                            <div class="form-check form-check-inline pr-5 d-none">
+                                <div class="custom-control custom-checkbox small">
+                                    <input class="custom-control-input" type="checkbox" id="CheckSpares" checked>
+                                    <label class="custom-control-label" for="CheckSpares">@localizer["Spares"]</label>
+                                </div>
+                            </div>
+                        }
+                    }
+
+                    @if (!Model.isSale)
+                    {
+                        <div class="form-check form-check-inline pl-5">
+                            <div class="custom-control custom-checkbox small">
+                                <input class="custom-control-input" type="checkbox" id="CheckStockComponent">
+                                <label id="labelStockComponent" class="custom-control-label" for="CheckStockComponent">@localizer["Stock components"]</label>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="col-md-4 mb-3">
+                    <label class="control-label">@localizer["Products"]</label>
+                    <select class="form-control select2bs4" id="Products">
+                        <option value="-1">@localizer["Select product"]</option>
+                    </select>
+                </div>
+
+                <div id="selectStructuresDiv" class="col-md-4 mb-3 display-none-custom">
+                    <label class="control-label">@localizer["Configurations"]</label>
+                    <select class="form-control select2bs4" id="Structures">
+                        <option value="">@localizer["Select configuration"]</option>
+                    </select>
+                </div>
+
+                <div id="divQuantity" class="col-md-1 mb-3 display-none-custom">
+                    <label for="quantityInput" class="control-label">@localizer["Quantity"]</label>
+                    <input id="quantityInput" type="text" class="form-control text-center" value="1">
+                    @*<input id="quantityInput" type="number" class="form-control text-center" value="1" onkeydown="if(event.key==='.'){event.preventDefault();}" oninput="event.target.value = event.target.value.replace(/[^0-9]*/g,'');">*@
+                </div>
+                <div id="divUnitMeasure" class="col-md-2 mb-3 display-none-custom">
+                    <label for="unitMeasure" class="control-label">@localizer["Unit measure"]</label>
+                    <input id="unitMeasure" type="text" class="custom-form-control form-control" readonly>
+                </div>
+                <div id="divBtnAdd" class="col-md-1 mb-3 pr-0 display-none-custom">
+                    <label class="control-label">@localizer["Add"]</label>
+                    <button id="btn-add-detail" type="button" class="form-control btn btn-primary"><i class="fas fa-plus"></i></button>
+                </div>
+
+            </div>
+
+            <div id="table-div" class="col-md-12 p-0 display-none-custom">
+                <div class="row d-flex  col-md-12 ml-1">
+                    <label class="card-title text-capitalize mb-3">@localizer["Details"]</label>
+                </div>
+
+                <div id="table-responsive-div" class="table-responsive col-12">
+                    <table class="table w-100 nowrap" id="OrderDetailsTable">
+                        <thead class="bg-thead">
+                            <tr>
+                                <th>@localizer["Number"]</th>
+                                <th>@localizer["Code"]</th>
+                                <th>@localizer["Description"]</th>
+                                <th>@localizer["Configuration"]</th>
+                                <th>@localizer["Quantity"]</th>
+                                <th>@localizer["Unit measure"]</th>
+                                <th hidden>@localizer["Category sale"]</th>
+
+                                @if (Model.isSale)
+                                {
+                                    <th>@localizer["Unit price"]</th>
+                                }
+                                else
+                                {
+                                    <th hidden>@localizer["Unit price"]</th>
+                                }
+
+                                <th>@localizer["Delivery date"]</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.OrderDetails != null)
+                            {
+
+                                @foreach (var item in Model.OrderDetails)
+                                {
+                                    <tr>
+                                        <td class="d-none">
+                                            <input type="hidden" name="OrderDetails.Index" value="@indexForTable" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].Id" readonly value="@item.Id" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].ConcurrencyToken" readonly value="@item.ConcurrencyToken" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].OrderHeaderId" readonly value="@item.OrderHeaderId" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].OrderStateId" readonly value="@item.OrderStateId" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].StructureId" readonly value="@item.StructureId" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].SupplyVoltageId" readonly value="@item.SupplyVoltageId" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].ProductId" readonly value="@item.ProductId" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].MissingProductId" readonly value="@item.MissingProductId" />
+                                        </td>
+                                        @if (item.Product != null)
+                                        {
+                                            <td><input type="text" class="productNumber form-control" name="OrderDetails[@indexForTable].ProductNumber" readonly value="@item.ProductNumber" /></td>
+
+                                            <td><input type="text" class="form-control" name="OrderDetails[@indexForTable].ProductCode" readonly value="@item.Product.Code" /></td>
+                                            <td class="w-25"><input type="text" class="form-control" name="OrderDetails[@indexForTable].ProductDescription" readonly value="@item.Product.Description" /></td>
+
+                                            //configuracion
+                                            @if (item.Structure != null)
+                                            {
+                                                <td><input type="text" class="form-control" name="OrderDetails[@indexForTable].StructureDescription" readonly value="@item.Structure.Description" /></td>
+                                            }
+                                            else
+                                            {
+                                                <td><input type="text" class="form-control" name="OrderDetails[@indexForTable].StructureDescription" readonly /></td>
+                                            }
+
+                                            <td><input type="text" class="inputQuantity form-control text-center" name="OrderDetails[@indexForTable].Quantity" readonly value="@Math.Round(item.Quantity,2)" onkeypress="return validateIsNumber(event);" /></td>
+                                            
+                                            @if(item.Product.UnitMeasure != null)
+                                            {
+                                                <td><input type="text" class="form-control text-center" name="OrderDetails[@indexForTable].UnitMeasureDescription" readonly value="@item.Product.UnitMeasure.Description" /></td>
+                                            }
+                                            else
+                                            {
+                                                <td><input type="text" class="form-control text-center" name="OrderDetails[@indexForTable].UnitMeasureDescription" readonly /></td>
+                                            }
+
+                                            <td hidden><input type="text" readonly class="form-control" name="OrderDetails[@indexForTable].SaleCategory" value="@item.SaleCategory.Trim().ToString()" /></td>
+
+                                            @if (Model.isSale)
+                                            {
+                                                // precio unitario
+                                                <td id="unitPriceTh"><input type="text" class="unitPrice form-control text-center" name="OrderDetails[@indexForTable].UnitPrice" value="@Math.Round(item.UnitPrice,2)" onkeypress="return validateIsNumber(event);" /></td>
+                                            }
+                                            else
+                                            {
+                                                // precio unitario
+                                                <td hidden id="unitPriceTh"><input type="text" class="unitPrice form-control text-center" name="OrderDetails[@indexForTable].UnitPrice" value="@Math.Round(item.UnitPrice,2)" onkeypress="return validateIsNumber(event);" /></td>
+                                            }
+
+                                            // fecha de entrega
+                                            <td id="deliveryDateTh"><input type="date" class="deliveryDateClass form-control text-center" name="OrderDetails[@indexForTable].DeliveryDate" value="@item.DeliveryDate.Value.ToString("yyyy-MM-dd")" onchange="checkDeliveryDate(event, this);" /></td>
+                                       
+                                        }
+                                        <td><button type="button" id="btn-remove-@item.OrderHeaderId" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td>
+                                    </tr>
+
+                                    indexForTable++;
+                                }                                
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @if (Model.isSale)
+                {
+                    <div class="row">
+                        <div class="col-md-7 pt-3"></div>
+                        <div class="col-md-5 pt-3">
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label">@localizer["Total products price"]</label>
+                                <div class="col-md-3">
+                                    <input asp-for="TotalPrice" name="TotalPrice" type="text" readonly class="form-control text-red text-bold text-center" id="TotalPrice">
+                                </div>
+                                <div class="col-md-5 pr-0 pl-0">
+                                    <input type="text" class="moneyInput form-control text-center" placeholder="Moneda">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (Model.isSale)
+        {
+            <div class="row">
+                <div class="col-md-6 pt-3">
+                    <div class="form-row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PaymentMethod" class="control-label">@localizer["Payment method"]</label>
+                            <input asp-for="PaymentMethod" name="PaymentMethod" type="text" class="form-control" id="PaymentMethod">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ValidOfferDate" class="control-label">@localizer["Valid offer date"]</label>
+                            <input asp-for="ValidOfferDate" name="ValidOfferDate" type="date" class="form-control" id="ValidOfferDate">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="TypeOfFreightAndSecure" class="control-label">@localizer["Type of freight and secure"]</label>
+                            <input asp-for="TypeOfFreightAndSecure" name="TypeOfFreightAndSecure" type="text" class="form-control" id="TypeOfFreightAndSecure">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PlaceOfDelivery" class="control-label">@localizer["Place of delivery"]</label>
+                            <input asp-for="PlaceOfDelivery" name="PlaceOfDelivery" type="text" class="form-control" id="PlaceOfDelivery">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Transport" class="control-label">@localizer["Transport"]</label>
+                            <input asp-for="Transport" name="Transport" type="text" class="form-control" id="Transport">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Packaging" class="control-label">@localizer["Packaging"]</label>
+                            <input asp-for="Packaging" name="Packaging" type="text" class="form-control" id="Packaging">
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-1"></div>
+                <div class="col-md-5 pt-3">
+
+                    <div class="form-group row">
+                        <label asp-for="Taxes" class="col-md-3 col-form-label">@localizer["Taxes"]</label>
+                        <div class="col-md-3">
+                            <input asp-for="Taxes" name="Taxes" type="text" class="form-control text-center" id="Taxes" onkeypress="return validateIsNumber(event);">
+                        </div>
+                        <div class="col-md-5 pr-0 pl-0">
+                            <input type="text" class="moneyInput form-control text-center" placeholder="Moneda">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label asp-for="SecureAndFreightCosts" class="col-md-3 col-form-label">@localizer["Secure and freight costs"]</label>
+                        <div class="col-md-3">
+                            <input asp-for="SecureAndFreightCosts" name="SecureAndFreightCosts" type="text" class="form-control text-center" id="SecureAndFreightCosts" onkeypress="return validateIsNumber(event);">
+                        </div>
+                        <div class="col-md-5 pr-0 pl-0">
+                            <input type="text" class="moneyInput form-control text-center" placeholder="Moneda">
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label asp-for="Bonus" class="col-md-3 col-form-label">@localizer["Bonus"]</label>
+                        <div class="col-md-3">
+                            <input asp-for="Bonus" name="Bonus" type="text" class="form-control text-center" id="Bonus" onkeypress="return validateIsNumber(event);">
+                        </div>
+                        <div class="col-md-5 pr-0 pl-0">
+                            <input type="text" class="moneyInput form-control text-center" placeholder="Moneda">
+                        </div>
+                    </div>
+                    <div class="form-group row border-top border-bottom pt-2 pb-2 border-secondary">
+                        <label class="col-md-3 col-form-label">@localizer["Total"]</label>
+                        <div class="col-md-3">
+                            <input asp-for="OrderTotalPrice" name="OrderTotalPrice" type="text" class="form-control text-red text-bold text-center" readonly id="OrderTotalPrice">
+                        </div>
+                        <div class="col-md-5 pr-0 pl-0">
+                            <input type="text" class="moneyInput form-control text-center" placeholder="Moneda">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12 mb-3">
+                <label asp-for="SaleObservations" class="control-label">@localizer["Observations"]</label>
+                <textarea asp-for="SaleObservations" name="SaleObservations" class="form-control" id="SaleObservations" rows="5"></textarea>
+            </div>
+        }
+        else
+        {
+            <div class="col-md-12 mb-3 p-0 pt-3">
+                <label asp-for="ProductionObservations" class="control-label">@localizer["Observations"]</label>
+                <textarea asp-for="ProductionObservations" name="ProductionObservations" class="form-control" id="ProductionObservations" rows="5"></textarea>
+            </div>
+        }
+    }
+    else
+    {
+
+        @Html.HiddenFor(x => x.ConcurrencyToken)
+        @Html.HiddenFor(x => x.isSale)
+        @Html.HiddenFor(x => x.onlySpares)
+
+        <input type="hidden" asp-for="User" name="User" value="@Model.User" class="form-control">
+
+        @if (Model.isSale)
+        {
+            <div class="form-row">
+
+                <div class="col-md-2 mb-3">
+                    <label asp-for="OrderDate" class="control-label">@localizer["Date"]</label>
+                    <input asp-for="OrderDate" name="OrderDate" type="date" class="form-control" id="OrderDate">
+                    <span asp-validation-for="OrderDate" class="text-danger"></span>
+                </div>
+                <div class="col-md-9 mb-3">
+                    <label asp-for="ClientId" class="control-label">@localizer["Client"] - @localizer["Business name"]</label>
+                    <select name="ClientId" class="form-control select2bs4" id="Clients" asp-for="ClientId" asp-items="@Model.Clients">
+                        <option value="">@localizer["Select client"]</option>
+                    </select>
+                    <span asp-validation-for="ClientId" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mb-3 d-none">
+                    <label class="control-label">@localizer["New client"]</label>
+                    <button id="btn-create-client" class="btn btn-secondary" type="button"><img class="tables-img-icon" src="~/images/newclient.svg" width="25" height="25" /></button>
+                </div>
+
+                <div id="divNumberOrder" class="col-md-1 mb-3 ml-0">
+                    <label asp-for="Number" class="control-label">@localizer["Number"]</label>
+                    <input asp-for="Number" name="Number" type="text" class="form-control" id="Number" disabled />
+                </div>
+
+                <div class="col-md-12">
+                    <label class="font-weight-light">Operación</label>
+                </div>
+                
+                <div id="divSaleOperation" class="form-row col-md-12 d-flex mb-3">
+                    <div class="col-md-2 pt-3">
+                        <a class="btn btn-group pl-0">
+                            <div class="pr-3 custom-control custom-checkbox small" id="newOperationDiv">
+                                @if(Model.SaleOperationId == null)
+                                {
+                                    <input checked id="newCheck" class="custom-control-input" type="checkbox" name="NewOperation" asp-for="NewOperation">
+                                }
+                                else
+                                {
+                                    <input id="newCheck" class="custom-control-input" type="checkbox" name="NewOperation" asp-for="NewOperation">
+                                }
+                                <label for="newCheck" class="custom-control-label">@localizer["New"]</label>
+                            </div>
+                            <div class="pr-2 custom-control custom-checkbox small">
+                                @if(Model.SaleOperationId != null)
+                                {
+                                    <input checked id="existingCheck" class="custom-control-input" type="checkbox" name="ExistingOperation" asp-for="ExistingOperation">
+                                }
+                                else
+                                {
+                                    <input id="existingCheck" class="custom-control-input" type="checkbox" name="ExistingOperation" asp-for="ExistingOperation">
+                                }
+                                <label for="existingCheck" class="custom-control-label">@localizer["Existing"]</label>
+                            </div>
+                        </a>
+                    </div>
+                    @if(Model.SaleOperationId == null)
+                    {
+                        <div id="divInputSaleOperation" class="col-md-4 pt-3">
+                            <div id="selectSaleOperation_div" class="d-none">
+                                <select name="SelectExistingSaleOperation" class="form-control select2bs4" id="saleOperations">
+                                </select>
+                            </div>
+                            <div id="createNewSaleOperation_div">
+                                <input type="text" class="form-control" name="CreateNewSaleOperation" id="CreateNewSaleOperation" value="@localizer["New operation"]" disabled>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div id="divInputSaleOperation" class="col-md-4 pt-3">
+                            <div id="selectSaleOperation_div">
+                                <select name="SelectExistingSaleOperation" class="form-control select2bs4" id="saleOperations">
+                                </select>
+                            </div>
+                            <div id="createNewSaleOperation_div" class="d-none">
+                                <input type="text" class="form-control" name="CreateNewSaleOperation" id="CreateNewSaleOperation" value="@localizer["New operation"]" disabled>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div id="divEmail" class="col-md-3 mb-3 display-none-custom">
+                    <label class="control-label">@localizer["Email"]</label>
+                    <input id="ClientEmail" name="ClientEmail" type="text" class="form-control" readonly>
+                </div>
+            
+                <div id="divCity" class="col-md-3 mb-3 display-none-custom">
+                    <label class="control-label">@localizer["City"]</label>
+                    <input id="ClientCity" name="ClientCity" type="text" class="form-control" readonly>
+                </div>
+                <div id="divState" class="col-md-3 mb-3 display-none-custom">
+                    <label class="control-label">@localizer["Client state"]</label>
+                    <input id="ClientState" name="ClientState" type="text" class="form-control" readonly>
+                </div>
+                <div id="divCountry" class="col-md-3 mb-3 display-none-custom">
+                    <label class="control-label">@localizer["Country"]</label>
+                    <input id="ClientCountry" name="ClientCountry" type="text" class="form-control" readonly>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="form-row pb-3">
+                <div class="col-md-2 mb-3">
+                    <label asp-for="OrderDate" class="control-label">@localizer["Date"]</label>
+                    <input asp-for="OrderDate" name="OrderDate" type="date" class="form-control" id="OrderDate">
+                    <span asp-validation-for="OrderDate" class="text-danger"></span>
+                </div>
+                <div class="col-md-1 mb-3">
+                    <label asp-for="Number" class="control-label">@localizer["Number"]</label>
+                    <input asp-for="Number" name="Number" type="text" class="form-control" id="Number" disabled />
+                </div>
+            </div>
+        }
+
+        <div class="form-row pt-3 d-none">
+            <div class="col-md-2">
+                <label class="font-weight-light">Agregar productos</label>
+            </div>
+            <div id="divCheckStock" class="form-row col-md-10 d-flex mb-3">
+                <div class="form-check form-check-inline pr-4 d-none">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkStock">
+                        <label class="custom-control-label" for="checkStock">@localizer["In stock"]</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pt-3 pb-3 border-top border-secondary">
+
+            @*<div id="divCheckStock" class="form-row col-md-12 d-flex mb-3">
+                <div class="form-check form-check-inline pr-4 d-none">
+                    <div class="custom-control custom-checkbox small">
+                        <input class="custom-control-input" type="checkbox" id="checkStock">
+                        <label class="custom-control-label" for="checkStock">@localizer["In stock"]</label>
+                    </div>
+                </div>
+            </div>*@
+
+            <div id="divExistingProduct" class="col-md-12 mb-3 d-none">
+                <label class="control-label">@localizer["Products"]</label>
+                <select class="form-control select2bs4" id="select2ProductNumbers">
+                    <option value="-1">@localizer["Select stock product"]</option>
+                </select>
+            </div>
+
+            <div id="divNewProduct" class="form-row">
+
+                <label class="pr-5 d-none">Origen de producto</label>
+                <label class="pr-5 d-none"></label>
+                @if (Model.onlySpares)
+                {
+                    <label class="pl-5 d-none">@localizer["Sale category"]</label>
+                }
+                else
+                {
+                    <label class="pl-5 d-none">@localizer["Sale category"]</label>
+                }
+                <div class="col-md-12 d-flex mb-3 d-none pl-2">
+                    <div class="form-check form-check-inline pr-4 d-none">
+                        <div class="custom-control custom-checkbox small">
+                            <input class="custom-control-input" type="checkbox" id="CheckSimplemak" checked>
+                            <label class="custom-control-label" for="CheckSimplemak">@localizer["Simplemak"]</label>
+                        </div>
+                    </div>
+                    <div class="form-check form-check-inline pr-5 d-none">
+                        <div class="custom-control custom-checkbox small">
+                            <input class="custom-control-input" type="checkbox" id="CheckImported">
+                            <label class="custom-control-label" for="CheckImported">@localizer["Imported"]</label>
+                        </div>
+                    </div>
+
+                    @if (!Model.onlySpares)
+                    {
+                        <div class="form-check form-check-inline pr-4 d-none">
+                            <div class="custom-control custom-checkbox small">
+                                <input class="custom-control-input" type="checkbox" id="CheckMachines" checked>
+                                <label class="custom-control-label" for="CheckMachines">@localizer["Machines"]</label>
+                            </div>
+                        </div>
+                        <div class="form-check form-check-inline pr-4 d-none">
+                            <div class="custom-control custom-checkbox small">
+                                <input class="custom-control-input" type="checkbox" id="CheckAccesories">
+                                <label class="custom-control-label" for="CheckAccesories">@localizer["Accesories"]</label>
+                            </div>
+                        </div>
+                    }
+                    
+                    @if (Model.isSale)
+                    {
+                        if (Model.onlySpares)
+                        {
+                            <div class="form-check form-check-inline pr-5 d-none">
+                                <div class="custom-control custom-checkbox small">
+                                    <input class="custom-control-input" type="checkbox" id="CheckSpares" checked>
+                                    <label class="custom-control-label" for="CheckSpares">@localizer["Spares"]</label>
+                                </div>
+                            </div>
+                        }
+                    }
+
+                    @if (!Model.isSale)
+                    {
+                        <div class="form-check form-check-inline pl-5 d-none">
+                            <div class="custom-control custom-checkbox small">
+                                <input class="custom-control-input" type="checkbox" id="CheckStockComponent">
+                                <label id="labelStockComponent" class="custom-control-label" for="CheckStockComponent">@localizer["Stock components"]</label>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <div class="col-md-4 mb-3 d-none">
+                    <label class="control-label">@localizer["Products"]</label>
+                    <select class="form-control select2bs4" id="Products" disabled>
+                        <option value="-1">@localizer["Select product"]</option>
+                    </select>
+                </div>
+
+                <div id="selectStructuresDiv" class="col-md-4 mb-3 display-none-custom d-none">
+                    <label class="control-label">@localizer["Configurations"]</label>
+                    <select class="form-control select2bs4" id="Structures">
+                        <option value="">@localizer["Select configuration"]</option>
+                    </select>
+                </div>
+
+                <div id="divQuantity" class="col-md-1 mb-3 display-none-custom d-none">
+                    <label for="quantityInput" class="control-label">@localizer["Quantity"]</label>
+                    <input id="quantityInput" type="number" class="form-control text-center" value="1">
+                    @*<input id="quantityInput" type="number" class="form-control text-center" value="1" onkeydown="if(event.key==='.'){event.preventDefault();}" oninput="event.target.value = event.target.value.replace(/[^0-9]*/g,'');">*@
+                </div>
+                <div id="divUnitMeasure" class="col-md-2 mb-3 display-none-custom d-none">
+                    <label for="unitMeasure" class="control-label">@localizer["Unit measure"]</label>
+                    <input id="unitMeasure" type="text" class="form-control">
+                </div>
+                <div id="divBtnAdd" class="col-md-1 mb-3 pr-0 display-none-custom d-none">
+                    <label class="control-label">@localizer["Add"]</label>
+                    <button id="btn-add-detail" type="button" class="form-control btn btn-primary"><i class="fas fa-plus"></i></button>
+                </div>
+
+            </div>
+
+            <div id="table-div" class="col-md-12 p-0 display-none-custom">
+                <div class="row d-flex  col-md-12 ml-1">
+                    <label class="card-title text-capitalize mb-3">@localizer["Details"]</label>
+                </div>
+
+                <div id="table-responsive-div" class="table-responsive col-12">
+                    <table class="table w-100 nowrap" id="OrderDetailsTable">
+                        <thead class="bg-thead">
+                            <tr>
+                                <th>@localizer["Number"]</th>
+                                <th>@localizer["Code"]</th>
+                                <th>@localizer["Description"]</th>
+                                <th>@localizer["Configuration"]</th>
+                                <th>@localizer["Quantity"]</th>
+                                <th>@localizer["Unit measure"]</th>
+                                <th hidden>@localizer["Category sale"]</th>
+
+                                @if (Model.isSale)
+                                {
+                                    <th>@localizer["Unit price"]</th>
+                                }
+                                else
+                                {
+                                    <th hidden>@localizer["Unit price"]</th>
+                                }
+
+                                <th>@localizer["Delivery date"]</th>
+
+                                <th>@localizer["Delivered date"]</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.OrderDetails != null)
+                            {
+
+                                @foreach (var item in Model.OrderDetails)
+                                {
+                                    <tr>
+                                        <td class="d-none">
+                                            <input type="hidden" name="OrderDetails.Index" value="@indexForTable" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].Id" readonly value="@item.Id" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].ConcurrencyToken" readonly value="@item.ConcurrencyToken" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].OrderHeaderId" readonly value="@item.OrderHeaderId" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].OrderStateId" readonly value="@item.OrderStateId" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].StructureId" readonly value="@item.StructureId" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].SupplyVoltageId" readonly value="@item.SupplyVoltageId" />
+                                            <input type="hidden" name="OrderDetails[@indexForTable].ProductId" readonly value="@item.ProductId" />
+                                            @if(item.BelongsToASaleOrder)
+                                            {
+                                                <input type="hidden" name="OrderDetails[@indexForTable].BelongsToASaleOrder" readonly value="true" />
+                                            }
+                                            else
+                                            {
+                                                <input type="hidden" name="OrderDetails[@indexForTable].BelongsToASaleOrder" readonly value="false" />
+                                            }
+                                            @if(item.BelongsToAProductionOrder)
+                                            {
+                                                <input type="hidden" name="OrderDetails[@indexForTable].BelongsToAProductionOrder" readonly value="true" />
+                                            }
+                                            else
+                                            {
+                                                <input type="hidden" name="OrderDetails[@indexForTable].BelongsToAProductionOrder" readonly value="false" />
+                                            }
+                                        </td>
+                                        @if (item.Product != null)
+                                        {
+                                            <td><input type="text" class="productNumber form-control" name="OrderDetails[@indexForTable].ProductNumber" readonly value="@item.ProductNumber" /></td>
+
+                                            <td><input type="text" class="form-control" name="OrderDetails[@indexForTable].ProductCode" readonly value="@item.Product.Code" /></td>
+                                            <td class="w-25"><input type="text" class="form-control" name="OrderDetails[@indexForTable].ProductDescription" readonly value="@item.Product.Description" /></td>
+
+                                            //configuracion
+                                            @if (item.Structure != null)
+                                            {
+                                                <td><input type="text" class="form-control" name="OrderDetails[@indexForTable].StructureDescription" readonly value="@item.Structure.Description" /></td>
+                                            }
+                                            else
+                                            {
+                                                <td><input type="text" class="form-control" name="OrderDetails[@indexForTable].StructureDescription" readonly /></td>
+                                            }
+
+                                            <td><input type="text" class="inputQuantity form-control text-center" name="OrderDetails[@indexForTable].Quantity" readonly value="@Math.Round(item.Quantity,2)" onkeypress="return validateIsNumber(event);" /></td>
+
+                                            @if(item.Product.UnitMeasure != null)
+                                            {
+                                                <td><input type="text" class="form-control text-center" name="OrderDetails[@indexForTable].UnitMeasureDescription" readonly value="@item.Product.UnitMeasure.Description" /></td>
+                                            }
+                                            else
+                                            {
+                                                <td><input type="text" class="form-control text-center" name="OrderDetails[@indexForTable].UnitMeasureDescription" readonly /></td>
+                                            }
+
+                                            @*<td hidden><input type="text" readonly class="form-control" name="OrderDetails[@indexForTable].SaleCategory" value="@item.SaleCategory.Split("-")[1].Trim().ToString()" /></td>*@
+                                            <td hidden><input type="text" readonly class="form-control" name="OrderDetails[@indexForTable].SaleCategory" value="@item.SaleCategory.Trim().ToString()" /></td>
+                                            @if (Model.isSale)
+                                            {
+                                                // precio unitario
+                                                <td id="unitPriceTh"><input type="text" class="unitPrice form-control text-center" name="OrderDetails[@indexForTable].UnitPrice" value="@Math.Round(item.UnitPrice,2)" onkeypress="return validateIsNumber(event);" /></td>
+                                            }
+                                            else
+                                            {
+                                                // precio unitario
+                                                <td id="unitPriceTh" hidden><input type="text" class="unitPrice form-control text-center" name="OrderDetails[@indexForTable].UnitPrice" value="@Math.Round(item.UnitPrice,2)" onkeypress="return validateIsNumber(event);" /></td>
+                                            }
+
+                                            if (Model.onlySpares)
+                                            {
+                                                // fecha de entrega
+                                                <td id="deliveryDateTh"><input type="date" readonly class="deliveryDateClass form-control text-center" name="OrderDetails[@indexForTable].DeliveryDate" value="@item.DeliveryDate.Value.ToString("yyyy-MM-dd")" onchange="checkDeliveryDate(event, this);" /></td>
+                                            }
+                                            else if (Model.isSale)
+                                            {
+                                                // fecha de entrega
+                                                <td id="deliveryDateTh"><input type="date" readonly class="deliveryDateClass form-control text-center" name="OrderDetails[@indexForTable].DeliveryDate" value="@item.DeliveryDate.Value.ToString("yyyy-MM-dd")" onchange="checkDeliveryDate(event, this);" /></td>
+                                            }
+                                            else
+                                            {
+                                                // fecha de entrega
+                                                <td id="deliveryDateTh"><input type="date" class="deliveryDateClass form-control text-center" name="OrderDetails[@indexForTable].DeliveryDate" value="@item.DeliveryDate.Value.ToString("yyyy-MM-dd")" onchange="checkDeliveryDate(event, this);" /></td>
+                                            }
+
+                                            // fecha entregada
+                                            @if(item.DeliveredDate != null)
+                                            {
+                                                <td><input type="date" class="form-control" name="OrderDetails[@indexForTable].DeliveredDate" value="@item.DeliveredDate.Value.ToString("yyyy-MM-dd")" /></td>
+                                            }
+                                            else
+                                            {
+                                                <td><input type="date" class="form-control" name="OrderDetails[@indexForTable].DeliveredDate" value="@DateTime.Now.ToString("yyyy-MM-dd")" /></td>
+                                            }
+
+                                        }
+                                        <td><button type="button" disabled id="btn-remove-@item.Id" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td>
+                                    </tr>
+
+                                    indexForTable++;
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                @if (Model.isSale)
+                {
+                    <div class="row">
+                        <div class="col-md-7 pt-3"></div>
+                        <div class="col-md-5 pt-3">
+                            <div class="form-group row">
+                                <label class="col-md-3 col-form-label">@localizer["Total products price"]</label>
+                                <div class="col-md-3">
+                                    <input asp-for="TotalPrice" name="TotalPrice" type="text" readonly class="form-control text-red text-bold text-center" id="TotalPrice">
+                                </div>
+                                <div class="col-md-5 pr-0 pl-0">
+                                    <input type="text" class="moneyInput form-control text-center" placeholder="Moneda">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        @if (Model.isSale)
+        {
+            <div class="row">
+                <div class="col-md-6 pt-3">
+                    <div class="form-row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PaymentMethod" class="control-label">@localizer["Payment method"]</label>
+                            <input asp-for="PaymentMethod" name="PaymentMethod" type="text" class="form-control" id="PaymentMethod" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="ValidOfferDate" class="control-label">@localizer["Valid offer date"]</label>
+                            <input asp-for="ValidOfferDate" name="ValidOfferDate" type="date" class="form-control" id="ValidOfferDate" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="TypeOfFreightAndSecure" class="control-label">@localizer["Type of freight and secure"]</label>
+                            <input asp-for="TypeOfFreightAndSecure" name="TypeOfFreightAndSecure" type="text" class="form-control" id="TypeOfFreightAndSecure" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="PlaceOfDelivery" class="control-label">@localizer["Place of delivery"]</label>
+                            <input asp-for="PlaceOfDelivery" name="PlaceOfDelivery" type="text" class="form-control" id="PlaceOfDelivery" disabled>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Transport" class="control-label">@localizer["Transport"]</label>
+                            <input asp-for="Transport" name="Transport" type="text" class="form-control" id="Transport">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Packaging" class="control-label">@localizer["Packaging"]</label>
+                            <input asp-for="Packaging" name="Packaging" type="text" class="form-control" id="Packaging" disabled>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-1"></div>
+
+                <div class="col-md-5 pt-3">
+
+                    <div class="form-group row">
+                        <label asp-for="Taxes" class="col-md-3 col-form-label">@localizer["Taxes"]</label>
+                        <div class="col-md-3">
+                            <input asp-for="Taxes" name="Taxes" type="text" class="form-control text-center" id="Taxes" onkeypress="return validateIsNumber(event);" disabled>
+                        </div>
+                        <div class="col-md-5 pr-0 pl-0">
+                            <input type="text" class="moneyInput form-control text-center" placeholder="Moneda" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label asp-for="SecureAndFreightCosts" class="col-md-3 col-form-label">@localizer["Secure and freight costs"]</label>
+                        <div class="col-md-3">
+                            <input asp-for="SecureAndFreightCosts" name="SecureAndFreightCosts" type="text" class="form-control text-center" id="SecureAndFreightCosts" onkeypress="return validateIsNumber(event);" disabled>
+                        </div>
+                        <div class="col-md-5 pr-0 pl-0">
+                            <input type="text" class="moneyInput form-control text-center" placeholder="Moneda" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label asp-for="Bonus" class="col-md-3 col-form-label">@localizer["Bonus"]</label>
+                        <div class="col-md-3">
+                            <input asp-for="Bonus" name="Bonus" type="text" class="form-control text-center" id="Bonus" onkeypress="return validateIsNumber(event);" disabled>
+                        </div>
+                        <div class="col-md-5 pr-0 pl-0">
+                            <input type="text" class="moneyInput form-control text-center" placeholder="Moneda" disabled>
+                        </div>
+                    </div>
+                    <div class="form-group row border-top border-bottom pt-2 pb-2 border-secondary">
+                        <label class="col-md-3 col-form-label">@localizer["Total"]</label>
+                        <div class="col-md-3">
+                            <input asp-for="OrderTotalPrice" name="OrderTotalPrice" type="text" class="form-control text-red text-bold text-center" readonly id="OrderTotalPrice" disabled>
+                        </div>
+                        <div class="col-md-5 pr-0 pl-0">
+                            <input type="text" class="moneyInput form-control text-center" placeholder="Moneda" disabled>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-12 mb-3">
+                <label asp-for="SaleObservations" class="control-label">@localizer["Observations"]</label>
+                <textarea asp-for="SaleObservations" name="SaleObservations" class="form-control" id="SaleObservations" rows="5"></textarea>
+            </div>
+
+            <div class="col-md-12 mb-3 p-0 pt-3 d-none">
+                <label asp-for="ProductionObservations" class="control-label">@localizer["Observations"]</label>
+                <textarea asp-for="ProductionObservations" name="ProductionObservations" class="form-control" id="ProductionObservations" rows="5"></textarea>
+            </div>
+        }
+        else
+        {
+            <div class="col-md-12 mb-3 d-none">
+                <label asp-for="SaleObservations" class="control-label">@localizer["Observations"]</label>
+                <textarea asp-for="SaleObservations" name="SaleObservations" class="form-control" id="SaleObservations" rows="5"></textarea>
+            </div>
+
+            <div class="col-md-12 mb-3 p-0 pt-3">
+                <label asp-for="ProductionObservations" class="control-label">@localizer["Observations"]</label>
+                <textarea asp-for="ProductionObservations" name="ProductionObservations" class="form-control" id="ProductionObservations" rows="5"></textarea>
+            </div>
+        }
+
+        if (!Model.onlySpares && !Model.isSale)
+        {
+            if(Model.deliveryDateHistoryVMs.Count > 0){
+                <div class="accordion" id="accordionSection">
+                    <div id="card-accordion" class="card">
+                        <div class="card-header border-0" id="historyChangesHeader">
+                            <h2 class="mb-0">
+                                <button class="btn btn-outline-primary btn-block text-left collapsed" type="button" data-toggle="collapse" data-target="#collapseThree" aria-expanded="false" aria-controls="collapseThree">
+                                    <i class="fas fa-plus-circle"></i> @localizer["Delivery date history changes"]
+                                </button>
+                            </h2>
+                        </div>
+                        <div id="collapseThree" class="collapse" aria-labelledby="historyChangesHeading">
+                            <div id="historyChanges-info-body" class="card-body">
+                                <partial name="_UpdatedChanges" model="@Model.deliveryDateHistoryVMs" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        }
+
+    }
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="button" class="btn btn-primary">@localizer["Save"]</button>
+        <button id="btn-cancel" type="button" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+    </div>
+</form>
+
+<script type="text/javascript" language="javascript">
+    $(document).ready(function () {
+        $.validator.unobtrusive.parse(document);
+        $.fn.select2.defaults.set('language', 'es');
+
+        /* Format decimals */
+        const decimalInputsIds = ['Taxes', 'SecureAndFreightCosts', 'Bonus', 'Quantity'];
+
+        let idNumberSM = function () {
+            let tmp = null;
+            $.ajax({
+                async: false,
+                url: '/Sales/Order/GetLastProductNumberForMachines',
+                type: 'get',
+                dataType: 'json',
+                success: function (response) {
+                    tmp = response.maxProductNumber + 1;
+                }
+            });
+            return tmp;
+        }();
+        let idNumberSA = function () {
+            let tmp = null;
+            $.ajax({
+                async: false,
+                url: '/Sales/Order/GetLastProductNumberForAccessories',
+                type: 'get',
+                dataType: 'json',
+                success: function (response) {
+                    tmp = response.maxProductNumber + 1;
+                }
+            });
+            return tmp;
+        }();
+        let idNumberSR = function () {
+            let tmp = null;
+            $.ajax({
+                async: false,
+                url: '/Sales/Order/GetLastProductNumberForSpare',
+                type: 'get',
+                dataType: 'json',
+                success: function (response) {
+                    tmp = response.maxProductNumber + 1;
+                }
+            });
+            return tmp;
+        }();
+        let idNumberIM = function () {
+            let tmp = null;
+            $.ajax({
+                async: false,
+                url: '/Sales/Order/GetLastProductNumberForMachinesImported',
+                type: 'get',
+                dataType: 'json',
+                success: function (response) {
+                    tmp = response.maxProductNumber + 1;
+                }
+            });
+            return tmp;
+        }();
+        let idNumberIA = function () {
+            let tmp = null;
+            $.ajax({
+                async: false,
+                url: '/Sales/Order/GetLastProductNumberForAccessoriesImported',
+                type: 'get',
+                dataType: 'json',
+                success: function (response) {
+                    tmp = response.maxProductNumber + 1;
+                }
+            });
+            return tmp;
+        }();
+        let idNumberIR = function () {
+            let tmp = null;
+            $.ajax({
+                async: false,
+                url: '/Sales/Order/GetLastProductNumberForSpareImported',
+                type: 'get',
+                dataType: 'json',
+                success: function (response) {
+                    tmp = response.maxProductNumber + 1;
+                }
+            });
+            return tmp;
+        }();
+        // Simplemak Componentes Stock
+        let idNumberSCS = function () {
+            let tmp = null;
+            $.ajax({
+                async: false,
+                url: '/Sales/Order/GetLastProductNumberForStockComponents',
+                type: 'get',
+                dataType: 'json',
+                success: function (response) {
+                    tmp = response.maxProductNumber + 1;
+                }
+            });
+            return tmp;
+        }();
+
+        let onlySpares = false;
+
+        //let indexForTable = 1;
+        let indexForTable = @indexForTable;
+        let clientsSelect = $('#Clients');
+        let productsSelect = $('#Products');
+        let saleOperationsSelect = $('#saleOperations');
+        let checkSimplemak = document.getElementById('CheckSimplemak');
+        let checkImported = document.getElementById('CheckImported');
+        let checkMachines = document.getElementById('CheckMachines');
+        let checkAccesories = document.getElementById('CheckAccesories');
+        let checkSpares = document.getElementById('CheckSpares');
+        let checkStockComponent = document.getElementById('CheckStockComponent');
+        let checkSimplemakValue = false;
+        let checkMachinesValue = false;
+        let checkAccesoriesValue = false;
+        let checkSparesValue = false;
+        let checkStockComponentValue = false;
+        let structures = $('#Structures');
+        let totalPrice = 0;
+        let IdentificationDescription = "Simplemak";
+        let IdentificationNumber = "";
+        let deliveryDate = new Date();
+        let checkStock = $('#checkStock');
+        let select2ProductNumbers = $('#select2ProductNumbers');
+        let countryId = 0;
+
+        $("#quantityInput").on({
+            "focus": function (event) {
+                $(event.target).select();
+            },
+            "keyup": function (event) {
+                $(event.target).val(function (index, value) {
+                    return value.replace(/\D/g, "")
+                        .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                        .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                });
+            },
+            "change": function (event) {
+                $(event.target).val(function (index, value) {
+                    let valueAux = value;
+                    if (!value.includes(",")) {
+                        valueAux = value.concat(",00");
+                    }
+                    else {
+                        valueAux = value;
+                    }
+
+                    if (value.charAt(0) == "0" && value.length == 1) {
+                        valueAux = value.concat(",00");
+                    }
+                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                        if(value.charAt(1) == "."){
+                            valueAux = value.slice(2);
+                        }
+                        else if(value.charAt(2) == "."){
+                            valueAux = value.slice(1);
+                        }
+                        else{
+                            valueAux = value.slice(1);
+                        }
+                    }
+
+                    for (var i = 0; i < valueAux.length; i++) {
+                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                            let addZero = "";
+                            if(valueAux[i] == ","){
+                                addZero = "0";
+                            }
+                            valueAux = addZero + valueAux.slice(i);
+                            break;
+                        }
+                    }
+                    return valueAux;
+
+                });
+            }
+        });
+
+        if (@Model.Id != 0) 
+        {
+            $.ajax({
+                url: '/Sales/Order/LoadExistingOperations',
+                method: 'get',
+                data: {
+                    id: $('#Clients').val()
+                },
+                success: function (response) {
+                    $.each(response.data, function (index, item) {
+                        saleOperationsSelect.append($('<option />', { value: item.id, text: item.operation }));
+                    });
+                }
+            });
+        }
+        
+        $('#newCheck').on('change', function () {
+            if (this.checked) {
+                $('#existingCheck').prop('checked', false);
+                $("#createNewSaleOperation_div").removeClass("d-none");
+                $("#selectSaleOperation_div").addClass("d-none");
+                
+            } else {
+                $('#existingCheck').prop('checked', true);
+                $('#newCheck').prop('checked', false);
+                $("#createNewSaleOperation_div").addClass("d-none");
+                $("#selectSaleOperation_div").removeClass("d-none");
+                
+            }
+        });
+
+        $('#existingCheck').on('change', function () {
+            if (this.checked) {
+                $('#newCheck').prop('checked', false);
+                $("#createNewSaleOperation_div").addClass("d-none");
+                $("#selectSaleOperation_div").removeClass("d-none");
+                $('#saleOperationIdValue').value = 1;
+                document.getElementById("saleOperationIdValue").value = document.getElementById('saleOperations').value;
+                
+            } else {
+                $('#newCheck').prop('checked', true);
+                $('#existingCheck').prop('checked', false);
+                $("#createNewSaleOperation_div").removeClass("d-none");
+                $("#selectSaleOperation_div").addClass("d-none");
+                
+            }
+        });
+
+        $("#btn-save").on("click", function () {
+            if (@Model.Id == 0) {
+                let message = 'La fecha de entrega esta establecida por defecto según categoría de productos, si NO desea modificarla, haga click en "Aceptar" para guardar la órden.';
+                if (confirm(message)) {
+
+                    // Fran: 23/5/2023: Se agrega para bloquear la pagina y no permitir darle dos veces la boton de guardado.
+                    showSpinner();
+
+                    $('#create-form').submit();
+                }
+            } else {
+
+                // Fran: 23/5/2023: Se agrega para bloquear la pagina y no permitir darle dos veces la boton de guardado.
+                showSpinner();
+
+                $('#create-form').submit();
+            }
+        });
+
+        $("#btn-cancel").on("click", function () {
+            $("#form-modal").modal("hide");
+        });
+
+        clientsSelect.select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select client"]",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+
+                });
+            }
+        });
+
+        saleOperationsSelect.select2({
+            placeholder: "@localizer["Select operation"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        productsSelect.select2({
+            placeholder: "@localizer["Select product"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        select2ProductNumbers.select2({
+            placeholder: "@localizer["Select stock product"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        structures.prop('disabled', true);
+        structures.select2({
+            placeholder: "@localizer["Select configuration"]",
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: function (data) {
+                return data.sort(function (a, b) {
+                    if (a.id != -1 && b.id != -1) {
+                        if (a.text > b.text) {
+                            return 1;
+                        }
+                        if (a.text < b.text) {
+                            return -1;
+                        }
+                        return 0;
+                    }
+                });
+            }
+        });
+
+        productsSelect.prop('disabled', true);
+        $('#CheckAccesories').prop('disabled', true);
+        $('#CheckSpares').prop('disabled', true);
+
+        if ($('#onlySpares').val() == "True") {
+            onlySpares = true;
+        }
+
+        if (onlySpares) {
+            deliveryDate.setDate(deliveryDate.getDate() + 20);
+        } else {
+            deliveryDate.setDate(deliveryDate.getDate() + 75);
+        }
+
+        $('#OrderDate').change(function () {
+            let orderDate = new Date($(this).val());
+
+            if (onlySpares) {
+                orderDate.setDate(orderDate.getDate() + 20);
+                document.querySelectorAll('.deliveryDateClass').forEach(item => {
+                    item.value = orderDate.getFullYear() + "-" + zeroPadded(orderDate.getMonth() + 1) + "-" + zeroPadded(orderDate.getDate() + 1);
+                });
+            } else {
+                orderDate.setDate(orderDate.getDate() + 120);
+                document.querySelectorAll('.deliveryDateClass').forEach(item => {
+                    item.value = orderDate.getFullYear() + "-" + zeroPadded(orderDate.getMonth() + 1) + "-" + zeroPadded(orderDate.getDate() + 1);
+                });
+            }
+        });
+
+        showSpinner();
+        if (!onlySpares) {
+            // Initial load products select2
+            $.ajax({
+                url: '/Sales/Order/LoadProductsSelect2',
+                method: 'get',
+                data: {
+                    checkSimplemak: true,
+                    checkMachines: true,
+                    checkAccesories: false,
+                    checkSpares: false,
+                    checkStockComponents: false
+                },
+                dataType: 'json',
+            }).done(function (response) {
+                productsSelect.prop('disabled', false);
+                $('#CheckAccesories').prop('disabled', false);
+                $('#CheckSpares').prop('disabled', false);
+
+                if (response.isValid) {
+                    productsSelect.empty();
+                    productsSelect.append($("<option />").val(-1).text('@localizer["Select product"]'));
+                    $.each(response.products, function (index, item) {
+                        productsSelect.append($('<option />', { value: item.value, text: item.text }));
+                    });
+                } else {
+                    productsSelect.empty();
+                    productsSelect.prop('disabled', true);
+                }
+
+                hideSpinner();
+            });
+        }
+        else {
+            // Initial load products select2
+            $.ajax({
+                url: '/Sales/Order/LoadProductsSelect2',
+                method: 'get',
+                data: {
+                    checkSimplemak: true,
+                    checkMachines: false,
+                    checkAccesories: false,
+                    checkSpares: true,
+                    checkStockComponents: false
+                },
+                dataType: 'json',
+            }).done(function (response) {
+                productsSelect.prop('disabled', false);
+                $('#CheckAccesories').prop('disabled', false);
+                $('#CheckSpares').prop('disabled', false);
+
+                if (response.isValid) {
+                    productsSelect.empty();
+                    productsSelect.append($("<option />").val(-1).text('@localizer["Select product"]'));
+                    $.each(response.products, function (index, item) {
+                        productsSelect.append($('<option />', { value: item.value, text: item.text }));
+                    });
+                } else {
+                    productsSelect.empty();
+                    productsSelect.prop('disabled', true);
+                }
+
+                hideSpinner();
+            });
+        }
+
+        saleOperationsSelect.change(function () {
+            if($(this).val() != 0)
+            {
+                document.getElementById("saleOperationIdValue").value = $(this).val();
+            }
+            else
+            {
+                alert("Debe seleccionar una operacion");
+            }
+        });
+
+        clientsSelect.change(function () {
+
+            $('#divCity').hide('slow');
+            $('#divState').hide('slow');
+            $('#divCountry').hide('slow');
+            $('#divEmail').hide('slow');
+
+            $.ajax({
+                url: '/Sales/Order/GetClientDetailsById',
+                method: 'get',
+                data: { id: $(this).val() },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.isValid) {
+  
+                        document.getElementById('ClientCity').value = "";
+                        document.getElementById('ClientState').value = "";
+                        document.getElementById('ClientCountry').value = "";
+                        document.getElementById('ClientEmail').value = "";
+
+                        $('#divCity').show('slow');
+                        $('#divState').show('slow');
+                        $('#divCountry').show('slow');
+                        $('#divEmail').show('slow');
+
+                        if (response.data.city != null) {
+                            document.getElementById('ClientCity').value = response.data.city.name;
+                        }
+                        if (response.data.state != null) {
+                            document.getElementById('ClientState').value = response.data.state.name;
+                        }
+                        if (response.data.country != null) {
+                            document.getElementById('ClientCountry').value = response.data.country.description;
+
+                            // ARGENTINA = 61 (Para lista de precios de ARG), MEXICO = 79 (Para lista de precios de MX), los demás lista de precios COMEX
+                            if (!onlySpares) {
+                                countryId = response.data.country.id;
+                                if (countryId == 61) {
+                                    $("input.moneyInput").val("USD");
+                                } else if (countryId == 79) {
+                                    $("input.moneyInput").val("$ MXN");
+                                } else {
+                                    $("input.moneyInput").val("USD");
+                                }
+                            } else {
+                                countryId = response.data.country.id;
+                                $("input.moneyInput").val("USD");
+                            }
+
+                        }
+                        document.getElementById('ClientEmail').value = response.data.email;
+
+                        $('#btn-add-detail').prop('disabled', false);
+
+                    }
+                }
+            });
+
+            $.ajax({
+                url: '/Sales/Order/LoadExistingOperations',
+                method: 'get',
+                data: {
+                        id: $(this).val()
+                },
+                success: function (response) {
+                    
+                    if(response.data.length > 0)
+                    {
+                        saleOperationsSelect.empty();
+                    }
+                    else{
+                        saleOperationsSelect.empty();
+                    }
+
+                    $.each(response.data, function (index, item) {
+                        saleOperationsSelect.append($('<option />', { value: item.id, text: item.operation }));
+                    });
+                    
+                }
+            });     
+
+        });
+
+        checkSimplemak.addEventListener('change', function () {
+
+            $('#CheckStockComponent').prop('disabled', false);
+
+            $('#Products').prop('disabled', true);
+            $('#Products option').remove();
+
+            if (this.checked) {
+                $('#CheckImported').prop('checked', false);
+                IdentificationDescription += "Simplemak";
+                checkSimplemakValue = true;
+            } else {
+                $('#CheckImported').prop('checked', true);
+                IdentificationDescription += "Importadas";
+                checkSimplemakValue = false;
+            }
+
+            if ($('#CheckMachines').prop('checked')) {
+                checkMachinesValue = true;
+            } else {
+                checkMachinesValue = false;
+            }
+
+            if ($('#CheckAccesories').prop('checked')) {
+                checkAccesoriesValue = true;
+            } else {
+                checkAccesoriesValue = false;
+            }
+
+            if ($('#CheckSpares').prop('checked')) {
+                checkSparesValue = true;
+            } else {
+                checkSparesValue = false;
+            }
+
+            productsSelect.prop('disabled', true);
+            $('#CheckSimplemak').prop('disabled', true);
+            $('#CheckImported').prop('disabled', true);
+            $('#CheckMachines').prop('disabled', true);
+            $('#CheckAccesories').prop('disabled', true);
+            $('#CheckSpares').prop('disabled', true);
+            $.ajax({
+                url: '/Sales/Order/LoadProductsSelect2',
+                method: 'get',
+                data: {
+                    checkSimplemak: checkSimplemakValue,
+                    checkMachines: checkMachinesValue,
+                    checkAccesories: checkAccesoriesValue,
+                    checkSpares: checkSparesValue,
+                    checkStockComponents: checkStockComponentValue
+                },
+                dataType: 'json'
+            })
+            .done(function (response) {
+                productsSelect.prop('disabled', false);
+                $('#CheckSimplemak').prop('disabled', false);
+                $('#CheckImported').prop('disabled', false);
+                $('#CheckMachines').prop('disabled', false);
+                $('#CheckAccesories').prop('disabled', false);
+                $('#CheckSpares').prop('disabled', false);
+
+                if (response.isValid) {
+                    productsSelect.empty();
+                    productsSelect.append($("<option />").val(-1).text('@localizer["Select product"]'));
+                    $.each(response.products, function (index, item) {
+                        productsSelect.append($('<option />', { value: item.value, text: item.text }));
+                    });
+                } else {
+                    productsSelect.empty();
+                    productsSelect.prop('disabled', true);
+                }
+            });
+        });
+
+        checkImported.addEventListener('change', function () {
+
+            $('#CheckStockComponent').prop('disabled', true);
+
+            $('#Products').prop('disabled', true);
+            $('#Products option').remove();
+
+            if (this.checked) {
+                $('#CheckSimplemak').prop('checked', false);
+                IdentificationDescription += "Importadas";
+                checkSimplemakValue = false;
+
+            } else {
+                $('#CheckSimplemak').prop('checked', true);
+                IdentificationDescription += "Simplemak";
+                checkSimplemakValue = true;
+            }
+
+            if ($('#CheckMachines').prop('checked')) {
+                checkMachinesValue = true;
+            } else {
+                checkMachinesValue = false;
+            }
+
+            if ($('#CheckAccesories').prop('checked')) {
+                checkAccesoriesValue = true;
+            } else {
+                checkAccesoriesValue = false;
+            }
+
+            if ($('#CheckSpares').prop('checked')) {
+                checkSparesValue = true;
+            } else {
+                checkSparesValue = false;
+            }
+
+            productsSelect.prop('disabled', true);
+            $('#CheckSimplemak').prop('disabled', true);
+            $('#CheckImported').prop('disabled', true);
+            $('#CheckMachines').prop('disabled', true);
+            $('#CheckAccesories').prop('disabled', true);
+            $('#CheckSpares').prop('disabled', true);
+            $.ajax({
+                url: '/Sales/Order/LoadProductsSelect2',
+                method: 'get',
+                data: {
+                    checkSimplemak: checkSimplemakValue,
+                    checkMachines: checkMachinesValue,
+                    checkAccesories: checkAccesoriesValue,
+                    checkSpares: checkSparesValue,
+                    checkStockComponents: false
+                },
+                dataType: 'json'
+            })
+            .done(function (response) {
+
+                productsSelect.prop('disabled', false);
+                $('#CheckSimplemak').prop('disabled', false);
+                $('#CheckImported').prop('disabled', false);
+                $('#CheckMachines').prop('disabled', false);
+                $('#CheckAccesories').prop('disabled', false);
+                $('#CheckSpares').prop('disabled', false);
+
+                if (response.isValid) {
+                    productsSelect.empty();
+                    productsSelect.append($("<option />").val(-1).text('@localizer["Select product"]'));
+                    $.each(response.products, function (index, item) {
+                        productsSelect.append($('<option />', { value: item.value, text: item.text }));
+                    });
+                } else {
+                    productsSelect.empty();
+                    productsSelect.prop('disabled', true);
+                }
+            });
+        });
+
+        if (checkMachines != null) {
+            checkMachines.addEventListener('change', function () {
+
+                if (this.checked) {
+                    checkMachinesValue = true;
+                } else {
+                    checkMachinesValue = false;
+                }
+
+                if ($('#CheckAccesories').prop('checked')) {
+                    checkAccesoriesValue = true;
+                } else {
+                    checkAccesoriesValue = false;
+                }
+
+                if ($('#CheckSpares').prop('checked')) {
+                    checkSparesValue = true;
+                } else {
+                    checkSparesValue = false;
+                }
+
+                if ($('#CheckSimplemak').prop('checked')) {
+                    checkSimplemakValue = true;
+                } else {
+                    checkSimplemakValue = false;
+                }
+
+                productsSelect.prop('disabled', true);
+                $('#CheckSimplemak').prop('disabled', true);
+                $('#CheckImported').prop('disabled', true);
+                $('#CheckMachines').prop('disabled', true);
+                $('#CheckAccesories').prop('disabled', true);
+                $('#CheckSpares').prop('disabled', true);
+                $.ajax({
+                    url: '/Sales/Order/LoadProductsSelect2',
+                    method: 'get',
+                    data: {
+                        checkSimplemak: checkSimplemakValue,
+                        checkMachines: checkMachinesValue,
+                        checkAccesories: checkAccesoriesValue,
+                        checkSpares: checkSparesValue,
+                        checkStockComponents: false
+                    },
+                    dataType: 'json'
+                }).done(function (response) {
+                    productsSelect.prop('disabled', false);
+                    $('#CheckSimplemak').prop('disabled', false);
+                    $('#CheckImported').prop('disabled', false);
+                    $('#CheckMachines').prop('disabled', false);
+                    $('#CheckAccesories').prop('disabled', false);
+                    $('#CheckSpares').prop('disabled', false);
+
+                    if (response.isValid) {
+                        productsSelect.empty();
+                        productsSelect.append($("<option />").val(-1).text('@localizer["Select product"]'));
+                        $.each(response.products, function (index, item) {
+                            productsSelect.append($('<option />', { value: item.value, text: item.text }));
+                        });
+                    } else {
+                        productsSelect.empty();
+                        productsSelect.prop('disabled', true);
+                    }
+                });
+            });
+        }
+
+        if (checkAccesories != null) {
+            checkAccesories.addEventListener('change', function () {
+
+                if ($('#CheckMachines').prop('checked')) {
+                    checkMachinesValue = true;
+                } else {
+                    checkMachinesValue = false;
+                }
+
+                if (this.checked) {
+                    checkAccesoriesValue = true;
+                } else {
+                    checkAccesoriesValue = false;
+                }
+
+                if ($('#CheckSpares').prop('checked')) {
+                    checkSparesValue = true;
+                } else {
+                    checkSparesValue = false;
+                }
+
+                if ($('#CheckSimplemak').prop('checked')) {
+                    checkSimplemakValue = true;
+                } else {
+                    checkSimplemakValue = false;
+                }
+
+                productsSelect.prop('disabled', true);
+                $('#CheckSimplemak').prop('disabled', true);
+                $('#CheckImported').prop('disabled', true);
+                $('#CheckMachines').prop('disabled', true);
+                $('#CheckAccesories').prop('disabled', true);
+                $('#CheckSpares').prop('disabled', true);
+                $.ajax({
+                    url: '/Sales/Order/LoadProductsSelect2',
+                    method: 'get',
+                    data: {
+                        checkSimplemak: checkSimplemakValue,
+                        checkMachines: checkMachinesValue,
+                        checkAccesories: checkAccesoriesValue,
+                        checkSpares: checkSparesValue,
+                        checkStockComponents: false
+                    },
+                    dataType: 'json'
+                }).done(function (response) {
+                    productsSelect.prop('disabled', false);
+                    $('#CheckSimplemak').prop('disabled', false);
+                    $('#CheckImported').prop('disabled', false);
+                    $('#CheckMachines').prop('disabled', false);
+                    $('#CheckAccesories').prop('disabled', false);
+                    $('#CheckSpares').prop('disabled', false);
+
+                    if (response.isValid) {
+                        productsSelect.empty();
+                        productsSelect.append($("<option />").val(-1).text('@localizer["Select product"]'));
+                        $.each(response.products, function (index, item) {
+                            productsSelect.append($('<option />', { value: item.value, text: item.text }));
+                        });
+                    } else {
+                        productsSelect.empty();
+                        productsSelect.prop('disabled', true);
+                    }
+                });
+            });
+        }
+
+        if (checkSpares != null) {
+            checkSpares.addEventListener('change', function () {
+
+                if ($('#CheckMachines').prop('checked')) {
+                    checkMachinesValue = true;
+                } else {
+                    checkMachinesValue = false;
+                }
+
+                if ($('#CheckAccesories').prop('checked')) {
+                    checkAccesoriesValue = true;
+                } else {
+                    checkAccesoriesValue = false;
+                }
+
+                if (this.checked) {
+                    checkSparesValue = true;
+                } else {
+                    checkSparesValue = false;
+                }
+
+                if ($('#CheckSimplemak').prop('checked')) {
+                    checkSimplemakValue = true;
+                } else {
+                    checkSimplemakValue = false;
+                }
+
+                productsSelect.prop('disabled', true);
+                $('#CheckSimplemak').prop('disabled', true);
+                $('#CheckImported').prop('disabled', true);
+                $('#CheckMachines').prop('disabled', true);
+                $('#CheckAccesories').prop('disabled', true);
+                $('#CheckSpares').prop('disabled', true);
+                $.ajax({
+                    url: '/Sales/Order/LoadProductsSelect2',
+                    method: 'get',
+                    data: {
+                        checkSimplemak: checkSimplemakValue,
+                        checkMachines: checkMachinesValue,
+                        checkAccesories: checkAccesoriesValue,
+                        checkSpares: checkSparesValue,
+                        checkStockComponents: false
+                    },
+                    dataType: 'json'
+                }).done(function (response) {
+                    productsSelect.prop('disabled', false);
+                    $('#CheckSimplemak').prop('disabled', false);
+                    $('#CheckImported').prop('disabled', false);
+                    $('#CheckMachines').prop('disabled', false);
+                    $('#CheckAccesories').prop('disabled', false);
+                    $('#CheckSpares').prop('disabled', false);
+
+                    if (response.isValid) {
+                        productsSelect.empty();
+                        productsSelect.append($("<option />").val(-1).text('@localizer["Select product"]'));
+                        $.each(response.products, function (index, item) {
+                            productsSelect.append($('<option />', { value: item.value, text: item.text }));
+                        });
+                    } else {
+                        productsSelect.empty();
+                        productsSelect.prop('disabled', true);
+                    }
+                });
+            });
+        }
+
+        if (checkStockComponent != null) {
+            checkStockComponent.addEventListener('change', function () {
+                if (this.checked) {
+                    checkStockComponentValue = true;
+                    $('#CheckSimplemak').prop('checked', true);
+                    $('#CheckMachines').prop('checked', false);
+                    $('#CheckAccesories').prop('checked', false);
+                    $('#CheckSpares').prop('checked', false);
+
+                    checkSimplemakValue = true;
+                    checkMachinesValue = false;
+                    checkAccesoriesValue = false;
+                    checkSparesValue = false;
+
+                    $('#CheckImported').attr('disabled', true);
+                    $('#CheckMachines').attr('disabled', true);
+                    $('#CheckAccesories').attr('disabled', true);
+                    $('#CheckSpares').attr('disabled', true);
+                } else {
+                    checkStockComponentValue = false;
+                    $('#CheckSimplemak').prop('checked', true);
+                    $('#CheckMachines').prop('checked', true);
+                    $('#CheckAccesories').prop('checked', false);
+                    $('#CheckSpares').prop('checked', false);
+
+                    checkSimplemakValue = true;
+                    checkMachinesValue = true;
+                    checkAccesoriesValue = false;
+                    checkSparesValue = false;
+
+                    $('#CheckImported').removeAttr('disabled');
+                    $('#CheckMachines').removeAttr('disabled');
+                    $('#CheckAccesories').removeAttr('disabled');
+                    $('#CheckSpares').removeAttr('disabled');
+                }
+
+                productsSelect.prop('disabled', true);
+                $.ajax({
+                    url: '/Sales/Order/LoadProductsSelect2',
+                    method: 'get',
+                    data: {
+                        checkSimplemak: checkSimplemakValue,
+                        checkMachines: checkMachinesValue,
+                        checkAccesories: checkAccesoriesValue,
+                        checkSpares: checkSparesValue,
+                        checkStockComponents: checkStockComponentValue
+                    },
+                    dataType: 'json'
+                }).done(function (response) {
+                    productsSelect.prop('disabled', false);
+
+                    if (response.isValid) {
+                        productsSelect.empty();
+                        productsSelect.append($("<option />").val(-1).text('@localizer["Select product"]'));
+                        $.each(response.products, function (index, item) {
+                            productsSelect.append($('<option />', { value: item.value, text: item.text }));
+                        });
+                    } else {
+                        productsSelect.empty();
+                        productsSelect.prop('disabled', true);
+                    }
+                });
+            });
+        }
+
+        productsSelect.change(
+            function () {
+                if ($('#Products').val() != -1) {
+                    if ($('#btn-add-detail').prop('disabled')) 
+                    {
+                        $('#Products').val(-1).trigger('change');
+                        alert("Debe seleccionar un cliente antes de agregar un producto.");
+                    } 
+                    else 
+                    {
+                        $('#selectStructuresDiv').show('slow');
+                        $('#divQuantity').show('slow');
+                        $('#divUnitMeasure').show('slow');
+                        $('#divBtnAdd').show('slow');
+
+                        $.ajax({
+                            url: '/Sales/Order/GetProductById',
+                            method: 'get',
+                            data: { id: $('#Products').val() },
+                            dataType: 'json',
+                            success: function (response) {
+                                if (response.isValid) {
+                                    $('#unitMeasure').val(response.product.unitMeasure.description);
+                                }
+                            }
+                        });                        
+
+                        // Load structures
+                        $.ajax({
+                            url: '/Sales/Order/GetStructuresByProductId',
+                            method: 'get',
+                            data: { id: $('#Products').val() },
+                            dataType: 'json',
+                            success: function (response) {
+
+                                if (response.isValid) {
+                                    structures.empty();
+                                    structures.prop('disabled', false);
+                                    structures.append($("<option />").val(-1).text('@localizer["Select configuration"]'));
+                                    $.each(response.structures, function (index, item) {
+                                        if (response.structures.length == 1) {
+                                            structures.append($('<option />', { value: item.value, text: item.text }).attr('selected', true));
+                                        } else {
+                                            structures.append($('<option />', { value: item.value, text: item.text }));
+                                        }
+
+                                    });
+                                } else {
+                                    structures.empty();
+                                    structures.prop('disabled', true);
+                                }
+                            }
+                        });
+
+                    }
+                }
+            }
+        );
+
+        select2ProductNumbers.change(function () {
+            if ($(this).val() != -1) {
+                $('#btn-add-existing-detail').prop('disabled', false);
+            }
+            else {
+                $('#btn-add-existing-detail').prop('disabled', true);
+            }
+        });
+
+        $('#btn-add-existing-detail').on('click', function () {
+
+            if (clientsSelect.val() != "") {
+
+                $.ajax({
+                    url: '/Sales/Order/GetOPDetailsById',
+                    method: 'GET',
+                    data: {
+                        odId: select2ProductNumbers.val()
+                    },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.isValid) {
+
+                            let productNumberToAddNotExist = false;
+                            $("#OrderDetailsTable tbody tr td:nth-child(2) input").each(function () {
+                                if ($(this).val() == response.orderDetail.productNumber) {
+                                    productNumberToAddNotExist = true;
+                                }
+                            });
+
+                            if (!productNumberToAddNotExist) {
+
+                                $.ajax({
+                                    url: '/Sales/Order/GetPriceForSelectedProduct',
+                                    method: 'get',
+                                    data: {
+                                        productId: response.orderDetail.productId,
+                                        structureId: response.orderDetail.structureId
+                                    },
+                                    dataType: 'json',
+                                    success: function (priceResponse) {
+
+                                        indexForTable += 1;
+
+                                        $(this).prop('disabled', false);
+
+                                        let orderDetail = response.orderDetail;
+
+                                        let trHtml = '<tr>';
+
+                                        trHtml += '<td class="d-none">';
+                                        trHtml += '<input type="hidden" name="OrderDetails[' + indexForTable + '].StructureId" value="' + orderDetail.structureId + '">';
+
+                                        if (orderDetail.supplyVoltageId == null) {
+                                            trHtml += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + -1 + '">';
+                                        } else {
+                                            
+                                            trHtml += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + orderDetail.supplyVoltageId + '">';
+                                        }
+
+                                        trHtml += '<input type="hidden" name="OrderDetails.Index" value="' + indexForTable + '">' +
+                                            '<input type="hidden" name="OrderDetails.ConcurrencyToken">' +
+                                            '<input type="hidden" class="form-control" name="OrderDetails[' + indexForTable + '].ProductId" value="' + orderDetail.productId + '">' +
+                                            '<input type="hidden" name="OrderDetails[' + indexForTable + '].OrderStateId" value="'+ orderDetail.orderStateId +'">' +
+                                            '<input type="hidden" class="BelongsToAProductionOrder" name="OrderDetails[' + indexForTable + '].BelongsToAProductionOrder" value="true">' +
+                                            '<input type="hidden" name="OrderDetails[' + indexForTable + '].OrderDetailIdBelongsToASaleOrder" value="'+ orderDetail.id +'">';
+                                        trHtml += '</td>';
+
+                                        trHtml += '<td>';
+                                        trHtml += '<input type="text" class="productNumber BelongsToAProductionOrder form-control" name="OrderDetails[' + indexForTable + '].ProductNumber" readonly value="' + orderDetail.productNumber + '">';
+                                        trHtml += '</td>';
+
+                                        trHtml += '<td>';
+                                        trHtml += '<input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].ProductCode" readonly value="' + orderDetail.product.code + '">';
+                                        trHtml += '</td>';
+
+                                        trHtml += '<td>';
+                                        trHtml += '<input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].ProductDescription" readonly value="' + orderDetail.product.description + '">';
+                                        trHtml += '</td>';
+
+                                        trHtml += '<td>';
+                                        trHtml += '<input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].StructureDescription" readonly value="' + orderDetail.structure.description + '">';
+                                        trHtml += '</td>';
+
+                                        trHtml += '<td>';
+                                        trHtml += '<input type="text" class="inputQuantity form-control text-center" name="OrderDetails[' + indexForTable + '].Quantity" readonly value="' + orderDetail.quantity + '">';
+                                        trHtml += '</td>';
+
+                                        trHtml += '<td>';
+                                        if(orderDetail.product.unitMeasure != null)
+                                        {
+                                            trHtml += '<input type="text" class="form-control text-center" name="OrderDetails[' + indexForTable + '].UnitMeasureDescription" readonly value="' + orderDetail.product.unitMeasure.description + '">';
+                                        }
+                                        else
+                                        {
+                                            trHtml += '<input type="text" class="form-control text-center" name="OrderDetails[' + indexForTable + '].UnitMeasureDescription" readonly >';
+                                        }
+                                        trHtml += '</td>';
+
+                                        trHtml += '<td hidden>';
+                                        trHtml += '<input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].SaleCategory" readonly value="' + orderDetail.saleCategory.trim() + '">';
+                                        trHtml += '</td>';
+
+                                        trHtml += '<td id="unitPriceTh">';
+                                        if (priceResponse.price != "") {
+
+                                            if (countryId == 61) {
+                                                trHtml += '<input id="unitPrice_' + indexForTable + '" value="' + String(priceResponse.price.priceArg).replace('.', ',') + '" type="text" class="unitPrice unitPrice_' + indexForTable + ' form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  />';
+                                            } else if (countryId == 79) {
+                                                trHtml += '<input id="unitPrice_' + indexForTable + '" value="' + String(priceResponse.price.priceMx).replace('.', ',') + '" type="text" class="unitPrice unitPrice_' + indexForTable + ' form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  />';
+                                            } else {
+                                                trHtml += '<input id="unitPrice_' + indexForTable + '" value="' + String(priceResponse.price.priceAll).replace('.', ',') + '" type="text" class="unitPrice unitPrice_' + indexForTable + ' form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  />';
+                                            }
+                                        } else {
+                                            trHtml += '<input id="unitPrice_' + indexForTable + '" value="0" type="text" class="unitPrice unitPrice_' + indexForTable + ' form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  />';
+                                        }
+                                        trHtml += '</td>';
+
+                                        trHtml += '<td id="deliveryDateTh">';
+                                        trHtml += '<input type="date" class="deliveryDateClass form-control text-center" name="OrderDetails[' + indexForTable + '].DeliveryDate" value="' + moment(orderDetail.deliveryDate).format('YYYY-MM-DD') + '" onchange="checkDeliveryDate(event, this);">';
+                                        trHtml += '</td>';
+
+                                        trHtml += '<td>';
+                                        trHtml += '<button type="button" id="btn-remove-' + indexForTable + '" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20"></button>';
+                                        trHtml += '</td>';
+
+                                        trHtml += '</tr>';
+
+                                        $("#OrderDetailsTable tbody").append(trHtml);
+                                        $("#table-div").show("slow");
+
+                                        $(this).prop('disabled', true);
+                                        select2ProductNumbers.val(-1).trigger('change');
+
+                                        getTotalPrice(totalPrice);
+
+                                        document.querySelectorAll('.unitPrice').forEach(item => {
+                                            item.addEventListener('change', (e) => {
+                                                getTotalPrice(totalPrice);
+                                                e.stopPropagation();
+                                                e.preventDefault();
+                                            });
+                                        });
+
+                                        document.querySelectorAll('.unitPrice').forEach(item => {
+                                            item.addEventListener('focus', (e) => {
+                                                item.select();
+                                                e.stopPropagation();
+                                                e.preventDefault();
+                                            });
+                                        });
+
+                                        document.querySelectorAll('.unitPrice_' + indexForTable).forEach(item => {
+                                            item.addEventListener('change', (e) => {
+                                                getTotalPrice(totalPrice);
+                                                e.stopPropagation();
+                                                e.preventDefault();
+                                            });
+                                        });
+
+                                        document.querySelectorAll('.unitPrice_' + indexForTable).forEach(item => {
+                                            item.addEventListener('focus', (e) => {
+                                                item.select();
+                                                e.stopPropagation();
+                                                e.preventDefault();
+                                            });
+                                        });
+
+                                    }
+                                });
+
+                            }
+                            else {
+                                $(this).prop('disabled', true);
+                                select2ProductNumbers.val(-1).trigger('change');
+                                alert("El producto ya fue agregado a la venta.");
+                            }
+
+                        }
+                    }
+                });
+
+            } else {
+                $(this).prop('disabled', true);
+                select2ProductNumbers.val(-1).trigger('change');
+                alert("Debe seleccionar un cliente antes de agregar un producto.");
+            }
+        });
+
+        checkStock.change(function () {
+            if (this.checked) {
+                $('#divNewProduct').addClass('d-none');
+                $('#divExistingProduct').removeClass('d-none');
+                $('#selectDivExistingProduct').removeClass('d-none');
+                $('#divBtnAddExisting').removeClass('d-none');
+
+                select2ProductNumbers.prop('disabled', true);
+
+                $.ajax({
+                    url: '/Sales/Order/LoadStockProducts',
+                    method: 'GET',
+                    dataType: 'json',
+                }).done(function (response) {
+                    select2ProductNumbers.prop('disabled', false);
+
+                    if (response.isValid) {
+                        select2ProductNumbers.empty();
+                        select2ProductNumbers.append($("<option />").val(-1).text('@localizer["Select stock product"]'));
+
+                        let x = "";
+                        let html = "";
+
+                        $.each(response.stockProducts, function (index, item) {
+
+                            if (x != item.group.name) {
+                                x = item.group.name;
+                                html += '</optGroup>';
+                                html += '<optGroup label="' + item.group.name + '" >';
+                                html += '<option value="' + item.value + '">' + item.text + '</option>';
+                            } else {
+                                html += '<option value="' + item.value + '">' + item.text + '</option>';
+                            }
+
+                        });
+
+                        select2ProductNumbers.append(html);
+
+                    } else {
+                        select2ProductNumbers.empty();
+                        select2ProductNumbers.prop('disabled', true);
+                    }
+                });
+
+            } else {
+                $('#divNewProduct').removeClass('d-none');
+                $('#divExistingProduct').addClass('d-none');
+                $('#selectDivExistingProduct').addClass('d-none');
+                $('#divBtnAddExisting').addClass('d-none');
+            }
+        });
+
+        $(document).on("click", ".btn-remove", function () {
+            if ($('#isSale').val() == "True") {
+                let priceAfter = 0;
+                //priceAfter = parseFloat(String(document.getElementById('TotalPrice').value).replace('.', '').replace(',', '.')).toFixed(2);
+                priceAfter = parseFloat($('#TotalPrice').val().replace(',', '.')).toFixed(2);
+
+                let quantityOfRowToDelete = parseFloat($(this).parent().prev().prev().prev().prev().children().val());
+                let unitPriceOfRowToDelete = parseFloat($(this).parent().prev().prev().children().val().replace('.', '').replace(',', '.'));
+                let priceToDecrement = quantityOfRowToDelete * unitPriceOfRowToDelete;
+
+                priceAfter -= parseFloat(priceToDecrement);
+                if (priceAfter < 0) {
+                    priceAfter = 0;
+                }
+
+                if (isNaN(priceAfter)) {
+                    document.getElementById("TotalPrice").value = 0;
+                } else {
+                    document.getElementById("TotalPrice").value = parseFloat(priceAfter).toFixed(2).toString().replace('.', ',');
+                }
+
+                if ($('#isSale').val() == "True") {
+                    let orderTotalPrice = (+parseFloat(String(document.getElementById('Taxes').value).replace('.', '').replace(',', '.')).toFixed(2) + +parseFloat(String(document.getElementById('SecureAndFreightCosts').value).replace('.', '').replace(',', '.')).toFixed(2) + +parseFloat(String(document.getElementById('TotalPrice').value).replace('.', '').replace(',', '.')).toFixed(2)) - +parseFloat(String(document.getElementById('Bonus').value).replace('.', '').replace(',', '.')).toFixed(2);
+                    if (orderTotalPrice < 0) {
+                        orderTotalPrice = 0;
+                    }
+
+                    if (isNaN(orderTotalPrice)) {
+                        document.getElementById('OrderTotalPrice').value = 0;
+                    } else {
+                        document.getElementById('OrderTotalPrice').value = parseFloat(orderTotalPrice).toFixed(2).toString().replace('.', ',');
+                    }
+                }
+            }
+
+            $(this).closest('tr').remove();
+        });
+
+        if ($("#OrderDetailsTable tbody tr").length > 0) 
+        {
+            $("#table-div").show();
+        } 
+        else 
+        {
+            $("#table-div").hide();
+        }
+
+        if ($('#isSale').val() == "True") {
+            $('#btn-add-detail').prop('disabled', true);
+        }
+
+        $("#btn-add-detail").on('click', function () {
+
+            if ($('#Products').val() == "-1") 
+            {
+
+                $.ajax({
+                    url: '/Sales/Order/ShowAlerts',
+                    method: 'get',
+                    data: { inputDetail: "product_notselected" },
+                    dataType: 'json'
+                });
+
+            } 
+            else 
+            {
+
+                if ($("#quantityInput").val() != "") {
+                    if ($("#quantityInput").val() != "0" && $("#quantityInput").val() != "0,00") {
+                        $("#table-div").show("slow");
+                        $.ajax({
+                            url: '/Sales/Order/GetProductById',
+                            method: 'get',
+                            data: { id: $('#Products').val() },
+                            dataType: 'json',
+                            success: function (response) {
+                                if (response.isValid) {
+
+                                    $.ajax({
+                                        url: '/Sales/Order/GetPriceForSelectedProduct',
+                                        method: 'get',
+                                        data: {
+                                            productId: $('#Products').val(),
+                                            structureId: $('#Structures').val()
+                                        },
+                                        dataType: 'json',
+                                        success: function (priceResponse) {
+
+                                            // Add one product to table
+                                            let OneHtmlForTable = '<tr id="' + indexForTable + '">' +
+                                                '<td class="d-none">';
+
+                                            if (response.product.subCategory.categoryId == 1) {
+                                                if (!$('#Structures').prop('disabled') && $('#Structures').val() != -1) {
+                                                    OneHtmlForTable += '<input type="hidden" name="OrderDetails[' + indexForTable + '].StructureId" value="' + $('#Structures').val() + '" />';
+
+                                                    if (response.product.structures.length > 0) {
+                                                        for (let x = 0; x < response.product.structures.length; x++) {
+                                                            if (response.product.structures[x].id == $('#Structures').val() && response.product.structures[x].supplyVoltageId != null) {
+                                                                OneHtmlForTable += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + response.product.structures[x].supplyVoltageId + '" />';
+                                                            }
+                                                        }
+                                                    } else {
+                                                        OneHtmlForTable += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + -1 + '" />';
+                                                    }
+
+                                                } else {
+                                                    $.ajax({
+                                                        url: '/Sales/Order/ShowAlerts',
+                                                        method: 'get',
+                                                        data: { inputDetail: "structure_notselected" },
+                                                        dataType: 'json',
+                                                        complete: function () {
+                                                            if ($("#OrderDetailsTable tbody tr").length == 0) {
+                                                                $("#table-div").hide();
+                                                            }
+
+                                                        }
+                                                    });
+                                                    return;
+                                                }
+                                            }
+
+                                            if (response.product.subCategory.categoryId == 2) {
+                                                if (!$('#Structures').prop('disabled') && $('#Structures').val() != -1) {
+                                                    OneHtmlForTable += '<input type="hidden" name="OrderDetails[' + indexForTable + '].StructureId" value="' + $('#Structures').val() + '" />';
+
+                                                    if (response.product.structures.length > 0) {
+                                                        for (let x = 0; x < response.product.structures.length; x++) {
+                                                            if (response.product.structures[x].id == $('#Structures').val() && response.product.structures[x].supplyVoltageId != null) {
+                                                                OneHtmlForTable += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + response.product.structures[x].supplyVoltageId + '" />';
+                                                            }
+                                                        }
+                                                    } else {
+                                                        OneHtmlForTable += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + -1 + '" />';
+                                                    }
+
+                                                } else {
+                                                    $.ajax({
+                                                        url: '/Sales/Order/ShowAlerts',
+                                                        method: 'get',
+                                                        data: { inputDetail: "structure_notselected" },
+                                                        dataType: 'json',
+                                                        complete: function () {
+                                                            if ($("#OrderDetailsTable tbody tr").length == 0) {
+                                                                $("#table-div").hide();
+                                                            }
+
+                                                        }
+                                                    });
+                                                    return;
+                                                }
+                                            }
+
+                                            if (response.product.subCategory.categoryId == 3 || response.product.subCategory.categoryId == 4) {
+                                                OneHtmlForTable += '<input type="hidden" name="OrderDetails[' + indexForTable + '].StructureId" value="' + -1 + '" />';
+                                                OneHtmlForTable += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + -1 + '" />';
+                                            }
+
+                                            OneHtmlForTable += '<input type="hidden" name="OrderDetails.Index" value="' + indexForTable + '" />' +
+                                                '<input type="hidden" name="OrderDetails.ConcurrencyToken" />' +
+                                                '<input type="hidden" class="form-control" name="OrderDetails[' + indexForTable + '].ProductId" readonly value="' + $('#Products').val() + '" />' +
+                                                '<input type="hidden" name="OrderDetails[' + indexForTable + '].OrderStateId" value="1" />' +
+                                                '</td>';
+
+                                            if (checkSimplemak.checked) {
+                                                IdentificationDescription = "Simplemak";
+                                            } else {
+                                                IdentificationDescription = "Importadas";
+                                            }
+
+                                            // Si es Simplemak
+                                            if (IdentificationDescription == "Simplemak") {
+                                                if (response.product.subCategory.category.description == "Maquinas y Accesorios") {
+
+                                                    if (response.product.subCategory.description != "Accesorios") {
+                                                        IdentificationDescription += " - Máquinas";
+                                                        IdentificationNumber += "01-";
+                                                    } else {
+                                                        IdentificationDescription += " - Accesorios";
+                                                        IdentificationNumber += "02-";
+                                                    }
+
+                                                } else if (response.product.subCategory.category.description == "Conjuntos" || response.product.subCategory.category.description == "Piezas Individuales" || response.product.subCategory.category.description == "Componentes Comprados") {
+                                                    if (!$('#CheckStockComponent').prop('checked')) {
+                                                        IdentificationDescription += " - Repuestos";
+                                                        IdentificationNumber += "03-";
+                                                    } else {
+                                                        IdentificationDescription += " - Stock";
+                                                        IdentificationNumber += "04-";
+                                                    }
+                                                }
+
+                                                // Si es Importadas
+                                            } else {
+                                                if (response.product.subCategory.category.description == "Maquinas y Accesorios") {
+
+                                                    if (response.product.subCategory.description != "Accesorios") {
+                                                        IdentificationDescription += " - Máquinas";
+                                                        IdentificationNumber += "11-";
+                                                    } else {
+                                                        IdentificationDescription += " - Accesorios";
+                                                        IdentificationNumber += "12-";
+                                                    }
+
+                                                } else if (response.product.subCategory.category.description == "Conjuntos" || response.product.subCategory.category.description == "Piezas Individuales" || response.product.subCategory.category.description == "Componentes Comprados") {
+                                                    IdentificationDescription += " - Repuestos";
+                                                    IdentificationNumber += "13-";
+                                                }
+                                            }
+
+                                            if (IdentificationDescription == "Simplemak - Máquinas") {
+                                                OneHtmlForTable += '<td><input type="text" class="productNumber form-control" name="OrderDetails[' + indexForTable + '].ProductNumber" readonly value="' + IdentificationNumber + ('00000' + idNumberSM).slice(-5) + '" /></td>';
+                                            } else if (IdentificationDescription == "Simplemak - Accesorios") {
+                                                OneHtmlForTable += '<td><input type="text" class="productNumber form-control" name="OrderDetails[' + indexForTable + '].ProductNumber" readonly value="' + IdentificationNumber + ('00000' + idNumberSA).slice(-5) + '" /></td>';
+                                            } else if (IdentificationDescription == "Simplemak - Repuestos") {
+                                                OneHtmlForTable += '<td><input type="text" class="productNumber form-control" name="OrderDetails[' + indexForTable + '].ProductNumber" readonly value="' + IdentificationNumber + ('00000' + idNumberSR).slice(-5) + '" /></td>';
+                                            } else if (IdentificationDescription == "Simplemak - Stock") {
+                                                OneHtmlForTable += '<td><input type="text" class="productNumber form-control" name="OrderDetails[' + indexForTable + '].ProductNumber" readonly value="' + IdentificationNumber + ('00000' + idNumberSCS).slice(-5) + '" /></td>';
+                                            } else if (IdentificationDescription == "Importadas - Máquinas") {
+                                                OneHtmlForTable += '<td><input type="text" class="productNumber form-control" name="OrderDetails[' + indexForTable + '].ProductNumber" readonly value="' + IdentificationNumber + ('00000' + idNumberIM).slice(-5) + '" /></td>';
+                                            } else if (IdentificationDescription == "Importadas - Accesorios") {
+                                                OneHtmlForTable += '<td><input type="text" class="productNumber form-control" name="OrderDetails[' + indexForTable + '].ProductNumber" readonly value="' + IdentificationNumber + ('00000' + idNumberIA).slice(-5) + '" /></td>';
+                                            } else if (IdentificationDescription == "Importadas - Repuestos") {
+                                                OneHtmlForTable += '<td><input type="text" class="productNumber form-control" name="OrderDetails[' + indexForTable + '].ProductNumber" readonly value="' + IdentificationNumber + ('00000' + idNumberIR).slice(-5) + '" /></td>';
+                                            }
+
+                                            OneHtmlForTable += '<td><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].ProductCode" readonly value="' + $("#Products option:selected").text().substring(0, 6) + '" /></td>' +
+                                                '<td class="w-25"><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].ProductDescription" readonly value="' + $("#Products option:selected").text().substring(9) + '" /></td>';
+
+                                            if (response.product.subCategory.categoryId == 1) {
+                                                if (!$('#Structures').prop('disabled') && $('#Structures').val() != -1) {
+                                                    OneHtmlForTable += '<td><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].StructureDescription" readonly value="' + $("#Structures option:selected").text() + '" /></td>'
+                                                } else {
+                                                    $.ajax({
+                                                        url: '/Sales/Order/ShowAlerts',
+                                                        method: 'get',
+                                                        data: { inputDetail: "structure_notselected" },
+                                                        dataType: 'json',
+                                                        complete: function () {
+                                                            if ($("#OrderDetailsTable tbody tr").length == 0) {
+                                                                $("#table-div").hide();
+                                                            }
+
+                                                        }
+                                                    });
+                                                    return;
+                                                }
+                                            }
+
+                                            if (response.product.subCategory.categoryId == 2) {
+                                                if (!$('#Structures').prop('disabled') && $('#Structures').val() != -1) {
+                                                    OneHtmlForTable += '<td><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].StructureDescription" readonly value="' + $("#Structures option:selected").text() + '" /></td>'
+                                                } else {
+                                                    $.ajax({
+                                                        url: '/Sales/Order/ShowAlerts',
+                                                        method: 'get',
+                                                        data: { inputDetail: "structure_notselected" },
+                                                        dataType: 'json',
+                                                        complete: function () {
+                                                            if ($("#OrderDetailsTable tbody tr").length == 0) {
+                                                                $("#table-div").hide();
+                                                            }
+
+                                                        }
+                                                    });
+                                                    return;
+                                                }
+                                            }
+
+                                            if (response.product.subCategory.categoryId == 3 || response.product.subCategory.categoryId == 4) {
+                                                if ($('#Structures').val() != -1) {
+                                                    OneHtmlForTable += '<td><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].StructureDescription" readonly value="" /></td>'
+                                                } else {
+                                                    OneHtmlForTable += '<td><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].StructureDescription" readonly value="' + $("#Structures option:selected").text() + '" /></td>'
+                                                }
+                                            }
+
+                                            if (IdentificationDescription == "Simplemak - Repuestos" || IdentificationDescription == "Importadas - Repuestos" || IdentificationDescription == "Simplemak - Stock") 
+                                            {
+                                                OneHtmlForTable += '<td><input type="text" class="inputQuantity form-control text-center" name="OrderDetails[' + indexForTable + '].Quantity" value="' + $("#quantityInput").val() + '" readonly /></td>';
+                                            } 
+                                            else 
+                                            {
+                                                OneHtmlForTable += '<td><input type="text" class="inputQuantity form-control text-center" name="OrderDetails[' + indexForTable + '].Quantity" value="1" readonly /></td>';
+                                            }
+
+                                            if(response.product.unitMeasure != null)
+                                            {
+                                                OneHtmlForTable += '<td><input type="text" class="form-control text-center" name="OrderDetails[' + indexForTable + '].UnitMeasureDescription" value="' + response.product.unitMeasure.description + '" readonly /></td>';
+                                            }
+                                            else
+                                            {
+                                                OneHtmlForTable += '<td><input type="text" class="form-control text-center" name="OrderDetails[' + indexForTable + '].UnitMeasureDescription" readonly /></td>';
+                                            }
+                                            
+                                            OneHtmlForTable += '<td hidden><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].SaleCategory" value="' + IdentificationDescription.split('-')[1].trim() + '" readonly /></td>';
+
+                                            if ($('#isSale').val() == "True") {
+
+                                                if (!onlySpares) {
+                                                    if (priceResponse.price != "") {
+
+                                                        if (countryId == 61) {
+                                                            OneHtmlForTable += '<td id="unitPriceTh"><input value="' + String(priceResponse.price.priceArg).replace('.', ',') + '" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                                                        } else if (countryId == 79) {
+                                                            OneHtmlForTable += '<td id="unitPriceTh"><input value="' + String(priceResponse.price.priceMx).replace('.', ',') + '" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                                                        } else {
+                                                            OneHtmlForTable += '<td id="unitPriceTh"><input value="' + String(priceResponse.price.priceAll).replace('.', ',') + '" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                                                        }
+                                                    } else {
+                                                        OneHtmlForTable += '<td id="unitPriceTh"><input value="0" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                                                    }
+                                                } else {
+                                                    if (priceResponse.price != "") {
+                                                        OneHtmlForTable += '<td id="unitPriceTh"><input value="' + String(priceResponse.price.priceAll).replace('.', ',') + '" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                                                    } else {
+                                                        OneHtmlForTable += '<td id="unitPriceTh"><input value="0" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                                                    }
+                                                }
+
+                                            } else {
+                                                OneHtmlForTable += '<td id="unitPriceTh" hidden><input type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" value="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                                            }
+
+                                            deliveryDate = new Date();
+                                            if ($('#CheckStockComponent').prop('checked')) {
+                                                deliveryDate.setDate(deliveryDate.getDate() + 20);
+                                            } else {
+                                                if (onlySpares) {
+                                                    deliveryDate.setDate(deliveryDate.getDate() + 20);
+                                                } else {
+                                                    deliveryDate.setDate(deliveryDate.getDate() + 75);
+                                                }
+                                            }
+
+                                            if (IdentificationNumber == "02-" || IdentificationNumber == "12-") {
+                                                deliveryDate = new Date();
+                                                deliveryDate.setDate(deliveryDate.getDate() + 20);
+                                            }
+
+                                            OneHtmlForTable += '<td id="deliveryDateTh"><input type="date" class="deliveryDateClass form-control text-center" name="OrderDetails[' + indexForTable + '].DeliveryDate" value="' + deliveryDate.getFullYear() + "-" + zeroPadded(deliveryDate.getMonth() + 1) + "-" + zeroPadded(deliveryDate.getDate()) + '" onchange="checkDeliveryDate(event, this);" /></td>' +
+                                                '<td><button type="button" id="btn-remove-' + indexForTable + '" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td></tr>';
+
+                                            if (parseInt($("#quantityInput").val()) > 1) {
+
+                                                if (IdentificationDescription == "Simplemak - Máquinas") {
+                                                    for (let i = 1; i <= parseInt($("#quantityInput").val()); i++) {
+                                                        let html = manyHtmlForTable(IdentificationNumber, idNumberSM, indexForTable, deliveryDate, IdentificationDescription, countryId, priceResponse.price, response.product.subCategory.categoryId, response.product.structures, response.product);
+                                                        $("#OrderDetailsTable tbody").append(html);
+                                                        idNumberSM += 1;
+                                                        indexForTable += 1;
+                                                    }
+                                                } else if (IdentificationDescription == "Simplemak - Accesorios") {
+                                                    for (let i = 1; i <= parseInt($("#quantityInput").val()); i++) {
+                                                        let html = manyHtmlForTable(IdentificationNumber, idNumberSA, indexForTable, deliveryDate, IdentificationDescription, countryId, priceResponse.price, response.product.subCategory.categoryId, response.product.structures, response.product);
+                                                        $("#OrderDetailsTable tbody").append(html);
+                                                        idNumberSA += 1;
+                                                        indexForTable += 1;
+                                                    }
+                                                } else if (IdentificationDescription == "Simplemak - Repuestos") {
+                                                    $("#OrderDetailsTable tbody").append(OneHtmlForTable);
+                                                    indexForTable += 1;
+                                                } else if (IdentificationDescription == "Simplemak - Stock") {
+                                                    $("#OrderDetailsTable tbody").append(OneHtmlForTable);
+                                                    indexForTable += 1;
+                                                } else if (IdentificationDescription == "Importadas - Máquinas") {
+                                                    for (let i = 1; i <= parseInt($("#quantityInput").val()); i++) {
+                                                        let html = manyHtmlForTable(IdentificationNumber, idNumberIM, indexForTable, deliveryDate, IdentificationDescription, countryId, priceResponse.price, response.product.subCategory.categoryId, response.product.structures, response.product);
+                                                        $("#OrderDetailsTable tbody").append(html);
+                                                        idNumberIM += 1;
+                                                        indexForTable += 1;
+                                                    }
+                                                } else if (IdentificationDescription == "Importadas - Accesorios") {
+                                                    for (let i = 1; i <= parseInt($("#quantityInput").val()); i++) {
+                                                        let html = manyHtmlForTable(IdentificationNumber, idNumberIA, indexForTable, deliveryDate, IdentificationDescription, countryId, priceResponse.price, response.product.subCategory.categoryId, response.product.structures, response.product);
+                                                        $("#OrderDetailsTable tbody").append(html);
+                                                        idNumberIA += 1;
+                                                        indexForTable += 1;
+                                                    }
+                                                } else if (IdentificationDescription == "Importadas - Repuestos") {
+                                                    $("#OrderDetailsTable tbody").append(OneHtmlForTable);
+                                                    indexForTable += 1;
+                                                }
+
+                                            } else {
+
+                                                if (IdentificationDescription == "Simplemak - Máquinas") {
+                                                    $("#OrderDetailsTable tbody").append(OneHtmlForTable);
+                                                    idNumberSM += 1;
+                                                    indexForTable += 1;
+                                                } else if (IdentificationDescription == "Simplemak - Accesorios") {
+                                                    $("#OrderDetailsTable tbody").append(OneHtmlForTable);
+                                                    idNumberSA += 1;
+                                                    indexForTable += 1;
+                                                } else if (IdentificationDescription == "Simplemak - Repuestos") {
+                                                    $("#OrderDetailsTable tbody").append(OneHtmlForTable);
+                                                    indexForTable += 1;
+                                                } else if (IdentificationDescription == "Simplemak - Stock") {
+                                                    $("#OrderDetailsTable tbody").append(OneHtmlForTable);
+                                                    indexForTable += 1;
+                                                } else if (IdentificationDescription == "Importadas - Máquinas") {
+                                                    $("#OrderDetailsTable tbody").append(OneHtmlForTable);
+                                                    idNumberIM += 1;
+                                                    indexForTable += 1;
+                                                } else if (IdentificationDescription == "Importadas - Accesorios") {
+                                                    $("#OrderDetailsTable tbody").append(OneHtmlForTable);
+                                                    idNumberIA += 1;
+                                                    indexForTable += 1;
+                                                } else if (IdentificationDescription == "Importadas - Repuestos") {
+                                                    $("#OrderDetailsTable tbody").append(OneHtmlForTable);
+                                                    indexForTable += 1;
+                                                }
+
+                                            }
+
+                                            document.querySelectorAll('.unitPrice').forEach(item => {
+                                                $(item).on({
+                                                    "focus": function (event) {
+                                                        $(event.target).select();
+                                                    },
+                                                    "keyup": function (event) {
+                                                        $(event.target).val(function (index, value) {
+                                                            return value.replace(/\D/g, "")
+                                                            //.replace(/^0+/, '0')
+                                                            .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                            .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                        });
+                                                    },
+                                                    "change": function (event) {
+                                                        $(event.target).val(function (index, value) {
+                                                            let valueAux = value;
+                                                            if (!value.includes(",")) {
+                                                                valueAux = value.concat(",00");
+                                                            }
+                                                            else {
+                                                                valueAux = value;
+                                                            }
+                                                            
+                                                            if (value.charAt(0) == "0" && value.length == 1) {
+                                                                valueAux = value.concat(",00");
+                                                            }
+                                                            else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                                if(value.charAt(1) == "."){
+                                                                    valueAux = value.slice(2);
+                                                                }
+                                                                else if(value.charAt(2) == "."){
+                                                                    valueAux = value.slice(1);
+                                                                }
+                                                                else{
+                                                                    valueAux = value.slice(1);
+                                                                }
+                                                            }
+                                                            
+                                                            for (var i = 0; i < valueAux.length; i++) {
+                                                                if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                                    let addZero = "";
+                                                                    if(valueAux[i] == ","){
+                                                                        addZero = "0";
+                                                                    }
+                                                                    valueAux = addZero + valueAux.slice(i);
+                                                                    break;
+                                                                }
+                                                            }
+                                                            
+                                                            return valueAux;
+                                                        });
+                                                    }
+                                                });
+                                            });
+
+                                            document.querySelectorAll('.unitPrice').forEach(item => {
+                                                item.addEventListener('change', (e) => {
+                                                    getTotalPrice(totalPrice);
+                                                    e.stopPropagation();
+                                                    e.preventDefault();
+                                                });
+                                            });
+
+                                            document.querySelectorAll('.unitPrice').forEach(item => {
+                                                getTotalPrice(totalPrice);
+                                            });
+
+                                            document.querySelectorAll('.unitPrice').forEach(item => {
+                                                item.addEventListener('focus', (e) => {
+                                                    item.select();
+                                                    e.stopPropagation();
+                                                    e.preventDefault();
+                                                });
+                                            });
+
+                                            IdentificationDescription = "";
+                                            IdentificationNumber = "";
+                                            $("#quantityInput").val("1,00");
+                                            $('#unitMeasure').val("");
+                                            $("#Products").val("-1");
+                                            $("#Products").change();
+                                            $("#Structures").val("-1");
+                                            $("#Structures").change();
+                                            $("#Structures").prop('disabled', true);
+
+                                            $('#selectStructuresDiv').hide('slow');
+                                            $('#divQuantity').hide('slow');
+                                            $('#divUnitMeasure').hide('slow');
+                                            $('#divBtnAdd').hide('slow');
+
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    } else {
+                        $.ajax({
+                            url: '/Sales/Order/ShowAlerts',
+                            method: 'get',
+                            data: { inputDetail: "quantity_zero" },
+                            dataType: 'json'
+                        });
+                    }
+                } else {
+                    $.ajax({
+                        url: '/Sales/Order/ShowAlerts',
+                        method: 'get',
+                        data: { inputDetail: "quantity_empty" },
+                        dataType: 'json'
+                    });
+                }
+            }
+        });
+
+        $('#btn-create-client').on('click', function () {
+            jQueryModalGet('/clients/client/OnGetCreateOrEdit?calledFromAnotherArea=true', '@localizer["New client"]');
+        });
+
+        if ($('#isSale').val() == "True") {
+
+            $('#Taxes').on('focus', function () {
+                $('#btn-save').prop('disabled', true);
+                this.select();
+            });
+
+            $('#Taxes').focusout(function () {
+                $('#btn-save').prop('disabled', false);
+            });
+
+            $('#SecureAndFreightCosts').on('focus', function () {
+                $('#btn-save').prop('disabled', true);
+                this.select();
+            });
+
+            $('#SecureAndFreightCosts').focusout(function () {
+                $('#btn-save').prop('disabled', false);
+            });
+
+            $('#Bonus').on('focus', function () {
+                $('#btn-save').prop('disabled', true);
+                this.select();
+            });
+
+            $('#Bonus').focusout(function () {
+                $('#btn-save').prop('disabled', false);
+            });
+
+            validateDecimalsNumbersOnInput(decimalInputsIds);
+
+            document.getElementById('Taxes').addEventListener('change', (e) => {
+
+                if (document.getElementById('Taxes').value == '') {
+                    document.getElementById('Taxes').value = 0;
+                }
+                if (document.getElementById('SecureAndFreightCosts').value == '') {
+                    document.getElementById('SecureAndFreightCosts').value = 0;
+                }
+                if (document.getElementById('Bonus').value == '') {
+                    document.getElementById('Bonus').value = 0;
+                }
+
+                let oTotalPrice = (+parseFloat(String(document.getElementById('Taxes').value).replace('.', '').replace(',', '.')).toFixed(2) + +parseFloat(String(document.getElementById('SecureAndFreightCosts').value).replace('.', '').replace(',', '.')).toFixed(2) + +parseFloat(String(document.getElementById('TotalPrice').value).replace('.', '').replace(',', '.')).toFixed(2)) - +parseFloat(String(document.getElementById('Bonus').value).replace('.', '').replace(',', '.')).toFixed(2);
+                if (oTotalPrice < 0) {
+                    oTotalPrice = 0;
+                }
+                document.getElementById('OrderTotalPrice').value = parseFloat(oTotalPrice).toFixed(2).toString().replace('.', ',');
+            });
+            document.getElementById('SecureAndFreightCosts').addEventListener('change', (e) => {
+
+                if (document.getElementById('Taxes').value == '') {
+                    document.getElementById('Taxes').value = 0;
+                }
+                if (document.getElementById('SecureAndFreightCosts').value == '') {
+                    document.getElementById('SecureAndFreightCosts').value = 0;
+                }
+                if (document.getElementById('Bonus').value == '') {
+                    document.getElementById('Bonus').value = 0;
+                }
+
+                let oTotalPrice = (+parseFloat(String(document.getElementById('Taxes').value).replace('.', '').replace(',', '.')).toFixed(2) + +parseFloat(String(document.getElementById('SecureAndFreightCosts').value).replace('.', '').replace(',', '.')).toFixed(2) + +parseFloat(String(document.getElementById('TotalPrice').value).replace('.', '').replace(',', '.')).toFixed(2)) - +parseFloat(String(document.getElementById('Bonus').value).replace('.', '').replace(',', '.')).toFixed(2);
+                if (oTotalPrice < 0) {
+                    oTotalPrice = 0;
+                }
+                document.getElementById('OrderTotalPrice').value = parseFloat(oTotalPrice).toFixed(2).toString().replace('.', ',');
+            });
+            document.getElementById('Bonus').addEventListener('change', (e) => {
+
+                if (document.getElementById('Taxes').value == '') {
+                    document.getElementById('Taxes').value = 0;
+                }
+                if (document.getElementById('SecureAndFreightCosts').value == '') {
+                    document.getElementById('SecureAndFreightCosts').value = 0;
+                }
+                if (document.getElementById('Bonus').value == '') {
+                    document.getElementById('Bonus').value = 0;
+                }
+
+                let oTotalPrice = (+parseFloat(String(document.getElementById('Taxes').value).replace('.', '').replace(',', '.')).toFixed(2) + +parseFloat(String(document.getElementById('SecureAndFreightCosts').value).replace('.', '').replace(',', '.')).toFixed(2) + +parseFloat(String(document.getElementById('TotalPrice').value).replace('.', '').replace(',', '.')).toFixed(2)) - +parseFloat(String(document.getElementById('Bonus').value).replace('.', '').replace(',', '.')).toFixed(2);
+                if (oTotalPrice < 0) {
+                    oTotalPrice = 0;
+                }
+                document.getElementById('OrderTotalPrice').value = parseFloat(oTotalPrice).toFixed(2).toString().replace('.', ',');
+            });
+        }
+
+        $('#quantityInput').on('focus', function () {
+            this.select();
+        });
+
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            if (item != null) {
+                $(item).on({
+                    "focus": function (event) {
+                        $(event.target).select();
+                    },
+                    "keyup": function (event) {
+                        $(event.target).val(function (index, value) {
+                            return value.replace(/\D/g, "")
+                            //.replace(/^0+/, '0')
+                            .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                            .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                        });
+                    },
+                    "change": function (event) {
+                        $(event.target).val(function (index, value) {
+                            let valueAux = value;
+                            if (!value.includes(",")) {
+                                valueAux = value.concat(",00");
+                            }
+                            else {
+                                valueAux = value;
+                            }
+                            if (value.charAt(0) == "0" && value.length == 1) {
+                                valueAux = value.concat(",00");
+                            }
+                            else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                if(value.charAt(1) == "."){
+                                    valueAux = value.slice(2);
+                                }
+                                else if(value.charAt(2) == "."){
+                                    valueAux = value.slice(1);
+                                }
+                                else{
+                                    valueAux = value.slice(1);
+                                }
+                            }
+                            
+                            for (var i = 0; i < valueAux.length; i++) {
+                                if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                    let addZero = "";
+                                    if(valueAux[i] == ","){
+                                        addZero = "0";
+                                    }
+                                    valueAux = addZero + valueAux.slice(i);
+                                    break;
+                                }
+                            }
+                            
+                            return valueAux;
+                        });
+                    }
+                });
+            }
+        });
+
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            if (item != null) {
+                item.addEventListener('change', (e) => {
+                    getTotalPrice(totalPrice);
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+            }
+        });
+
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            if (item != null) {
+                getTotalPrice(totalPrice);
+            }
+        });
+
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            if (item != null) {
+                item.addEventListener('focus', (e) => {
+                    item.select();
+                    e.stopPropagation();
+                    e.preventDefault();
+                });
+            }
+        });
+
+    });
+
+    function manyHtmlForTable(IdentificationNumber, idNum, indexForTable, deliveryDate, IdentificationDescription, countryId, price, categoryId, structures, product) {
+
+        let html = '<tr id="' + indexForTable + '">' +
+            '<td class="d-none">';
+
+        if (categoryId == 1) {
+            if (!$('#Structures').prop('disabled') && $('#Structures').val() != -1) {
+                html += '<input type="hidden" name="OrderDetails[' + indexForTable + '].StructureId" value="' + $('#Structures').val() + '" />';
+
+                if (structures.length > 0) {
+                    for (let x = 0; x < structures.length; x++) {
+                        if (structures[x].id == $('#Structures').val() && structures[x].supplyVoltageId != null) {
+                            html += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + structures[x].supplyVoltageId + '" />';
+                        }
+                    }
+                } else {
+                    html += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + -1 + '" />';
+                }
+
+            } else {
+                $.ajax({
+                    url: '/Sales/Order/ShowAlerts',
+                    method: 'get',
+                    data: { inputDetail: "structure_notselected" },
+                    dataType: 'json',
+                    complete: function () {
+                        if ($("#OrderDetailsTable tbody tr").length == 0) {
+                            $("#table-div").hide();
+                        }
+
+                    }
+                });
+                return;
+            }
+        }
+
+        if (categoryId == 2) {
+            if (!$('#Structures').prop('disabled') && $('#Structures').val() != -1) {
+                html += '<input type="hidden" name="OrderDetails[' + indexForTable + '].StructureId" value="' + $('#Structures').val() + '" />';
+
+                if (structures.length > 0) {
+                    for (let x = 0; x < structures.length; x++) {
+                        if (structures[x].id == $('#Structures').val() && structures[x].supplyVoltageId != null) {
+                            html += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + structures[x].supplyVoltageId + '" />';
+                        }
+                    }
+                } else {
+                    html += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + -1 + '" />';
+                }
+
+            } else {
+                $.ajax({
+                    url: '/Sales/Order/ShowAlerts',
+                    method: 'get',
+                    data: { inputDetail: "structure_notselected" },
+                    dataType: 'json',
+                    complete: function () {
+                        if ($("#OrderDetailsTable tbody tr").length == 0) {
+                            $("#table-div").hide();
+                        }
+
+                    }
+                });
+                return;
+            }
+        }
+
+        if (categoryId == 3 || categoryId == 4) {
+            html += '<input type="hidden" name="OrderDetails[' + indexForTable + '].StructureId" value="' + -1 + '" />';
+            html += '<input type="hidden" name="OrderDetails[' + indexForTable + '].SupplyVoltageId" value="' + -1 + '" />';
+        }
+
+        html += '<input type="hidden" name="OrderDetails.ConcurrencyToken" />' +
+            '<input type="hidden" name="OrderDetails.Index" value="' + indexForTable + '" />' +
+            '<input type="hidden" class="form-control" name="OrderDetails[' + indexForTable + '].ProductId" readonly value="' + $('#Products').val() + '" />' +
+            '<input type="hidden" name="OrderDetails[' + indexForTable + '].OrderStateId" value="1" />' +
+            '</td>' +
+            '<td><input type="text" class="productNumber form-control" name="OrderDetails[' + indexForTable + '].ProductNumber" readonly value="' + IdentificationNumber + ('00000' + idNum).slice(-5) + '" /></td>' +
+            '<td><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].ProductCode" readonly value="' + $("#Products option:selected").text().substring(0, 6) + '" /></td>' +
+            '<td class="w-25"><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].ProductDescription" readonly value="' + $("#Products option:selected").text().substring(9) + '" /></td>';
+
+        if ($("#Structures option:selected").text() == "@localizer["Select configuration"]") {
+            html += '<td><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].StructureDescription" readonly value="" /></td>'
+        } else {
+            html += '<td><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].StructureDescription" readonly value="' + $("#Structures option:selected").text() + '" /></td>'
+        }
+
+        html += '<td><input type="text" class="inputQuantity form-control text-center" name="OrderDetails[' + indexForTable + '].Quantity" value="1" readonly /></td>' +
+                '<td><input type="text" class="form-control text-center" name="OrderDetails[' + indexForTable + '].UnitMeasureDescription" value="'+ (product.unitMeasure != null ? product.unitMeasure.description : "") +'" readonly /></td>' +
+                '<td hidden><input type="text" class="form-control" name="OrderDetails[' + indexForTable + '].SaleCategory" value="' + IdentificationDescription.split('-')[1].trim() + '" readonly /></td>';
+
+        if ($('#isSale').val() == "True") {
+
+            if ($('#onlySpares').val() == "False") {
+                if (price != "") {
+
+                    if (countryId == 61) {
+                        html += '<td id="unitPriceTh"><input value="' + String(price.priceArg).replace('.', ',') + '" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                    } else if (countryId == 79) {
+                        html += '<td id="unitPriceTh"><input value="' + String(price.priceMx).replace('.', ',') + '" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                    } else {
+                        html += '<td id="unitPriceTh"><input value="' + String(price.priceAll).replace('.', ',') + '" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                    }
+                } else {
+                    html += '<td id="unitPriceTh"><input value="0" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                }
+            } else {
+                if (price != "") {
+                    html += '<td id="unitPriceTh"><input value="' + String(price.priceAll).replace('.', ',') + '" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                } else {
+                    html += '<td id="unitPriceTh"><input value="0" type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" onkeypress="return validateIsNumber(event);"  /></td>';
+                }
+            }
+
+        } else {
+            html += '<td id="unitPriceTh" hidden><input type="text" class="unitPrice form-control text-center" name="OrderDetails[' + indexForTable + '].UnitPrice" placeholder="0" value="0" onkeypress="return validateIsNumber(event);"  /></td>';
+        }
+
+        html += '<td id="deliveryDateTh"><input type="date" class="deliveryDateClass form-control text-center" name="OrderDetails[' + indexForTable + '].DeliveryDate" value="' + deliveryDate.getFullYear() + "-" + zeroPadded(deliveryDate.getMonth() + 1) + "-" + zeroPadded(deliveryDate.getDate()) + '" onchange="checkDeliveryDate(event, this);" /></td>' +
+
+            '<td><button type="button" id="btn-remove-' + indexForTable + '" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td></tr>';
+
+        return html;
+    }
+
+    jQueryModalGetModified = (url, title) => {
+        try {
+            $.ajax({
+                type: 'GET',
+                url: url,
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    $('#form-modal-client .modal-header').html('<h5 class="modal-title">' + title + '</h5> <button type="button" class="btn btn-secondary" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>');
+                    $('#form-modal-client .modal-body').html(res.html);
+                    $('#form-modal-client').modal('show');
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+    function zeroPadded(val) {
+        if (val >= 10)
+            return val;
+        else
+            return '0' + val;
+    }
+
+    function getTotalPrice(totalPrice) {
+        $('#OrderDetailsTable > tbody  > tr').each(function () {
+            let quantity = $(this).find("input.inputQuantity").val();
+            let unitPrice = $(this).find("input.unitPrice").val();
+            if (unitPrice != '' && unitPrice != 0) {
+
+               if(document.getElementById("TotalPrice") != null){
+                   totalPrice += parseFloat(parseInt(quantity)) * parseFloat(String(unitPrice).replace('.', '').replace(',', '.').trim()).toFixed(2);
+                   document.getElementById("TotalPrice").value = parseFloat(totalPrice).toFixed(2).toString().replace('.', ',');
+                   
+                   if ($('#isSale').val() == "True") {
+
+                       let taxesValue = 0;
+                        let sfcValue = 0;
+                        let bonusValue = 0;
+                        if (document.getElementById('Taxes').value != '') {
+                            taxesValue = document.getElementById('Taxes').value;
+                        }
+                        if (document.getElementById('SecureAndFreightCosts').value != '') {
+                            sfcValue = document.getElementById('SecureAndFreightCosts').value;
+                        }
+                        if (document.getElementById('Bonus').value != '') {
+                            bonusValue = document.getElementById('Bonus').value;
+                        }
+
+                        let orderTotalPrice = (+parseFloat(String(taxesValue).replace('.', '').replace(',', '.')).toFixed(2) + +parseFloat(String(sfcValue).replace('.', '').replace(',', '.')).toFixed(2) + +parseFloat(String(document.getElementById('TotalPrice').value).replace('.', '').replace(',', '.')).toFixed(2)) - +parseFloat(String(bonusValue).replace('.', '').replace(',', '.')).toFixed(2);
+                        if (orderTotalPrice < 0) {
+                        orderTotalPrice = 0;
+                        }
+                        document.getElementById('OrderTotalPrice').value = parseFloat(orderTotalPrice).toFixed(2).toString().replace('.', ',');
+                   }
+               }
+            }
+        });
+    }
+
+    function checkDeliveryDate(event, input) {
+        //let orderDate = new Date($('#OrderDate').val());
+        //let deliveryDate = new Date(event.target.value);
+
+        //if (deliveryDate < orderDate) {
+        //    alert("La fecha de entrega debe ser igual o mayor que le fecha de la órden.");
+        //    input.value = orderDate.getFullYear() + "-" + zeroPadded(orderDate.getMonth() + 1) + "-" + zeroPadded(orderDate.getDate() + 1);
+        //}
+    }
+
+</script>

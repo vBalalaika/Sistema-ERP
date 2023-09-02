@@ -1,0 +1,51 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+@model CategoryViewModel
+<form id="create-form" method="post" asp-controller="Category" asp-action="OnPostCreateOrEdit" asp-route-id="@Model.Id" onsubmit="return jQueryModalPost(this);" enctype="multipart/form-data">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group row">
+                <div class="col-md-9">
+                    <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">@localizer["Description"]</label>
+                <div class="col-md-9">
+                    <input type="text" asp-for="Description" name="Description" class="form-control">
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">@localizer["State"]</label>
+                <div class="col-md-9">
+
+                    @if (Model.Id == 0 || Model.IsActive)
+                    {
+                        <input type="checkbox" name="IsActive" value="true" checked />
+                    }
+                    else
+                    {
+                        <input type="checkbox" name="IsActive" value="true" />
+                    }
+                    <label for="IsActive" class="col-form-label">@localizer["Active"]</label>
+                </div>
+            </div>
+            <div class="form-group row">
+                <div class="col-md-3">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row form-group d-flex flex-row-reverse mb-0 mt-2 align-self-end">
+        <button id="btn-save" type="submit" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+        <button type="submit" class="btn btn-primary text-white mr-1">@localizer["Save"]</button>
+
+    </div>
+</form>
+<script type="text/javascript" language=javascript>
+    $.validator.unobtrusive.parse(document);
+</script>

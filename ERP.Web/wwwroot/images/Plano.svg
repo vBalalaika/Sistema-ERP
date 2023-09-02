@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW 2018 (64 Bit Versión de evaluación) -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="26.9571mm" height="23.0149mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 428.69 366"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str2 {stroke:black;stroke-width:11.93;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .str0 {stroke:black;stroke-width:7.95;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .str3 {stroke:#373435;stroke-width:23.85;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .str1 {stroke:black;stroke-width:23.85;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .str4 {stroke:#373435;stroke-width:7.95;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256;stroke-dasharray:15.902618 23.853927}
+    .fil0 {fill:none}
+   ]]>
+  </style>
+ </defs>
+ <g id="Capa_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <line class="fil0 str0" x1="374.11" y1="208.43" x2="387.89" y2= "188.79" />
+  <line class="fil0 str0" x1="343.39" y1="186.83" x2="357.17" y2= "167.18" />
+  <line class="fil0 str0" x1="312.52" y1="165.81" x2="326.3" y2= "146.17" />
+  <line class="fil0 str0" x1="282.36" y1="143.44" x2="295.16" y2= "125.19" />
+  <line class="fil0 str0" x1="253.12" y1="123.5" x2="266.9" y2= "103.85" />
+  <line class="fil0 str0" x1="220.95" y1="101.86" x2="234.73" y2= "82.21" />
+  <line class="fil0 str0" x1="362.36" y1="193.77" x2="372.26" y2= "179.65" />
+  <line class="fil0 str0" x1="331.73" y1="172.17" x2="341.64" y2= "158.05" />
+  <line class="fil0 str0" x1="301.11" y1="150.56" x2="311.02" y2= "136.44" />
+  <line class="fil0 str0" x1="270.49" y1="128.96" x2="280.4" y2= "114.83" />
+  <line class="fil0 str0" x1="239.87" y1="107.35" x2="249.77" y2= "93.23" />
+  <line class="fil0 str0" x1="209.25" y1="85.74" x2="219.15" y2= "71.62" />
+  <polygon class="fil0 str1" points="137.16,11.93 416.76,208.05 314.23,354.07 "/>
+  <polygon class="fil0 str2" points="255.75,147.77 354.45,216.69 315.64,269.3 "/>
+  <path class="fil0 str3" d="M287.52 78.94l51.78 -0.33 0 23.24 0 13.88m-88.54 202.78l0 0 -101.23 0.2 -137.26 -0.27 -0.33 -76.09 0.33 -162.68 54.8 0 61.84 0.17"/>
+  <polyline class="fil0 str4" points="132.55,318.7 132.55,303.71 132.55,235.32 200.1,235.32 212.22,235.32 "/>
+  <rect class="fil0 str4" x="12.21" y="79.88" width="102.16" height="112.34"/>
+ </g>
+</svg>

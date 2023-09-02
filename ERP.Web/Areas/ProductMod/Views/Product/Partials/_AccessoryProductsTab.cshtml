@@ -1,0 +1,83 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+
+@model ProductViewModel
+<div id="accessoryProductsTab">
+
+    <button class="btn btn-primary btn-block text-left collapsed  my-3" type="button" data-toggle="collapse" data-target="#tabContent-accessoryproducts" aria-expanded="false" aria-controls="collapseExample">
+        <i class="fa fas fa-plus-circle"></i>  @localizer["Accessories"]
+    </button>
+
+    <div class="col-12 collapse colapsableTab border" id="tabContent-accessoryproducts" role="tabpanel" aria-labelledby="accessoryproducts-tab">
+        <div class="row w-100">
+            <div class="col-md-12 py-3">
+                @*<div class="row mb-2 d-none">
+                        <div class="col-10">
+                            <label class="card-title">@localizer["Sub-Category"]</label>
+                            <div class="input-group">
+                                @Html.DropDownList("SubCategory", Model.SubCategories, "----------", new { @class = "form-control" })
+                            </div>
+                        </div>
+                    </div>*@
+                <div class="input-group row-col-md-12">
+                    <div class="col-md-6">
+                        <label class="card-title">@localizer["Add accessory"]</label>
+                        <div class="input-group">
+                            @*@Html.DropDownList("AccessoryProduct", Model.AccessoryProductsList, "----------", new { @class = "form-control" })*@
+                            <select class="form-control" id="AccessoryProduct" name="AccessoryProduct">
+                                <option value="" selected="selected">----------</option>
+                                @foreach (var accproduct in Model.AccessoryProductsList)
+                                {
+                                    <option data-code="@accproduct.Code" value="@accproduct.Id">@accproduct.Description</option>
+                                }
+                            </select>
+                        </div>
+
+                    </div>
+                    <div class="d-flex align-items-end col-md-4"><button type="button" class="btn btn-primary text-white" id="AddAccessoryProductButton"><i class="fa fa-plus" aria-hidden="true"></i></button></div>
+                </div>
+            </div>
+            <div class="col-md-8 py-3">
+                <div class="row d-flex  col-md-12 ml-1">
+                    <label class="card-title text-uppercase">@localizer["Accessories"]</label>
+                </div>
+                <div class="table-responsive-sm col-12">
+                    <table class="table" id="AccessoryProductsTable">
+                        <thead>
+                            <tr>
+                                <th scope="col" width="15%">@localizer["Code"]</th>
+                                <th scope="col">@localizer["Description"]</th>
+                                <th scope="col" width="5%">@localizer["Delete"]</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model.AccessoryProducts != null)
+                            {
+                                @foreach (var item in Model.AccessoryProducts)
+                                {
+                                    <tr>
+                                        <td class="d-none">
+                                            <input type="hidden" name="AccessoryProducts.Index" value="@item.IdProductAccessory" />
+                                            <input type="hidden" name="AccessoryProducts[@item.IdProductAccessory].Id" readonly value="@item.Id" />
+                                            <input type="hidden" name="AccessoryProducts[@item.IdProductAccessory].ConcurrencyToken" readonly value="@item.ConcurrencyToken" />
+                                            <input type="hidden" name="AccessoryProducts[@item.IdProductAccessory].IdProductAccessory" readonly value="@item.IdProductAccessory" />
+                                            <input type="hidden" name="AccessoryProducts[@item.IdProductAccessory].ProductAccesory.Id" readonly value="@item.IdProductAccessory" />
+                                        </td>
+                                        <td><input type="text" class="form-control" name="AccessoryProducts[@item.IdProductAccessory].ProductAccessory.Code" readonly value="@item.ProductAccessory.Code" /></td>
+                                        <td><input type="text" class="form-control" name="AccessoryProducts[@item.IdProductAccessory].ProductAccessory.Description" readonly value="@item.ProductAccessory.Description" /></td>
+
+                                        <td><button type="button" class="btn btn-outline-danger d-block m-auto DeleteButtonRoadmap"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td>
+                                    </tr>
+                                }
+                            }
+
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

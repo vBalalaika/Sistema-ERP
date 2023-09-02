@@ -1,0 +1,229 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Production.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+@model WorkOrderHeaderViewModel
+@{
+    int index = 0;
+}
+
+<form id="create-form" method="post" asp-controller="WorkOrderHeader" asp-action="AssignUsersToActivities" asp-route-id="@Model.Id" onsubmit="return jQueryModalPostWithoutRefresh(this);" enctype="multipart/form-data">
+    <div class="form-row p-2">
+
+        <div class="col-md-12 d-flex pl-0">
+            <div class="col-md-1 mb-3 pl-0">
+                <label class="control-label">@localizer["Nº WO"]</label>
+                <input type="text" asp-for="WorkOrderHeaderNumber" readonly class="form-control text-center" />
+            </div>
+            <div class="col-md-2 mb-3">
+                <label asp-for="CreatedOn" class="control-label">@localizer["Date of creation"]</label>
+                <input type="text" name="CreatedOn" asp-for="CreatedOn" class="form-control" readonly />
+            </div>
+        </div>
+
+        @if (Model.WorkOrders.Count() > 1)
+        {
+
+            var workOrderIds = "";
+            var sparesOrStock = "";
+            foreach (var wo in Model.WorkOrders)
+            {
+                workOrderIds += wo.Id + ",";
+                if (wo.OrderDetail.ProductNumber.StartsWith("03"))
+                {
+                    sparesOrStock = "Repuestos";
+                }
+                if (wo.OrderDetail.ProductNumber.StartsWith("04"))
+                {
+                    sparesOrStock = "Stock";
+                }
+            }
+
+            <label class="control-label">@localizer["Products"]</label>
+            <div class="col-md-12 d-flex align-items-end w-100 pt-2 pl-0">
+
+                @*<input type="hidden" name="item.Id" value="@item.Id" />*@
+
+                <div class="col-md-2 mb-2 pl-0">
+                    <label class="control-label border-bottom w-100">@localizer["Nº Product"]</label>
+                    <input type="text" value="@sparesOrStock" readonly class="form-control" />
+                </div>
+
+                <div class="col-md-3 mb-2">
+                    <label class="control-label border-bottom w-100">@localizer["Product"]</label>
+                    <input type="text" value="Varios" readonly class="form-control" />
+                </div>
+
+                <div class="col-md-2 mb-2 text-center">
+                    <label class="control-label border-bottom w-100 text-center">@localizer["Advance detail"]</label>
+                    <a class="btn action-btn pt-2" asp-area="Production" asp-controller="WorkOrder" asp-action="LoadWorkOrderForSparesOrStock" asp-route-workOrderIds="@workOrderIds.TrimEnd(',').ToString()" title="@localizer["Percentage of completion"]">
+                        <img class="action-img-icon" src="../../../images/Avance.svg" width="20" height="20" />
+                    </a>
+                </div>
+
+            </div>
+        }
+        else
+        {
+            @foreach (var item in Model.WorkOrders)
+            {
+                @if (index == 0)
+                {
+
+                    <label class="control-label">@localizer["Products"]</label>
+
+                    <div class="row w-100 border-bottom my-3 ml-0">
+                        <div class="col-md-2 mb-2 pl-0 text-left">
+                            <label asp-for="@item.OrderDetail.ProductNumber" class="control-label w-100">@localizer["Nº Product"]</label>
+                        </div>
+
+                        <div class="col-md-3 mb-2 text-left">
+                            <label asp-for="@item.OrderDetail.Product.CodeAndDescription" class="control-label w-100">@localizer["Product"]</label>
+                        </div>
+
+                        @if (item.OrderDetail.Structure != null)
+                        {
+                            <div class="col-md-3 mb-2 text-left">
+                                <label asp-for="@item.OrderDetail.Structure.Description" class="control-label w-100">@localizer["Configuration"]</label>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-md-3 mb-2 text-left">
+                                <label class="control-label w-100">@localizer["Configuration"]</label>
+                            </div>
+                        }
+
+                        <div class="col-md-2 mb-2 text-left">
+                            <label asp-for="@item.OrderDetail.Quantity" class="control-label w-100">@localizer["Quantity"]</label>
+                        </div>
+
+                        <div class="col-md-2 mb-2 text-left">
+                            <label class="control-label w-100 text-center">@localizer["Advance detail"]</label>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12 d-flex align-items-end w-100 pl-0">
+
+                        <input type="hidden" name="item.Id" value="@item.Id" />
+
+                        <div class="col-md-2 mb-2 pl-0 text-left">
+                            @*<label asp-for="@item.OrderDetail.ProductNumber" class="control-label border-bottom w-100">@localizer["Nº Product"]</label>*@
+                            <input type="text" value="@item.OrderDetail.ProductNumber" readonly class="form-control" />
+                        </div>
+
+                        <div class="col-md-3 mb-2 text-left">
+                            @*<label asp-for="@item.OrderDetail.Product.CodeAndDescription" class="control-label border-bottom w-100">@localizer["Product"]</label>*@
+                            <input type="text" value="@item.OrderDetail.Product.CodeAndDescription" readonly class="form-control" />
+                        </div>
+
+                        @if (item.OrderDetail.Structure != null)
+                        {
+                            <div class="col-md-3 mb-2 text-left">
+                                @*<label asp-for="@item.OrderDetail.Structure.Description" class="control-label border-bottom w-100">@localizer["Configuration"]</label>*@
+                                <input type="text" value="@item.OrderDetail.Structure.Description" readonly class="form-control" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-md-3 mb-2 text-left">
+                                @*<label class="control-label border-bottom w-100">@localizer["Configuration"]</label>*@
+                                <input type="text" value="" readonly class="form-control" />
+                            </div>
+                        }
+
+                        <div class="col-md-2 mb-2 text-left">
+                            @*<label asp-for="@item.OrderDetail.Quantity" class="control-label border-bottom w-100">@localizer["Quantity"]</label>*@
+                            <input type="text" value="@Math.Round(item.OrderDetail.Quantity, 2)" readonly class="form-control text-center" />
+                        </div>
+
+                        <div class="col-md-2 mb-2 text-center">
+                            @*<label class="control-label border-bottom w-100 text-center">@localizer["Advance detail"]</label>*@
+                            <a class="btn action-btn pt-2" asp-area="Production" asp-controller="WorkOrder" asp-action="LoadWorkOrder" asp-route-workorderId="@item.Id" title="@localizer["Percentage of completion"]">
+                                <img class="action-img-icon" src="../../../images/Avance.svg" width="20" height="20" />
+                            </a>
+                        </div>
+
+                    </div>
+
+                }
+                else
+                {
+                    <div class="col-md-12 d-flex align-items-end w-100 pt-2">
+
+                        <input type="hidden" name="item.Id" value="@item.Id" />
+
+                        <div class="col-md-2 mb-2">
+                            <input type="text" value="@item.OrderDetail.ProductNumber" readonly class="form-control" />
+                        </div>
+
+                        <div class="col-md-3 mb-2">
+                            <input type="text" value="@item.OrderDetail.Product.CodeAndDescription" readonly class="form-control" />
+                        </div>
+
+                        @if (item.OrderDetail.Structure != null)
+                        {
+                            <div class="col-md-3 mb-2">
+                                <input type="text" value="@item.OrderDetail.Structure.Description" readonly class="form-control" />
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="col-md-3 mb-2">
+                                <input type="text" value="" readonly class="form-control" />
+                            </div>
+                        }
+
+                        <div class="col-md-2 mb-2">
+                            <input type="text" value="@Math.Round(item.OrderDetail.Quantity, 2)" readonly class="form-control text-center" />
+                        </div>
+
+                        <div class="col-md-2 mb-2 text-center">
+                            <a class="btn action-btn pt-2" asp-area="Production" asp-controller="WorkOrder" asp-action="LoadWorkOrder" asp-route-workorderId="@item.Id" title="@localizer["Percentage of completion"]">
+                                <img class="action-img-icon" src="../../../images/Avance.svg" width="20" height="20" />
+                            </a>
+                        </div>
+
+                    </div>
+                }
+
+                index++;
+
+            }
+
+        }
+
+        <div class="col-md-12 pt-3 pl-0">
+            <label class="control-label">@localizer["Processes"]</label>
+        </div>
+
+        @if (!Model.WorkActivitiesGroupsByStation.All(wags => wags.IsGroupActive))
+        {
+            <button id="btn-enable-all" class="btn btn-secondary">@localizer["Enable all"]</button>
+        }
+        else
+        {
+            <button id="btn-enable-all" class="btn btn-secondary" disabled>@localizer["Enable all"]</button>
+        }
+        
+        <div class="row w-100 border-bottom my-3 ml-0">
+            <div class="col-md-1 text-left">
+                <label> @localizer["Actions"]</label>
+            </div>
+            <div class="col-md-4 text-left">
+                <label> @localizer["Station"]</label>
+            </div>
+            <div class="col-md-4 text-left">
+                <label> @localizer["Users"]</label>
+            </div>
+            <div class="col-md-3 text-left">
+                <label> @localizer["Advance"]</label>
+            </div>
+        </div>
+        <partial name="_ActivitiesState" model="@Model" />
+    </div>
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+        <button type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+    </div>
+</form>

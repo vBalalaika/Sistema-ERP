@@ -1,0 +1,168 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Production.Models
+@using ERP.Web.Areas.Sales.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+@model ToCreateWorkOrderViewModel
+
+<form id="create-form" method="post" asp-controller="WorkOrder" asp-action="OnPostCreate"  onsubmit="return jQueryModalPostSaleAndProductionOrders(this);" enctype="multipart/form-data">
+
+    <div class="form-row">
+        <div class="col-md-6 mb-3">
+            <label asp-for="NroWorkOrder" class="control-label">@localizer["Nº WO"]</label>
+            <input type="text" name="NroWorkOrder" asp-for="NroWorkOrder" readonly class="form-control" />
+            <span asp-validation-for="NroWorkOrder" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <label asp-for="WorkOrderDate" class="control-label">@localizer["Date"]</label>
+            <input asp-for="WorkOrderDate" name="WorkOrderDate" type="date" class="form-control" />
+            <span asp-validation-for="WorkOrderDate" class="text-danger"></span>
+        </div>
+        @for (int i = 0; i < Model.OrderDetailList.Count; i++)
+        {
+            <input type="hidden" name="OrderDetailList.Index" value="@Model.OrderDetailList[i].Id" />
+            <input type="hidden"  name="OrderDetailList[@Model.OrderDetailList[i].Id].Quantity" value="@Model.OrderDetailList[i].Quantity"/>
+            <input type="hidden" name="OrderDetailList[@Model.OrderDetailList[i].Id].Id" value="@Model.OrderDetailList[i].Id" />
+            <div class="col-md-6 mb-3">
+
+                <label asp-for="OrderDetailList[@Model.OrderDetailList[i].Id].ProductNumber" class="control-label">@localizer["Nº Product"]</label>
+                <input type="text" name="OrderDetailList[@Model.OrderDetailList[i].Id].ProductNumber" value="@Model.OrderDetailList[i].ProductNumber" readonly class="form-control" />
+
+            </div>
+            <div class="col-md-6 mb-3">
+                <label asp-for="Model.OrderDetailList[@Model.OrderDetailList[i].Id].Product.CodeAndDescription" class="control-label">@localizer["Product"]</label>
+                <input type="text" name="OrderDetailList[@Model.OrderDetailList[i].Id].Product.CodeAndDescription" value="@Model.OrderDetailList[i].Product.CodeAndDescription" readonly class="form-control" />
+
+            </div>
+
+        }
+        <div class="col-md-6 mb-3">
+            <label class="control-label">@localizer["Work Station"]</label>
+            <div class="mx-4">
+                <table class="table" id="StationListTable">
+                    <thead>
+                        <tr>
+                            <th scope="col">@localizer["Station"]</th>
+                            <th scope="col" width="5%">@localizer["Delete"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                    <tfoot>
+
+                    </tfoot>
+                </table>
+
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="custom-control custom-checkbox ">
+                <input id="checkAllStations" class="custom-control-input" type="checkbox" checked>
+                <label for="checkAllStations" class="custom-control-label">@localizer["Complete"]</label>
+            </div>
+            <div class="custom-control custom-checkbox">
+                <input id="checkSelectStations" class="custom-control-input" type="checkbox">
+                <label for="checkSelectStations" class="custom-control-label">@localizer["Select station"]</label>
+            </div>
+            <div class="row w-100">
+                <div class="col-md-9">
+                    <select class="form-control" id="StationList" name="StationList" disabled>
+                        <option value="" selected="selected">----------</option>
+                        @foreach (var station in Model.StationList)
+                        {
+                            <option data-code="@station.AbreviationDescription" value="@station.Id">@station.Abbreviation - @station.Description</option>
+                        }
+                    </select>
+                </div>
+                <div class="d-flex align-items-end col-md-2">
+                    <button type="button" id="btnAddStation" class="btn btn-primary text-white" disabled><i class="fa fa-plus" aria-hidden="true"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+        <button type="submit" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+    </div>
+
+</form>
+
+<script>
+    $(document).ready(function () {
+
+        checkAllStations.addEventListener('change', function () {
+
+            if (this.checked) {
+                $('#checkSelectStations').prop('checked', false);
+                $('#StationList').prop('disabled', true);
+                $('#btnAddStation').prop('disabled', true);
+                $('#StationListTable tbody').empty();
+
+            } else {
+                $('#checkSelectStations').prop('checked', true);
+                $('#StationList').prop('disabled', false);
+                $('#btnAddStation').prop('disabled', false);
+            }
+        });
+        checkSelectStations.addEventListener('change', function () {
+            if (this.checked) {
+                $('#checkAllStations').prop('checked', false);
+                $('#StationList').prop('disabled', false);
+                $('#btnAddStation').prop('disabled', false);
+            } else {
+                $('#checkAllStations').prop('checked', true);
+                $('#StationList').prop('disabled', true);
+                $('#btnAddStation').prop('disabled', true);
+                $('#StationListTable tbody').empty();
+            }
+        });
+        $("#StationList").select2({
+            placeholder: "Seleccionar puesto",
+            language: {
+                noResults: function (params) {
+                    return 'No se encontraron resultados';
+                }
+            },
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            },
+            sorter: data => data.sort((a, b) => a.text.localeCompare(b.text))
+        });
+        $("#btnAddStation").on('click', function () {
+            var code = $("#StationList").find(":selected").data("code");
+            var stationId = $("#StationList").val();// Gets the selected value of the dropdown
+            if (stationId == "") {
+                alert("Debe seleccionar una estación de trabajo")
+            }
+            else {
+                var add = true;
+                $("#StationListTable").find("td.d-none").each(function () {
+                    if ($(this).find("input").val() == stationId) {
+                        add = false;
+                    }
+
+                });
+                if (add) {
+                    $("#StationListTable tbody").append('<tr> <td class="d-none">' +
+                        '<input type="hidden" name="StationListSelected.Index" value="' + stationId + '" />' +
+                        '<input type="hidden" name="StationListSelected[' + stationId + '].Id" readonly value="' + stationId + '" /></td>' +
+                        '<td><input type="text" class="form-control"  readonly value="' + code + ' " /></td>' +
+                        '<td><button type="button" class="btn btn-outline-danger d-block m-auto DeleteButtonStationList"><i class="far fa-trash-alt"></i></button></td></tr>');
+                }
+                else {
+                    alert("El puesto seleccionado ya se encuentra en la lista")
+                }
+                //Limpiamos combo cuando agrega 1 estación
+                $("#StationListSelected").val(null).trigger("change");
+                $("#StationListSelected").select2("open");
+            }
+        });
+        $(document).on("click", ".DeleteButtonStationList", function () {
+            $(this).parent().parent().remove();
+        });
+    })
+
+</script>

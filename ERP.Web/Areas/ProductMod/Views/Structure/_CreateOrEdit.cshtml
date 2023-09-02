@@ -1,0 +1,290 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model StructureViewModel
+<form id="create-form" method="post" asp-controller="Structure" asp-action="OnPostCreateOrEdit" asp-route-id="@Model.Id" asp-route-viewToRender="@Model.viewToRender" onsubmit="return jQueryModalPost(this);" enctype="multipart/form-data">
+    @*prevent enter submit*@
+    <button type="submit" disabled style="display: none" aria-hidden="true"></button>
+    <input type="hidden" asp-for="ConcurrencyToken" class="form-control" />
+    @if (Model.Id != 0)
+    {
+        <input type="hidden" asp-for="LastVersion.VersionNumber" class="form-control">
+    }
+
+    <input type="hidden" asp-for="ProductId" readonly value="@Model.ProductId" />
+
+    <div class="row d-flex text-left col-md-12 display mb-2">
+        <label class="card-title text-uppercase">@Model.Product.Code - @Model.Product.Description</label>
+    </div>
+    <div class="form-row mb-3">
+        <div class="col-md-5 mb-3">
+            <label>@localizer["Configuration name"]</label>
+            <input type="text" asp-for="Description" name="Description" class="form-control">
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label asp-for="SupplyVoltageId" class="control-label">@localizer["Voltage"]</label>
+            <select name="SupplyVoltageId" class="form-control select2bs4" id="SupplyVoltages" asp-for="SupplyVoltageId" asp-items="@Model.SupplyVoltages">
+                <option value="">@localizer["Select supply voltage"]</option>
+            </select>
+        </div>
+
+        <div class="col-3 col-sm-3 col-md-1 col-lg-1 col-xl-1 mb-4 ml-4 align-self-end">
+            <span class="mr-1">@localizer["Base"]</span>
+            @Html.CheckBoxFor(model => model.IsBase)
+        </div>
+        <div class="col-3 col-sm-3 col-md-1 col-lg-1 col-xl-1 mb-4 align-self-end">
+            <span class="mr-1">@localizer["Standard"]</span>
+            @Html.CheckBoxFor(model => model.IsStandard)
+        </div>
+
+        <div class="row d-flex col-md-12 display pl-3">
+            <label class="font-weight-light">@localizer["Components"]</label>
+        </div>
+        <div class="col-md-5 mb-3">
+            <label>@localizer["Add component product"]</label>
+            <div class="input-group">
+                <select class="form-control select2bs4" name="ProductsStructure" id="ProductsStructure">
+                    <option value="" selected="selected">----------</option>
+                    @foreach (var prod in Model.ProductsList)
+                    {
+                        <option data-code="@prod.Code" value="@prod.Id">@prod.CodeAndDescription</option>
+                    }
+                </select>
+            </div>
+
+        </div>
+        <div class="col-md-5 mb-3">
+            <label>@localizer["Configuration of component product"]</label>
+            <div class="input-group">
+                <select class="form-control select2bs4" id="StructuresByProduct">
+                    <option value="" selected>----------</option>
+                </select>
+
+            </div>
+        </div>
+
+        <div class="col-md-1 mb-3">
+            <label>@localizer["Quantity"]</label>
+            <input type="number" id="Quantity" min="1" class="form-control text-center">
+        </div>
+        <div class="col-12 col-sm-12 col-md-1 col-lg-1 col-xl-1 mb-3 w-50">
+            <label class="control-label" for="AddProductToStructureButton">@localizer["Add"]</label>
+            <button type="button" class="btn btn-primary text-white form-control" id="AddProductToStructureButton"><i class="fa fa-plus" aria-hidden="true"></i></button>
+        </div>
+
+    </div>
+
+
+    <div class="col-12 pl-0">
+
+        @*<div class="card">*@
+        <div class="card-body table-responsive">
+            <div class="row d-flex col-md-12 display">
+                <label class="card-title text-uppercase">@localizer["Structure components"]</label>
+            </div>
+            <table id="StructureItemsTable" class="table table-striped w-100 nowrap">
+                <thead>
+                    <tr>
+                        <th scope="col" width="5%">@localizer["Order"]</th>
+                        <th scope="col" width="5%">@localizer["Code"]</th>
+                        <th scope="col" width="25%">@localizer["Product"]</th>
+                        <th scope="col" width="5%">@localizer["Quantity"]</th>
+                        <th scope="col" width="25%">@localizer["Configuration"]</th>
+                        <th scope="col" width="5%">@localizer["Delete"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.StructureItems != null)
+                    {
+                        @for (var i = 0; i < Model.StructureItems.Count; i++)
+                        {
+                            <tr>
+                                <td class="d-none">
+                                    <input type="hidden" class="getMax" name="StructureItems.Index" value="@i" />
+                                    <input type="hidden" asp-for="StructureItems[i].Id" readonly value="@Model.StructureItems[i].Id" />
+                                    <input type="hidden" asp-for="StructureItems[i].ConcurrencyToken" readonly value="@Model.StructureItems[i].ConcurrencyToken" />
+                                    @if (Model.StructureItems[i].SonProductId != null)
+                                    {
+                                        <input type="hidden" asp-for="StructureItems[i].SonProductId" readonly value="@Model.StructureItems[i].SonProductId" />
+                                    }
+                                    else
+                                    {
+                                        <input type="hidden" asp-for="StructureItems[i].SonStructureId" readonly value="@Model.StructureItems[i].SonStructureId" />
+                                    }
+                                </td>
+                                <td width="5%"><input type="number" min="1" class="form-control text-center" asp-for="StructureItems[i].Order" value="@Model.StructureItems[i].Order" /></td>
+                                <td width="15%"><input type="text" class="form-control" asp-for="StructureItems[i].SonProduct.Code" readonly value="@if(Model.StructureItems[i].SonProduct!=null){ @Model.StructureItems[i].SonProduct.Code;}else{@Model.StructureItems[i].SonStructure.Product.Code;} " /></td>
+                                <td width="35%"><input type="text" class="form-control" asp-for="StructureItems[i].SonProduct.Description" readonly value="@if(Model.StructureItems[i].SonProduct!=null){ @Model.StructureItems[i].SonProduct.Description;}else{@Model.StructureItems[i].SonStructure.Product.Description;} " /></td>
+                                <td width="5%"><input type="number" min="1" class="form-control time text-center" asp-for="StructureItems[i].Quantity" value="@Model.StructureItems[i].Quantity" /></td>
+                                <td width="35%"><input type="text" class="form-control" asp-for="StructureItems[i].SonStructure.Description" readonly value="@if(Model.StructureItems[i].SonStructure!=null){ @Model.StructureItems[i].SonStructure.Description; }" /></td>
+                                <td class="text-center" width="5%"><button type="button" class="btn btn-outline-danger d-block m-auto DeleteButton"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td>
+                            </tr>
+
+
+                        }
+                    }
+
+                </tbody>
+            </table>
+        </div>
+        @*</div>*@
+
+    </div>
+
+    <div class="row form-group d-flex flex-row-reverse mb-0 mt-2 align-self-end">
+        <button type="submit" class="btn btn-default close-button ml-2" data-dismiss="modal">@localizer["Cancel"]</button>
+        <button id="btn-save" type="submit" class="btn btn-primary text-white ">@localizer["Save"]</button>
+
+    </div>
+</form>
+<script>
+    $.validator.unobtrusive.parse(document);
+    $("#ProductsStructure").select2({
+        placeholder: "Seleccionar un producto",
+        theme: "bootstrap4",
+        escapeMarkup: function (m) {
+            return m;
+        }
+    });
+
+    $("#StructuresByProduct").select2({
+        placeholder: "Seleccionar una configuración",
+        theme: "bootstrap4",
+        escapeMarkup: function (m) {
+            return m;
+        },
+        sorter: data => data.sort((a, b) => a.text.localeCompare(b.text))
+    });
+
+    $("#SupplyVoltages").select2({
+        placeholder: "Seleccionar una tensión",
+        theme: "bootstrap4",
+        escapeMarkup: function (m) {
+            return m;
+        }
+    });
+
+    //ProductStructure "change"
+    $('#ProductsStructure').on('select2:select', function (e) {
+        var code = $("#ProductsStructure").find(":selected").data("code");
+        //var data = $(this).select2('data');
+        var productId = $("#ProductsStructure").val();
+        if (productId != undefined) {
+            if (productId != "") {
+                $.ajax({
+                    async: true,
+                    type: "GET",
+                    url: '/productmod/structure/GetStructuresByProduct?productId=' + productId,
+                    success: function (result) {
+                        if (result.isValid) {
+
+                            $("#StructuresByProduct").empty().trigger("change");
+
+                            result.structures.forEach(function (structure) {
+                                if (structure.isStandard) {
+                                    structure.description += "-(Estándar)";
+                                }
+                                if (structure.isBase) {
+                                    structure.description += "-(Base)";
+                                }
+                                var option = new Option(structure.description, structure.id, false, structure.isStandard);
+                                $('#StructuresByProduct').append(option).trigger('change');
+
+                            });
+                        }
+                    }
+                });
+            }
+
+        }
+    });
+
+    // .DeleteButton delete row
+    $(document).on("click", ".DeleteButton", function () {
+        $(this).parent().parent().remove();
+    });
+
+    //Add item to structure button
+    $("#AddProductToStructureButton").on('click',async function () {
+        var ProductId = $('#ProductsStructure').val();// Gets the selected value of the dropdown
+
+        var cantidad = $('#Quantity').val();
+        if (ProductId == "" || cantidad == "") {
+            alert("Debe seleccionar un producto y la cantidad")
+        }
+        else {
+            var structureToAddId = $("#StructuresByProduct").val();
+            if (structureToAddId != null) {
+                var canAdd = await loopControl(@Model.Id, structureToAddId);
+            } else {
+                addNewItem();
+                cleanDataAndGetReadyToNext();
+            }
+        }
+    });
+
+    function cleanDataAndGetReadyToNext() {
+        //Limpiamos combos cuando agrega 1 product
+        $("#ProductsStructure").val(null).trigger("change");
+        $("#StructuresByProduct").val(null).trigger("change");
+        $('#Quantity').val(null);
+
+        $("#ProductsStructure").select2("open");
+    }
+
+    // Agregar nuevo item a estructura
+    function addNewItem() {
+            var max = 0; //Buscamos el Maximo, para q no se repita el index de agrupacion.
+            if ($('#StructureItemsTable tbody tr').length > 0) {
+                max = Math.max.apply(Math, $('.getMax').map(function () {
+                    return $(this).val()
+                }))
+                max++;
+        }
+
+        var code = $("#ProductsStructure").find(":selected").data("code");
+        var codeanddesc = $("#ProductsStructure").select2('data')[0].text.split('-');
+        var descripcionproducto = codeanddesc[1];
+        var structureId = $("#StructuresByProduct").val();
+        var ProductId = $('#ProductsStructure').val();
+        var fkTd;
+        if (structureId != null) {
+            fkTd = '<input type="hidden" name="StructureItems[' + max + '].SonStructureId" readonly value="' + structureId + '" />';
+        } else {
+            fkTd = '<input type="hidden" name="StructureItems[' + max + '].SonProductId" readonly value="' + ProductId + '" /></td>';
+        }
+        $("#StructureItemsTable tbody").append('<tr> <td class="d-none">' +
+            '<input type="hidden" class="getMax" name="StructureItems.Index" value="' + max + '" />' +
+            '<input type="hidden" class="form-control" name="StructureItems[' + max + '].StructureId" value="' + @Model.Id + '" />' +
+            fkTd +
+            '<td width="5%"><input type="number" min="1" class="form-control text-center" name="StructureItems[' + max + '].Order" value="' + (max + 1) + '" /></td>' +
+            '<td width="15%"><input type="text"  class="form-control" name="StructureItems[' + max + '].SonProduct.Code" readonly  value="' + code + '" /></td>' +
+            '<td width="35%"><input type="text" class="form-control" name="StructureItems[' + max + '].SonProduct.Description" readonly value="' + descripcionproducto + ' " /></td>' +
+            '<td width="5%"><input type="number" min="1" class="form-control time text-center" name="StructureItems[' + max + '].Quantity"  value="' + $("#Quantity").val() + '" /></td>' +
+            '<td width="35%"><input type="text" class="form-control" name="StructureItems[' + max + '].SonStructure.Description"  readonly value="' + $("#StructuresByProduct option:selected").text() + ' " /></td>' +
+            '<td class="text-center" width="5%"><button type="button" class="btn btn-outline-danger d-block m-auto DeleteButton"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button></td></tr>');
+    }
+
+
+    // Funcion para controlar que no se pueda crear un bucle infinito entre estructuras
+    async function loopControl(structureId, structureToAddId) {
+        $.ajax({
+            async: true,
+            type: "GET",
+            url: '/productmod/structure/LoopControl?structureId=' + structureId + '&structureToAddId=' + structureToAddId + '',
+            success: function (result) {
+                if (result.canAdd) {
+                    addNewItem();
+                    cleanDataAndGetReadyToNext()
+                } else {
+                    alert("No se puede agregar la estructura seleccionada, causaría bucle infinito");
+                }
+            }
+        })
+    }
+
+
+    $('#ProductsStructure').trigger('select2:select');
+</script>

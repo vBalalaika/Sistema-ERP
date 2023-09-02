@@ -1,0 +1,15 @@
+﻿#shipmentsTable_filter, #allActivitiesShippingTable_filter {
+    display: none;
+}
+
+.sticky-top-title-custom {
+    position: -webkit-sticky;
+    position: sticky;
+    top: 0;
+    z-index: 1020;
+}
+
+div .dts div.dataTables_scrollBody {
+    min-height: 29vh !important;
+    height: 20vh !important;
+}

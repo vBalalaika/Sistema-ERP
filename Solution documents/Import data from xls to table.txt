@@ -1,0 +1,26 @@
+1º Importo el excel a una tabla cualquiera en SQL SERVER, genera una tabla temporal que luego se borra.
+2º Ejecuto la query para copiar datos de la tabla temporal creada, a la tabla de EF del sistema.
+
+Por ejemplo:
+INSERT INTO Countries ([Code],[Denomination],[Description],[IsActive],[SystemTimeZone])
+(SELECT [Code],[Denomination],[Description],[IsActive],[SystemTimeZone] FROM Nombre_Tabla_Importada)
+
+*********************************************** Módulo clientes ***********************************************
+
+Para insertar los valores de estados de operación
+
+INSERT INTO [SystemERP_DB].[dbo].[OperationStates] ([Description],[IsActive])
+VALUES ('Iniciada',1)
+GO
+INSERT INTO [SystemERP_DB].[dbo].[OperationStates] ([Description],[IsActive])
+VALUES ('En curso',1)
+GO
+INSERT INTO [SystemERP_DB].[dbo].[OperationStates] ([Description],[IsActive])
+VALUES ('No iniciada',1)
+GO
+INSERT INTO [SystemERP_DB].[dbo].[OperationStates] ([Description],[IsActive])
+VALUES ('Concretada',1)
+GO
+INSERT INTO [SystemERP_DB].[dbo].[OperationStates] ([Description],[IsActive])
+VALUES ('De baja',1)
+GO

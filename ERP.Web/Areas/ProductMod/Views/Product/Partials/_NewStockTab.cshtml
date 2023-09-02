@@ -1,0 +1,56 @@
+﻿@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@model ProductViewModel
+
+<input asp-for="StorageQuantity" id="StorageQuantity" type="text" name="StorageQuantity" />
+
+<input asp-for="StorageUnitMeasureId" id="StorageUnitMeasureId" type="text" name="StorageUnitMeasureId" />
+
+<input asp-for="PhysicalSpaceWidth" id="PhysicalSpaceWidth" type="text" name="PhysicalSpaceWidth" />
+
+<input asp-for="PhysicalSpaceLength" id="PhysicalSpaceLenght" type="text" name="PhysicalSpaceLength" />
+
+<input asp-for="PhysicalSpaceHeight" id="PhysicalSpaceHeight" type="text" name="PhysicalSpaceHeight" />
+
+<input asp-for="LocationStationId" id="LocationStationId" type="text" name="LocationStationId" />
+
+<input asp-for="Shelves_Rack" id="Shelves_Rack" type="number" name="Shelves_Rack" />
+
+<input asp-for="Shelf" id="Shelf" type="number" name="Shelf" />
+
+<input asp-for="Position" id="Position" type="number" name="Position" />
+
+<input asp-for="StockWidth" id="StockWidth" type="text" name="StockWidth" />
+
+<input asp-for="StockWidthUnitMeasureId" id="StockWidthUnitMeasureId" type="text" name="StockWidthUnitMeasureId" />
+
+<input asp-for="StockLength" id="StockLength" type="text" name="StockLength" />
+
+<input asp-for="StockLengthUnitMeasureId" id="StockLengthUnitMeasureId" type="text" name="StockLengthUnitMeasureId" />
+
+<input asp-for="StockHeight" id="StockHeight" type="text" name="StockHeight" />
+
+<input asp-for="StockHeightUnitMeasureId" id="StockHeightUnitMeasureId" type="text" name="StockHeightUnitMeasureId" />
+
+<input asp-for="StockQuantity" id="StockQuantity" type="text" name="StockQuantity" />
+
+<input asp-for="StockQuantityUnitMeasureId" id="StockQuantityUnitMeasureId" type="text" name="StockQuantityUnitMeasureId" />
+
+<input asp-for="StockWeight" id="StockWeight" type="text" name="StockWeight" />
+
+<input asp-for="StockWeightUnitMeasureId" id="StockWeightUnitMeasureId" type="text" name="StockWeightUnitMeasureId" />
+
+<input asp-for="Existence" id="Existence" type="text" name="Existence" />
+
+<input asp-for="ExistenceUnitMeasureId" id="ExistenceUnitMeasureId" type="text" name="ExistenceUnitMeasureId" />
+
+<input asp-for="Minimum" id="Minimum" type="text" name="Minimum" />
+
+<input asp-for="MinimumUnitMeasureId" id="MinimumUnitMeasureId" type="text" name="MinimumUnitMeasureId" />
+
+<input asp-for="QuantityToOrder" id="QuantityToOrder" type="text" name="QuantityToOrder" />
+
+<input asp-for="QuantityToOrderUnitMeasureId" id="QuantityToOrderUnitMeasureId" type="text" name="QuantityToOrderUnitMeasureId" />
+
+<textarea asp-for="StockObservations" id="StockObservations" name="StockObservations"></textarea>

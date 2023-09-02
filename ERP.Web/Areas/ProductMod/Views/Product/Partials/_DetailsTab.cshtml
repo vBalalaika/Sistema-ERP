@@ -1,0 +1,151 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model ProductViewModel
+
+<button class="btn btn-primary btn-block text-left collapsed my-3" type="button" data-toggle="collapse" data-target="#tabContent-detail" aria-expanded="false" aria-controls="collapseExample">
+    <i class="fa fas fa-plus-circle"></i>  @localizer["Details"]
+</button>
+
+<div class="collapse show" id="tabContent-detail" role="tabpanel" aria-labelledby="detail-tab">
+    <div class="form-row">
+
+        <div class="col-md-1 col-lg-1 col-xl-1 mb-3">
+            <label>@localizer["Code"]</label>
+            @if (Model.Id != 0)
+            {
+                <input type="text" asp-for="Code" readonly name="Code" class="form-control" id="CodeGeneratorInput">
+            }
+            else
+            {
+                <input type="text" asp-for="Code" name="Code" class="form-control" id="CodeGeneratorInput">
+            }
+
+            <span asp-validation-for="Code" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-1 col-lg-1 col-xl-1 mb-3 align-self-end">
+            <a id="CodeGenerator" title="@localizer["Generator"]" class="btn btn-secondary w-100" asp-area="ProductMod" asp-controller="CodeGenerator" asp-action="OnGetCreateCodeGenerator"><img src="../../../images/newcode23.svg" width="100" height="50" /></a>
+        </div>
+
+        <div class="col-md-7 mb-3">
+            <label>@localizer["Description"]</label>
+            <input type="text" asp-for="Description" name="Description" class="form-control">
+            <span asp-validation-for="Description" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-3 mb-3">
+            <label> @localizer["Unit measure"]</label>
+            <div class="input-group">
+                @Html.DropDownListFor(m => m.UnitMeasureId, Model.UnitsMeasure, "----------", new { @class = "form-control" })
+            </div>
+            <span asp-validation-for="UnitMeasureId" class="text-danger"></span>
+        </div>
+
+        <div class="col-md-8">
+            <div class="form-row">
+                <div class="col-md-6 mb-3">
+                    <label id="subcategoryLabel"> @localizer["Family/Heading"]</label>
+                    <div class="input-group">
+                        @Html.DropDownListFor(m => m.SubCategoryId, Model.SubCategories, "----------", new { @class = "form-control" })
+                        @*Hidden para que funcione en el editar! Sino, al estar disabled, no guarda el valor*@
+                        @Html.HiddenFor(x => x.SubCategoryId)
+                    </div>
+                    <span asp-validation-for="SubCategoryId" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label> @localizer["Category"]</label>
+                    <div class="input-group">
+                        @Html.DropDownListFor(m => m.SubCategory.CategoryId, Model.Categories, "----------", new { @class = "form-control" })
+                        @*Hidden para mantener la descripcion de Categoria*@
+                        @Html.HiddenFor(x => x.SubCategory.Category.Description)
+                    </div>
+                    <span asp-validation-for="SubCategory.CategoryId" class="text-danger"></span>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="form-row pt-3 pb-3">
+                        <label class="pr-5">Origen de producto</label>
+                        <div class="col-md-12 d-flex mb-3 mt-1">
+                            <div class="form-check form-check-inline pr-4">
+                                <div class="custom-control custom-checkbox small">
+                                    <input class="custom-control-input" type="checkbox" id="chkInHouseManufacturing" name="ProductFeature.InHouseManufacturing" asp-for="ProductFeature.InHouseManufacturing">
+                                    <label class="custom-control-label" for="chkInHouseManufacturing">@localizer["Simplemak"]</label>
+                                </div>
+                            </div>
+                            <div class="form-check form-check-inline pr-5">
+                                <div class="custom-control custom-checkbox small">
+                                    <input name="ProductFeature.Bought" asp-for="ProductFeature.Bought" class="custom-control-input" type="checkbox" id="chkBought">
+                                    <label class="custom-control-label" for="chkBought">@localizer["Imported"]</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-8 pt-3">
+                    <div class="form-row">
+                        <div class="col-md-2 mt-4">
+                            <button title="@localizer["Files"]" type="button" class="btn btn-secondary w-100" onclick="jQueryModalGet('/productmod/product/GetFilesByProduct?id=@Model.Id','@Model.CodeAndDescription')"><img class="white-img-icon" src="../../../images/Archivos.svg" width="35" height="20" /></button>
+                        </div>
+
+                        @if (Model.Id != 0 && Model.SubCategory.Category.Description != "Piezas Individuales")
+                        {
+                            @if (Model.Structures.Any(x => x.IsStandard))
+                            {
+                                <div class="col-md-2 mt-4">
+                                    <a id="btnStructure" title="@localizer["Standard structure"]" asp-area="ProductMod" asp-controller="Structure" asp-action="LoadProduct" asp-route-productId="@Model.Id" asp-route-isStandard="true" class="btn btn-secondary w-100 text-white"><img class="white-img-icon" src="../../../images/Estructura estandar.svg" width="35" height="20" /></a>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-2 mt-4">
+                                    <a id="btnStructure" title="@localizer["Standard structure"]" asp-area="ProductMod" asp-controller="Structure" asp-action="Index" asp-route-productId="@Model.Id" class="btn btn-secondary w-100 text-white"><img class="white-img-icon" src="../../../images/Estructura estandar.svg" width="35" height="20" /></a>
+                                </div>
+                            }
+
+                            <div class="col-md-2 mt-4">
+                                <a id="btnConfigurations" title="@localizer["Configurations"]" asp-area="ProductMod" asp-controller="Structure" asp-action="Index" asp-route-productId="@Model.Id" class="btn btn-secondary w-100 text-white"><img class="white-img-icon" src="../../../images/Configuraciones.svg" width="35" height="20" /></a>
+                            </div>
+                        }
+                        @if (Model.Id != 0 && Model.SubCategory.Category.Description != "Maquinas y Accesorios")
+                        {
+                            <div class="col-md-2 mt-4">
+                                <button title="@localizer["Providers"]" type="button" onclick="jQueryModalGet('/productmod/product/GetProvidersByProduct?id=@Model.Id','@Model.CodeAndDescription')" class="btn btn-secondary w-100"><img class="white-img-icon" src="../../../images/Proveedores.svg" width="35" height="20" /></button>
+                            </div>
+                        }
+
+                        @if (Model.Id != 0 && Model.ProductFeature.StoredStock == true)
+                        {
+                            <div class="col-md-2 mt-4">
+                                <button disabled title="@localizer["Stock information"]" type="button" onclick="jQueryModalGet('/Logistics/Stock/_OnGetCreateOrEditExistence?productId=@Model.Id','@localizer["Stock information"]')" class="btn btn-secondary w-100"><img src="../../../images/consultaStock.svg" width="35" height="20" /></button>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="col-md-1 mb-3 pt-2">
+                    <label>@localizer["Revision"]</label>
+                    @if (Model.Id == 0)
+                    {
+                        <input type="text" as asp-for="Version" name="Version" value="1" class="form-control text-center">
+                    }
+                    else
+                    {
+                        <input type="text" as asp-for="Version" name="Version" class="form-control text-center">
+                    }
+                    <span asp-validation-for="Version" class="text-danger"></span>
+                </div>
+
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="col-md-12 col-xl-12 mb-3 p-0">
+                <label>@localizer["Observation"]</label>
+                <textarea rows="5" asp-for="Observation" name="Observation" class="form-control"></textarea>
+                <span asp-validation-for="Observation" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+</div>

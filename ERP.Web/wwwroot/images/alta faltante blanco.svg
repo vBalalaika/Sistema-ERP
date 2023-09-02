@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW 2018 (64 Bit Versión de evaluación) -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="25.4552mm" height="17.8244mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 979.95 686.19"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <font id="FontID0" horiz-adv-x="659" font-variant="normal" class="str4" style="fill-rule:nonzero" font-style="normal" font-weight="400">
+	<font-face 
+		font-family="Berlin Sans FB">
+		<font-face-src>
+			<font-face-name name="Berlin Sans FB"/>
+		</font-face-src>
+	</font-face>
+   <missing-glyph><path d="M0 0z"/></missing-glyph>
+   <glyph unicode="+" horiz-adv-x="403" d="M383.337 336.171c0,-5.34234 -2.50127,-32.3372 -7.33392,-81.1734 -1.00051,-2.66173 -3.33189,-4.00204 -6.83367,-4.00204 -15.9987,0 -37.3398,0.500255 -64.1648,1.50076 -32.1673,1.00051 -53.5084,1.50076 -64.0043,1.50076 0,-16.6594 0.500255,-41.4928 1.50076,-74.5002 1.00051,-32.9979 1.50076,-57.8313 1.50076,-74.5002 0,-12.6668 -16.499,-19.0002 -49.1666,-19.0002 -21.5015,0 -35.839,2.00102 -42.8331,5.83316 -3.00153,2.00102 -4.67219,6.00306 -5.00255,12.1666 -0.670153,18.6699 -0.500255,43.5033 0.500255,74.84 1.00051,38.0005 1.50076,63.1643 1.50076,75.1609 -8.83469,0 -29.3357,-0.500255 -61.8334,-1.50076 -25.3337,-1.00051 -46.0046,-1.50076 -61.8334,-1.50076 -5.5028,0 -8.33443,2.34082 -8.33443,6.83367 0,2.34082 1.50076,15.338 4.3324,39.1709 0,12.9972 0.670153,27.0043 2.00102,42.0025 2.33138,3.66224 6.00306,5.33291 11.1661,5.33291 -9.33494,0 28.8354,-1.00051 114.502,-3.33189 0,15.9987 -0.169898,40.162 -0.500255,72.6597 -0.330357,32.5071 -0.500255,56.8403 -0.500255,72.9995 0,5.5028 3.17143,8.33443 9.33494,8.33443 7.99464,0 20.501,0.169898 37.1604,0.670153 16.6689,0.500255 29.1752,0.830612 37.3398,0.830612 7.99464,0 12.1666,-4.66275 12.1666,-13.6673 0,-15.6684 -0.500255,-39.1615 -1.50076,-70.6681 -1.00051,-31.4972 -1.50076,-55.1602 -1.50076,-71.1589 14.6678,0 36.8301,0.160459 66.4961,0.500255 29.6661,0.330357 51.8377,0.500255 66.5056,0.500255 6.16352,0 9.33494,-2.00102 9.33494,-5.83316z"/>
+  </font>
+  <style type="text/css">
+   <![CDATA[
+    @font-face { font-family:"Berlin Sans FB";font-variant:normal;font-style:normal;font-weight:normal;src:url("#FontID0") format(svg)}
+    .str4 {stroke-width:7.19;stroke-miterlimit:22.9256}
+    .str2 {stroke:#FEFEFE;stroke-width:38.5;stroke-miterlimit:22.9256}
+    .str6 {stroke:#FEFEFE;stroke-width:28.87;stroke-miterlimit:22.9256}
+    .str3 {stroke:#FEFEFE;stroke-width:19.25;stroke-miterlimit:22.9256}
+    .str5 {stroke:#FEFEFE;stroke-width:2.93;stroke-miterlimit:22.9256}
+    .str0 {stroke:#FEFEFE;stroke-width:38.5;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .str7 {stroke:#FEFEFE;stroke-width:38.5;stroke-linecap:round;stroke-miterlimit:22.9256}
+    .str1 {stroke:#FEFEFE;stroke-width:38.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .fil0 {fill:none}
+    .fil1 {fill:#FEFEFE}
+    .fnt0 {font-weight:normal;font-size:407.86px;font-family:'Berlin Sans FB'}
+   ]]>
+  </style>
+ </defs>
+ <g id="Capa_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <g id="_2362833517696">
+   <polyline class="fil0 str0" points="386.41,251.12 508.28,306.56 507.93,631.13 197.36,489.85 197.71,165.29 306.34,214.7 "/>
+   <polyline class="fil0 str1" points="796.05,260.05 796.05,161.83 507.93,305.16 507.93,631.13 581.18,597.12 "/>
+   <polyline class="fil0 str2" points="197.71,165.29 491.47,64.64 587.47,95.27 796.05,161.83 "/>
+   <polyline class="fil0 str1" points="592.8,96.98 306.34,214.7 306.34,333.9 "/>
+   <polyline class="fil0 str0" points="672.64,124.13 386.41,251.12 386.41,366.99 343.9,321.08 306.34,333.9 "/>
+   <rect class="fil0 str3" transform="matrix(0.578515 0.252172 -0 0.578515 381.061 476.865)" width="138.78" height="99.31"/>
+   <line class="fil0 str3" x1="390.84" y1="253.14" x2="306.34" y2= "214.7" />
+   <text x="-5.47" y="203.97"  class="fil1 str5 fnt0">+</text>
+   <ellipse class="fil0 str6" cx="789.66" cy="494.34" rx="175.86" ry="177.41"/>
+   <path class="fil0 str7" d="M714.94 426.88l142.03 142.03m0 -142.03l-142.04 142.03"/>
+  </g>
+ </g>
+</svg>

@@ -1,0 +1,36 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Search for products or providers"];
+}
+@using ERP.Web.Areas.Purchases.Models.Providers
+@model RelProviderProductViewModel
+
+<head>
+    <link rel="stylesheet" href="~/css/Purchases/Providers/providers.css" />
+</head>
+<body>
+
+    <div class="card">
+
+        <div id="viewAll" class="card-body table-responsive">
+
+        </div>
+
+    </div>
+</body>
+
+@section Scripts
+{
+    <script src="~/js/site.js"></script>
+    <script>
+        $(document).ready(function () {
+            loadData();
+        });
+
+        function loadData() {
+            $('#viewAll').load('/purchases/providerproduct/LoadAllProviderProducts');
+        }
+
+    </script>
+}

@@ -1,0 +1,45 @@
+﻿@using ERP.Web.Areas.Production.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model WorkActivitiesViewModel
+
+<div class="sticky-top-WA bg-filter-custom row ml-1">
+
+    <div class="col-md-3">
+        <h6 class="mb-3"><b>@localizer["Product"]: </b>@Model.workOrdersProductsNames</h6>
+        <h6 class="mb-3"><b>@localizer["Configuration"]: </b>@Model.workOrdersStructuresNames</h6>
+    </div>
+
+    <div class="col-md-2">
+        <h6 class="mb-3"><b>@localizer["Nº Product"]: </b>@Model.workOrdersProductsNumbers</h6>
+    </div>
+
+    <div class="col-md-3 d-flex">
+        <h6 class="mb-3"><b>@localizer["Advance"]:</b></h6>
+
+        <div class="progress-bar-custom progress w-50 ml-3">
+            @if (Model.TotalAdvance == 0)
+            {
+                <div class="progress-bar" id="pb_totalAdvance" role="progressbar" style="width:@(Model.TotalAdvance+"%");" aria-valuenow="@(Model.TotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(Model.TotalAdvance + "%") </div>
+            }
+            else if (Model.TotalAdvance == 100)
+            {
+                <div class="progress-bar bg-success" id="pb_totalAdvance" role="progressbar" style="width:@(Model.TotalAdvance+"%");" aria-valuenow="@(Model.TotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(Model.TotalAdvance + "%") </div>
+            }
+            else
+            {
+                <div class="progress-bar bg-warning" id="pb_totalAdvance" role="progressbar" style="width:@(Model.TotalAdvance+"%");" aria-valuenow="@(Model.TotalAdvance)" aria-valuemin="0" aria-valuemax="100">@(Model.TotalAdvance + "%") </div>
+            }
+        </div>
+    </div>
+
+    <div class="col-md-2">
+        <h6 id="start_date" class="mb-3"><b>@localizer["Start"]: </b>@Model.StartDate</h6>
+        <h6 id="end_date" class="mb-3"><b>@localizer["End"]: </b>@Model.EndDate</h6>
+    </div>
+
+    <div class="col-md-2">
+        <h6 id="total_time" class="mb-3"><b>@localizer["Total time"]: </b>@Model.TotalTime</h6>
+    </div>
+
+</div>

@@ -1,0 +1,38 @@
+﻿#div-check {
+    padding-top: 40px;
+    padding-left: 10px;
+}
+
+#tdContactDate {
+    width: 10%;
+}
+
+#tdReminderDate {
+    width: 10%;
+}
+
+#clientTable_filter {
+    display: none;
+}
+
+@media only screen and (max-width: 767px) {
+    #div-export-buttons {
+        display: contents;
+        text-align: center;
+    }
+
+    #btn-create {
+        width: 100%;
+        flex: 1 1 auto;
+        float: none;
+        text-align: center;
+        margin-bottom: 0.5em;
+    }
+
+    div.dt-buttons {
+        float: none;
+        width: 100%;
+        text-align: center;
+        margin-bottom: .5em;
+    }
+}

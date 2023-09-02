@@ -1,0 +1,7 @@
+﻿#purchasesTable_filter, #servicePurchasesTable_filter {
+    display: none;
+}
+
+#btnChangeProvider, #btn-create-provider {
+    width: 100%
+}

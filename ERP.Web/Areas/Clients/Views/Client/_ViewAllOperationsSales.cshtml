@@ -1,0 +1,185 @@
+﻿@using ERP.Web.Areas.Clients.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<SaleOperationViewModel>
+@{
+    if (ViewData["OrderTitle"] != null)
+    {
+        ViewData["Title"] = ViewData["OrderTitle"].ToString();
+    }
+}
+    <head>
+        <link href="~/css/Clients/viewAllOperationSales.css" rel="stylesheet" />
+    </head>
+<body>
+
+    <div class="card">
+
+        <div id="viewAll" class="card-body table-responsive">
+
+            <h3>@localizer["Sales operations"]</h3>
+
+            <div class="col-md-4">
+                <div class="form-check form-check-inline">
+                    <label id="bussinessName" class="control-label"> <i class="far fa-user"></i> @ViewBag.BusinessName</label>
+                </div>
+            </div>
+                
+            <div id="div-export-buttons">
+                <div class="btn-group">
+                    <a id="btn-create" class="btn btn-secondary text-white" asp-area="Clients" asp-controller="Client" asp-action="_ViewAllSales" asp-route-clientId="@ViewBag.ClientId" title="@localizer["List of sales"]" style="cursor:pointer">
+                        <img class="tables-img-icon" src="~/images/Productos vendidos.svg" width="30" height="30" />
+                    </a>
+                </div>
+            </div>
+
+
+            <table id="saleOperationsTable" class="table table-striped-blue nowrap" width="100%">
+                <thead class="bg-thead">
+                    <tr>
+                        <th style="width: 20px"></th>
+                        <th class="col-1">@localizer["Operations"]</th>
+                        <th class="col-1">@localizer["Start date"]</th>
+                        <th class="col-1">@localizer["Ending date"]</th>
+                        <th class="col">@localizer["State"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var sale in Model)
+                    {
+                        <tr>
+                            <td class="text-center">
+                                <div class="btn-group">
+                                    <div class="d-flex  animated--grow-in">
+                                        <a class="btn action-btn" onclick="editOperation(@sale.Id)" style="cursor:pointer">
+                                            <img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" />
+                                        </a>
+                                        
+                                    @*    <form id="form_delete_@sale.Id" asp-area="Clients" asp-controller="Client" method="post" asp-action="OnPostDeleteSaleOperation" asp-route-id="@sale.Id" asp-route-clientId="@sale.ClientId" onsubmit="return jQueryModalDeleteModified(this, '@localizer["Are you sure to delete this operation?"]')">
+                                            <a class="btn action-btn" title="@localizer["Delete"]" href="javascript:$('#form_delete_@sale.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                        </form>*@
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                @sale.Operation
+                            </td>
+                            <td>
+                                @sale.StartDate.ToShortDateString()
+                            </td>
+                            @if (sale.EndingDate.ToShortDateString() != "1/1/0001")
+                            {
+                                <td>
+                                   @sale.EndingDate.ToShortDateString()
+                                </td>
+                            }
+                            else
+                            {
+                                <td>
+                                    
+                                </td>
+                            }
+                            <td>
+                               @sale.State
+                            </td>
+                        </tr>
+
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Operations"]</th>
+                        <th>@localizer["Start date"]</th>
+                        <th>@localizer["Ending date"]</th>
+                        <th>@localizer["State"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+
+
+@section Scripts
+    {
+    <script>
+
+        $(document).ready(function () {
+
+            $('#saleOperationsTable tfoot th').each(function (i) {
+                if ($(this).text() != "@localizer["Actions"]") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + $(this).text() + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let saleOperationsTable = $("#saleOperationsTable").DataTable({
+                "order": [[2, "asc"]],
+                "oLanguage": @localizer["LanguageDataTable"],
+                scrollY: '40vh',
+                scrollX: true,
+                scrollCollapse: true,
+                scroller: true,
+                searching: true,
+                scroller: {
+                    loadingIndicator: true
+                },
+                "buttons": [
+                    {
+                        extend: 'excelHtml5',
+                        text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                        titleAttr: 'Exportar archivo Excel',
+                        title: 'Registro de operaciones',
+                        exportOptions: {
+                            columns: [1, 2, 3, 4]
+                        }
+                    }]
+            });
+            saleOperationsTable.buttons().container()
+                .appendTo('#div-export-buttons .btn-group');
+
+            $(saleOperationsTable.table().container()).on('keyup', 'tfoot input', function () {
+                saleOperationsTable
+                    .column($(this).data('index'))
+                    .search(this.value)
+                    .draw();
+            });
+
+
+
+        });
+
+        function editOperation(saleOperationId) {
+            jQueryModalGet('/Clients/Client/_EditSaleOperation?saleOperationId=' + saleOperationId + '&view=_ViewAllOperationsSales', '@localizer["Edit operation"]');
+        }
+
+
+        jQueryModalDeleteModified = (form, title) => {
+            if (confirm(title)) {
+                try {
+                    $.ajax({
+                        type: 'POST',
+                        url: form.action,
+                        data: new FormData(form),
+                        contentType: false,
+                        processData: false,
+                        success: function (res) {
+                            if (res.isValid) {
+                                window.location.href = '/clients/client/_ViewAllOperationsSales?clientId=' + res.clientId;
+                            }
+                        },
+                        error: function (err) {
+                            console.log(err)
+                        }
+                    })
+                } catch (ex) {
+                    console.log(ex)
+                }
+            }
+            return false;
+        };
+
+    </script>
+}

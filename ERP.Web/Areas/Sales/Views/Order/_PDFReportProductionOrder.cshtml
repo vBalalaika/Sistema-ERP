@@ -1,0 +1,131 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Sales.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model OrderHeaderViewModel
+@{
+    Layout = null;
+}
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+
+    <link rel="stylesheet" type="text/css" href="~/css/Sales/OPPdfReportStyles.css" />
+
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i">
+
+    <link rel="stylesheet" type="text/css" href="~/lib/datatables/css/datatables.min.css" />
+    <link rel="stylesheet" type="text/css" href="~/css/adminlte.css" />
+
+</head>
+
+
+<body>
+    <div id="container" class="container p-2">
+
+        <article>
+            <div id="header_simplemak" class="row flexrow rounded">
+                <div id="header_left" class="col rounded-left">
+                    <img id="logo" src="~/images/logo-simplemak.png" class="rounded" alt="logo">
+                    <h4 id="title" class="text-white text-uppercase font-weight-bold">@localizer["Production order"]</h4>
+                </div>
+                <div id="header_right" class="col rounded-right">
+                    <h1 id="P" class="display-4 text-uppercase font-weight-bold">P</h1>
+                    <h4 id="cod" class="text-uppercase font-weight-bold">COD. @Model.Number</h4>
+                </div>
+            </div>
+
+            <div id="body_one" class="row flexrow">
+                <div id="body_one_left" class="col w-50">
+
+                    <h6 id="bussinessName" class="text-uppercase font-weight-bold d-inline">Razón social: </h6>
+                    <h6 id="simplemak" class="text-capitalize font-weight-light d-inline">Simplemak S.A.</h6>
+                    <br />
+
+                    <h6 id="address" class="text-uppercase font-weight-bold d-inline">Domicilio: </h6>
+                    <h6 id="simplemak_address" class="text-capitalize font-weight-light d-inline">51 Nº1120 Colón 2720</h6>
+                    <br />
+                </div>
+
+                <div id="body_one_right" class="col w-50">
+                    <h6 class="text-uppercase font-weight-bold d-inline">Órden de producción Nº: </h6>
+                    <h6 class="text-capitalize font-weight-light d-inline">@("000000" + Model.Number)</h6>
+                    <br />
+
+                    <h6 class="text-uppercase font-weight-bold d-inline">Fecha de emisión: </h6>
+                    <h6 class="text-capitalize font-weight-light d-inline">@Model.OrderDate.ToString("dd/MM/yyyy")</h6>
+                    <br />
+
+                </div>
+            </div>
+
+
+            <div id="body_two" class="row flexrow">
+                <div id="body_two_right" class="col w-100">
+
+                    <h6 class="text-uppercase font-weight-bold d-inline">CUIT: </h6>
+                    <h6 class="text-capitalize font-weight-light d-inline">30-70971555-7</h6>
+                    <br />
+
+                    <h6 class="text-uppercase font-weight-bold d-inline">Ingresos brutos: </h6>
+                    <h6 class="text-capitalize font-weight-light d-inline"></h6>
+                    <br />
+
+                    <h6 class="text-uppercase font-weight-bold d-inline">Inicio de actividades: </h6>
+                    <h6 class="text-capitalize font-weight-light d-inline"></h6>
+                    <br />
+
+                </div>
+            </div>
+
+            <div id="footer" class="row flexrow">
+                <div id="footer_left" class="col w-100 rounded">
+                    <h5 id="simplemak_title" class="text-uppercase font-weight-bold">Simplemak</h5>
+                </div>
+            </div>
+
+            <table id="products_table" class="table table-striped table-hover" width="100%">
+                <thead id="bg-thead-pdf">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th class="text-uppercase align-middle">@localizer["Code"]</th>
+                        <th class="text-uppercase align-middle">@localizer["Description"]</th>
+                        <th class="text-uppercase align-middle">@localizer["Quantity"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.OrderDetails)
+                    {
+                        <tr>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Product.Code)
+                            </td>
+                            <td>
+                                @Html.DisplayFor(modelItem => item.Product.Description)
+                            </td>
+                            <td class="text-center">
+                                @Html.DisplayFor(modelItem => item.Quantity)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </article>
+        @{
+            if (Model.ProductionObservations != null)
+            {
+                if (Model.ProductionObservations.ToString() != "")
+                {
+                    <footer>
+                        <div class="mt-4"></div>
+                        <h6 class="text-uppercase font-weight-bold d-inline">Comentario: </h6>
+                        <h6 class="font-weight-light d-inline">@Model.ProductionObservations</h6>
+                    </footer>
+                }
+            }
+        }
+    </div>
+</body>
+
+</html>

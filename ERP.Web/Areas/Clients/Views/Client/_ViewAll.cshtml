@@ -1,0 +1,282 @@
+﻿@using ERP.Web.Areas.Clients.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<ClientViewModel>
+
+<div id="div-export-buttons">
+    <div class="btn-group">
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Clients.Create)).Result.Succeeded)
+        {
+            <a id="btn-create" class="btn btn-secondary text-white">
+                <img class="tables-img-icon" src="~/images/newclient.svg" width="30" height="30" />
+            </a>
+        }
+    </div>
+</div>
+
+<table id="clientTable" class="table table-striped-blue nowrap" width="100%">
+    <thead class="bg-thead">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Business name"]</th>
+            <th>@localizer["Contact name"]</th>
+            <th>@localizer["Bought product"]</th>
+            <th>@localizer["Country"]</th>
+            <th>@localizer["State"]</th>
+            <th>@localizer["Branch company"]</th>
+            <th>@localizer["Industry"]</th>
+            <th>@localizer["SizeCompany"]</th>
+            <th>@localizer["Production level"]</th>
+            <th>@localizer["City"]</th>
+            <th>@localizer["Address"]</th>
+            <th>@localizer["Email"]</th>
+            <th>@localizer["Phone number"]</th>
+            <th>@localizer["Document type"]</th>
+            <th>@localizer["Document number"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var client in Model)
+        {
+            <tr>
+                <td hidden>
+                    @client.Id
+                </td>
+                <td class="text-left">
+                    <div class="btn-group">
+                        <div class="d-flex  animated--grow-in">
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Clients.Edit)).Result.Succeeded)
+                            {
+                                <a class="btn action-btn" title="@localizer["Edit"]" style="cursor:pointer" onclick="jQueryModalGet('/clients/client/OnGetCreateOrEdit?id=@client.Id','@localizer["Edit Client"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+
+                                <a class="btn action-btn" asp-area="Clients" asp-controller="Client" asp-action="_ViewAllSales" asp-route-clientId="@client.Id" title="@localizer["List of sales"]" style="cursor:pointer"><img class="action-img-icon" src="../../../images/Ventas.svg" width="20" height="20" /></a>
+
+                                <a class="btn action-btn" asp-area="Clients" asp-controller="Client" asp-action="_ViewAllOperationsSales" asp-route-clientId="@client.Id" title="@localizer["List of sale operations"]" style="cursor:pointer"><img class="action-img-icon" src="../../../images/Sale_Operation.svg" width="20" height="20" /></a>
+
+                                <a class="btn action-btn" asp-area="Clients" asp-controller="Client" asp-action="_ViewAllComunications" asp-route-clientId="@client.Id" title="@localizer["List of comunications"]" style="cursor:pointer"><img class="action-img-icon" src="../../../images/Comunicaciones.svg" width="20" height="20" /></a>
+
+                                <a class="btn action-btn" title="@localizer["Add reminder"]" style="cursor:pointer" onclick="jQueryModalGet('/clients/client/OnGetCreateReminderByClientId?id=@client.Id','@localizer["New reminder"]')"><img class="action-img-icon" src="../../../images/Recordatorio.svg" width="20" height="20" /></a>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Edit"]" style="cursor:pointer" onclick="jQueryModalGet('/clients/client/OnGetCreateOrEdit?id=@client.Id','@localizer["Edit Client"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+
+                                <a class="btn action-btn" asp-area="Clients" asp-controller="Client" asp-action="_ViewAllSales" asp-route-clientId="@client.Id" title="@localizer["List of sales"]" style="cursor:pointer"><img class="action-img-icon" src="../../../images/Ventas.svg" width="20" height="20" /></a>
+
+                                <a class="btn action-btn" asp-area="Clients" asp-controller="Client" asp-action="_ViewAllOperationsSales" asp-route-clientId="@client.Id" title="@localizer["List of sale operations"]" style="cursor:pointer"><img class="action-img-icon" src="../../../images/Ventas.svg" width="20" height="20" /></a>
+
+                                <a class="btn action-btn" asp-area="Clients" asp-controller="Client" asp-action="_ViewAllComunications" asp-route-clientId="@client.Id" title="@localizer["List of comunications"]" style="cursor:pointer"><img class="action-img-icon" src="../../../images/Comunicaciones.svg" width="20" height="20" /></a>
+
+                                <a class="btn action-btn disabled" title="@localizer["Add reminder"]" style="cursor:pointer" onclick="jQueryModalGet('/clients/client/OnGetCreateReminderByClientId?id=@client.Id','@localizer["New reminder"]')"><img class="action-img-icon" src="../../../images/Recordatorio.svg" width="20" height="20" /></a>
+                            }
+
+
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Clients.Delete)).Result.Succeeded)
+                            {
+                                <form id="form_delete_@client.Id" asp-area="Clients" asp-controller="Client" method="post" asp-action="OnPostDeactivated" asp-route-id="@client.Id" onsubmit="return jQueryModalDelete(this, '@localizer["Are you sure to delete this record?"]')">
+                                    <a class="btn action-btn" title="@localizer["Delete"]" href="javascript:$('#form_delete_@client.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </form>
+                            }
+                            else
+                            {
+                                <form id="form_delete_@client.Id" asp-area="Clients" asp-controller="Client" method="post" asp-action="OnPostDeactivated" asp-route-id="@client.Id" onsubmit="return jQueryModalDelete(this, '@localizer["Are you sure to delete this record?"]')">
+                                    <a class="btn action-btn disabled" title="@localizer["Delete"]" href="javascript:$('#form_delete_@client.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </td>
+
+                <td class="text-capitalize">
+                    @client.BusinessName
+                </td>
+                <td>
+                    @client.ContactName
+                </td>
+                @{
+                    if(client.Bought)
+                    {
+                            <td>@localizer["Yes"]</td>
+                    }
+                    else
+                    {
+                            <td>No</td>
+                    }
+                }
+                <td>
+                    @{
+                        if (client.Country != null)
+                        {
+                                @client.Country.Description
+                            ;
+                        }
+                    }
+                </td>
+                <td>
+                    @{
+                        if (client.State != null)
+                        {
+                                @client.State.Name
+                            ;
+                        }
+                    }
+                </td>
+                <td>
+                    @if(client.BranchCompany != "-1")
+                    {
+                        @client.BranchCompany
+                    }
+                </td>
+                <td>
+                    @client.IndustryServed
+                </td>
+                <td>
+                    @if (client.BranchCompany != "-1")
+                    {
+                        @client.SizeCompany
+                    }
+                </td>
+                <td>
+                    @if(client.BranchCompany != "-1")
+                    {
+                        @client.ProductionLevel
+                    }
+                </td>
+                <td>
+                    @{
+                        if (client.City != null)
+                        {
+                                @client.City.Name
+                            ;
+                        }
+                    }
+                </td>
+                <td>
+                    @client.Address
+                </td>
+                <td>
+                    @client.Email
+                </td>
+                <td>
+                    @client.CellPhoneNumber
+                </td>
+                <td>
+                    @{
+                        if (client.DocumentType != null)
+                        {
+                                @client.DocumentType.Description
+                            ;
+                        }
+                    }
+                </td>
+                <td>
+                    @client.DocumentNumber
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Business name"]</th>
+            <th>@localizer["Contact name"]</th>
+            <th>@localizer["Bought product"]</th>
+            <th>@localizer["Country"]</th>
+            <th>@localizer["State"]</th>
+            <th>@localizer["Branch company"]</th>
+            <th>@localizer["Industry"]</th>
+            <th>@localizer["SizeCompany"]</th>
+            <th>@localizer["Production level"]</th>
+            <th>@localizer["City"]</th>
+            <th>@localizer["Address"]</th>
+            <th>@localizer["Email"]</th>
+            <th>@localizer["Phone number"]</th>
+            <th>@localizer["Document type"]</th>
+            <th>@localizer["Document number"]</th>
+        </tr>
+    </tfoot>
+</table>
+
+<script>
+    $(document).ready(function () {
+
+        initTable();
+
+        $('#btn-create').on('click', function () {
+            jQueryModalGet('/clients/client/OnGetCreateOrEdit', '@localizer["New client"]');
+        });
+
+        // When call create reminder from create new Client from Order
+        let url = (window.location.pathname + window.location.search);
+        let urlFromOrder = url.split("&")[0];
+        let clientId = url.split("&clientId=")[1];
+
+        if (urlFromOrder == "/clients/client?fromOrder=true") {
+            jQueryModalGet('/clients/client/OnGetCreateReminderByClientId?id=' + parseInt(clientId), '@localizer["New reminder"]');
+        }
+        // End
+
+    });
+
+    // For clean inputs search on datatables.
+    $(document).keyup(function (e) {
+        if (e.key === "Escape") {
+            $('.search-control').val('');
+            $('#clientTable').DataTable().state.clear();
+            $('#clientTable').DataTable().clear().destroy();
+            window.location.reload();
+        }
+    });
+
+    function initTable() {
+        $('#clientTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+
+        let clientTable = $("#clientTable").DataTable({
+            "order": [[2, "asc"]],
+            "oLanguage": @localizer["LanguageDataTable"],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }],
+            scrollY: '50vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Datos de clientes',
+                    exportOptions: {
+                        columns: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+                    }
+                }]
+        });
+
+        clientTable.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(clientTable.table().container()).on('keyup', 'tfoot input', function () {
+            clientTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+    }
+
+</script>

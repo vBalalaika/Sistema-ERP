@@ -1,0 +1,815 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Purchases.Models.PurchaseOrder
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Service purchase order"];
+}
+@model ServicePOHeaderViewModel
+@{
+    int index = 1;
+}
+
+<form id="create-form" method="post" asp-controller="ServicePO" asp-action="OnPostCreate" asp-route-id="@Model.Id" enctype="multipart/form-data">
+
+    <div class="form-row">
+
+        <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+
+        <div class="col-md-2 mb-3">
+            <label asp-for="Date" class="control-label">@localizer["Date"]</label>
+            <input asp-for="Date" name="Date" type="date" class="form-control" id="Date" readonly>
+            <span asp-validation-for="Date" class="text-danger"></span>
+        </div>
+
+        @if (Model.Id != 0)
+        {
+            <div class="col-md-7 mb-3">
+                <label asp-for="ProviderId" class="control-label">@localizer["Provider"]</label>
+                <select name="ProviderId" class="form-control select2bs4" id="Providers" asp-for="ProviderId" disabled>
+                    @if(Model.Provider != null)
+                    {
+                        <option value="@Model.ProviderId">@Model.Provider.getBussinessNameOrName</option>
+                    }
+                </select>
+                <input type="hidden" asp-for="ProviderId" name="ProviderId" class="form-control">
+            </div>
+            <div class="col-md-1 mb-3">
+                <label class="control-label">@localizer["New"]</label>
+                <button disabled id="btn-create-provider" class="btn btn-secondary w-100" type="button"><i class="far fa-address-card"></i></button>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label asp-for="Number" class="control-label">@localizer["Number"]</label>
+                <input asp-for="Number" name="Number" type="number" class="form-control text-center" id="Number" readonly tabindex="-1" value="@Model.Id">
+            </div>
+        }
+        else
+        {
+            <div class="col-md-7 mb-3">
+                <label asp-for="ProviderId" class="control-label">@localizer["Provider"]</label>
+                <select name="ProviderId" class="form-control select2bs4" id="Providers" asp-for="ProviderId">
+                    <option value="-1">@localizer["Select provider"]</option>
+                </select>
+            </div>
+            <div class="col-md-1 mb-3">
+                <label class="control-label">@localizer["New"]</label>
+                <button id="btn-create-provider" class="btn btn-secondary w-100" type="button"><i class="far fa-address-card"></i></button>
+            </div>
+
+            <div class="col-md-2 mb-3">
+                <label asp-for="Number" class="control-label">@localizer["Number"]</label>
+                <input asp-for="Number" name="Number" type="number" class="form-control text-center" id="Number" readonly tabindex="-1">
+            </div>
+        }
+
+        <div id="divWorkStations" class="col-md-9 mb-3">
+            <label asp-for="StationId" class="control-label">@localizer["Station"]</label>
+            <select name="StationId" asp-for="StationId" class="form-control select2bs4" id="workStations">
+                @if(Model.Id != 0 && Model.Station != null)
+                {
+                    <option value="@Model.StationId" selected>@Model.Station.AbreviationDescription.ToString()</option>
+                }
+            </select>
+        </div>
+
+        <div id="table-div" class="col-md-12">
+            <table id="servicePODetailsTable" class="table table-responsive table-striped-blue nowrap" width="100%">
+                <thead class="bg-thead">
+                    <tr>
+                        <th width="5%"></th>
+                        <th width="7%">@localizer["Code"]</th>
+                        <th>@localizer["Description"]</th>
+                        <th width="5%" class="text-right">@localizer["Quantity"]</th>
+                        <th width="15%" class="text-left">@localizer["Unit measure"]</th>
+                        <th width="10%" class="text-right">@localizer["Unit price"]</th>
+                        <th width="10%" class="text-right">@localizer["Bonus"]</th>
+                        @*<th width="5%">@localizer["Delete"]</th>*@
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var servicePODetail in Model.ServicePODetails)
+                    {
+                        <tr>
+                            <td class="d-none">
+                                <input type="hidden" name="servicePODetails.Index" value="@index" />
+                                <input type="hidden" name="servicePODetails[@index].ProductId" value="@servicePODetail.ProductId" />
+                                @if(servicePODetail.UnitMeasure != null && servicePODetail.UnitMeasureId.HasValue)
+                                {
+                                    <input type="hidden" name="servicePODetails[@index].UnitMeasureId" value="@servicePODetail.UnitMeasureId.Value" />
+                                }
+                                else
+                                {
+                                    <input type="hidden" name="servicePODetails[@index].UnitMeasureId" />
+                                }
+
+                                <input type="hidden" name="servicePODetails[@index].DeliveryNoteDetailId" value="@servicePODetail.DeliveryNoteDetailId.Value" />
+                                <input type="hidden" name="servicePODetails[@index].Id" value="@servicePODetail.Id" />
+                                <input type="hidden" name="servicePODetails[@index].ConcurrencyToken" value="@servicePODetail.ConcurrencyToken" />
+                            </td>
+                            <td class="text-center">
+                                <input type="text" class="custom-form-control form-control" tabindex="-1" readonly value="@index" />
+                            </td>
+                            <td>
+                                <input type="text" class="custom-form-control form-control" name="ServicePODetails[@index].ProductCode" tabindex="-1" readonly value="@servicePODetail.Product.Code" />
+                            </td>
+                            <td>
+                                <input type="text" class="custom-form-control form-control" name="ServicePODetails[@index].ProductDescription" tabindex="-1" readonly value="@servicePODetail.Product.Description" />
+                            </td>
+                            <td>
+                                <input type="text" class="quantity custom-form-control form-control text-right" name="ServicePODetails[@index].Quantity" tabindex="-1" value="@servicePODetail.Quantity" />
+                            </td>
+                            <td>
+                                @if(servicePODetail.UnitMeasure != null)
+                                {
+                                    <input type="text" class="custom-form-control form-control text-left" name="ServicePODetails[@index].UnitMeasureDescription" tabindex="-1" readonly value="@servicePODetail.UnitMeasure.Description" />
+                                }
+                                else
+                                {
+                                    <input type="text" class="custom-form-control form-control text-left" name="ServicePODetails[@index].UnitMeasureDescription" tabindex="-1" readonly value="" />
+                                }
+                            </td>
+                            <td>
+                                <input type="text" class="unitPrice form-control text-right" name="ServicePODetails[@index].UnitPrice" tabindex="0" placeholder="0,00 USD" onkeypress="return validateIsNumber(event);" value="@Math.Round(servicePODetail.UnitPrice, 2) USD" />
+                            </td>
+                            <td>
+                                <input type="text" class="bonus form-control text-right" name="ServicePODetails[@index].Bonus" tabindex="0" placeholder="0,00%" onkeypress="return validateIsNumber(event);" value="@Math.Round(servicePODetail.Bonus, 2)%" />
+                            </td>
+                            @*<td>
+                                <button tabindex="-1" type="button" class="btn btn-outline-danger btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button>
+                            </td>*@
+                        </tr>
+
+                        index++;
+
+                    }
+                </tbody>
+            </table>
+
+            <div class="form-group row justify-content-between text-right">
+                <label asp-for="Bonus" class="col-md-10 col-form-label font-weight-normal">@localizer["Bonus"]:</label>
+                <div class="col-md-2">
+                    @if(Model.Id == 0)
+                    {
+                        <input asp-for="Bonus" name="Bonus" type="text" class="form-control text-right" id="Bonus" onkeypress="return validateIsNumber(event);" value="0,00%">
+                    }
+                    else
+                    {
+                        <input asp-for="Bonus" name="Bonus" type="text" class="form-control text-right" id="Bonus" onkeypress="return validateIsNumber(event);" value="@Math.Round(Model.Bonus, 2)%">
+                    }
+                </div>
+            </div>
+            @if(Model.Id == 0)
+            {
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]:</label>
+                    <div class="col-md-2">
+                        <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                            <option value="1" selected>21%</option>
+                            <option value="2">10,5%</option>
+                            <option value="3">27%</option>
+                            <option value="4">0%</option>
+                        </select>
+                    </div>
+                </div>
+            }
+            else
+            {
+                switch (Model.IVA)
+                {
+                    case 1:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]:</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1" selected>21%</option>
+                                <option value="2">10,5%</option>
+                                <option value="3">27%</option>
+                                <option value="4">0%</option>
+                            </select>
+                        </div>
+                    </div>   
+                    break;
+                    case 2:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]:</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1">21%</option>
+                                <option value="2" selected>10,5%</option>
+                                <option value="3">27%</option>
+                                <option value="4">0%</option>
+                            </select>
+                        </div>
+                    </div>  
+                    break;
+                    case 3:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]:</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1">21%</option>
+                                <option value="2">10,5%</option>
+                                <option value="3" selected>27%</option>
+                                <option value="4">0%</option>
+                            </select>
+                        </div>
+                    </div>  
+                    break;
+                    case 4:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]:</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1">21%</option>
+                                <option value="2">10,5%</option>
+                                <option value="3">27%</option>
+                                <option value="4" selected>0%</option>
+                            </select>
+                        </div>
+                    </div>  
+                    break;
+                }
+            }
+
+            @if(Model.ServicePODetails.All(spod => spod.UnitPrice == 0 && spod.Bonus == 0))
+            {
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Total" class="col-md-10 col-form-label font-weight-normal">@localizer["Total"]</label>
+                    <div class="col-md-2">
+                        <input asp-for="Total" name="Total" type="text" class="form-control text-right" id="Total" onkeypress="return validateIsNumber(event);" value="@String.Format("{0:N2}", Math.Round(Model.Total, 2)) USD"> 
+                    </div>
+                </div> 
+            }
+            else
+            {
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Total" class="col-md-10 col-form-label font-weight-normal">@localizer["Total"]</label>
+                    <div class="col-md-2">
+                        <input asp-for="Total" name="Total" type="text" class="form-control text-right" id="Total" onkeypress="return validateIsNumber(event);" value="0,00 USD"> 
+                    </div>
+                </div>
+            }
+
+        </div>
+
+        @if (Model.Id == 0)
+        {
+            <div class="col-md-12 mb-3">
+                <label asp-for="Comments" class="control-label">@localizer["Comments"]</label>
+                <textarea asp-for="Comments" name="Comments" class="form-control" id="Comments" rows="5"></textarea>
+            </div>
+        }
+        else
+        {
+            <div class="col-md-11 mb-3">
+                <label asp-for="Comments" class="control-label">@localizer["Comments"]</label>
+                <textarea asp-for="Comments" name="Comments" class="form-control" id="Comments" rows="5"></textarea>
+            </div>
+            <div class="col-md-1 mb-3">
+                <label class="control-label">@localizer["PDF Export"]</label>
+                <button id="btn-export-to-pdf" type="button" class="form-control btn btn-secondary h-50"><img src="~/images/PDF.svg" width="100%" height="100%" /></button>
+            </div>
+        }
+
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+        <button type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+    </div>
+
+</form>
+
+<script src="~/js/site.js"></script>
+<script type="text/javascript">
+    $.validator.unobtrusive.parse(document);
+    $(document).ready(function () {
+
+        let index = @index;
+        let select2Providers = $('#Providers');
+        let select2workStations = $('#workStations');
+
+        $('#IVA').select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        $('#IVA').change(function(){
+            getTotalForAllTable();
+        });
+
+        if ($("#servicePODetailsTable tbody tr").length > 0 && @Model.Id != 0) {
+            $("#table-div").show();
+        }
+        else{
+            $("#table-div").hide();
+        }
+
+        select2Providers.select2({
+            language: "es",
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select provider"]",
+            ajax: {
+                url: '/Purchases/ServicePO/_LoadProvidersSelect2',
+                data: function (params) {
+                    return {
+                        search: params.term
+                    };
+                },
+                processResults: function (data) {
+                    return {
+                        results: data.providers
+                    };
+                }
+            }
+        });
+
+        select2workStations.select2({
+            language: "es",
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select work station"]"
+        });
+
+        if (select2Providers.val() != -1) {
+            $('#divWorkStations').show();
+        }
+        else {
+            $('#divWorkStations').hide();
+        }
+
+        select2Providers.change(function () {
+            if(this.val != -1){
+               
+                $("#workStations").select2('destroy');
+
+                select2workStations.select2({
+                    language: "es",
+                    theme: "bootstrap4",
+                    placeholder: "@localizer["Select work station"]",
+                    ajax: {
+                        url: '/Purchases/ServicePO/_LoadProviderStationsSelect2',
+                        data: function (params) {
+                            return {
+                                search: params.term,
+                                providerId: $('#Providers').val()
+                            };
+                        },
+                        processResults: function (data) {
+                            if(data.stations[0] != null){
+
+                                $('#divWorkStations').show('slow');
+
+                                $("#workStations").append($("<option />")
+                                    .attr("value", data.stations[0].id)
+                                    .html(data.stations[0].text)
+                                ).val(data.stations[0].id).trigger("change").select2("close");
+                            }
+                            else
+                            {
+                                $('#workStations').empty().trigger('change');
+                            }
+                            return {
+                                results: data.stations
+                            };
+                        }
+                    }
+                });
+
+                $("#workStations").select2("open");
+                
+            }
+            else{
+                $('#divWorkStations').hide('slow');
+            }
+        });
+
+        // .btn-remove delete row
+        $(document).on("click", ".btn-remove", function () {
+            $(this).parent().parent().remove();
+            getTotalForAllTable();
+        });
+
+        $('#btn-create-provider').on('click', function () {
+            jQueryModalGet('/purchases/provider/OnGetCreateOrEdit?calledFromAnotherArea=true', '@localizer["New provider"]');
+        });
+
+        $("#create-form").submit(function (event) {
+            return jQueryModalPostModified(this);
+            event.preventDefault();
+        });
+
+        $('#btn-export-to-pdf').on('click', function () {
+            window.location.href = '/purchases/ServicePO/exporttopdf?spohId=' + @Model.Id;
+        });
+
+        $("#Bonus").on({
+            "focus": function (event) {
+                $(event.target).select();
+            },
+            "keyup": function (event) {
+                if(event.key == "Tab")
+                {
+                    $(event.target).val($(event.target).val());
+                }
+                else
+                {
+                    $(event.target).val(function (index, value) {
+                        return value.replace(/\D/g, "")
+                        .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                        .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");      
+                    });
+                }
+            },
+            "change": function (event) {
+                $(event.target).val(function (index, value) {
+                    let valueAux = value;
+                    if (!value.includes(",")) {
+                        valueAux = value.concat(",00");
+                    }
+                    else {
+                        valueAux = value;
+                    }
+
+                    if (value.charAt(0) == "0" && value.length == 1) {
+                        valueAux = value.concat(",00");
+                    }
+                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                        if(value.charAt(1) == "."){
+                            valueAux = value.slice(2);
+                        }
+                        else if(value.charAt(2) == "."){
+                            valueAux = value.slice(1);
+                        }
+                        else{
+                            valueAux = value.slice(1);
+                        }
+                    }
+
+                    for (var i = 0; i < valueAux.length; i++) {
+                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                            let addZero = "";
+                            if(valueAux[i] == ","){
+                                addZero = "0";
+                            }
+                            valueAux = addZero + valueAux.slice(i);
+                            break;
+                        }
+                    }
+
+                    if(parseFloat(valueAux.replace(',','.')) > 100 || valueAux.indexOf('.') >= 1)
+                    {
+                        alert("La bonificación no puede ser mayor que 100%.");
+                        return "100,00";
+                    }
+                    else
+                    {
+                        return valueAux;
+                    }
+                });
+
+                getTotalForAllTable();
+            }
+        });
+     
+        $("#Total").on({
+            "focus": function (event) {
+                $(event.target).select();
+            },
+            "keyup": function (event) {
+                if(event.key == "Tab")
+                {
+                    $(event.target).val($(event.target).val());
+                }
+                else
+                {
+                    $(event.target).val(function (index, value) {
+                        return value.replace(/\D/g, "")
+                        .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                        .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");      
+                    });
+                }
+            },
+            "change": function (event) {
+                $(event.target).val(function (index, value) {
+                    let valueAux = value;
+                    if (!value.includes(",")) {
+                        valueAux = value.concat(",00");
+                    }
+                    else {
+                        valueAux = value;
+                    }
+
+                    if (value.charAt(0) == "0" && value.length == 1) {
+                        valueAux = value.concat(",00");
+                    }
+                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                        if(value.charAt(1) == "."){
+                            valueAux = value.slice(2);
+                        }
+                        else if(value.charAt(2) == "."){
+                            valueAux = value.slice(1);
+                        }
+                        else{
+                            valueAux = value.slice(1);
+                        }
+                    }
+
+                    for (var i = 0; i < valueAux.length; i++) {
+                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                            let addZero = "";
+                            if(valueAux[i] == ","){
+                                addZero = "0";
+                            }
+                            valueAux = addZero + valueAux.slice(i);
+                            break;
+                        }
+                    }
+
+                    return valueAux;
+                });
+
+                document.querySelectorAll('.unitPrice').forEach(item => {
+                    $(item).val("0,00 USD");
+                });
+                
+                document.querySelectorAll('.bonus').forEach(item => {
+                    $(item).val("0,00%");
+                });
+            }
+        });
+
+        $(".unitPrice").on({
+            "focus": function (event) {
+                $(event.target).select();
+            },
+            "keyup": function (event) {
+                if(event.key == "Tab")
+                {
+                    $(event.target).val($(event.target).val());
+                }
+                else
+                {
+                    $(event.target).val(function (index, value) {
+                        return value.replace(/\D/g, "")
+                        .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                        .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                    });
+                }
+            },
+            "change": function (event) {
+                $(event.target).val(function (index, value) {
+                    let valueAux = value;
+                    if (!value.includes(",")) {
+                        valueAux = value.concat(",00");
+                    }
+                    else {
+                        valueAux = value;
+                    }
+
+                    if (value.charAt(0) == "0" && value.length == 1) {
+                        valueAux = value.concat(",00");
+                    }
+                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                        if(value.charAt(1) == "."){
+                            valueAux = value.slice(2);
+                        }
+                        else if(value.charAt(2) == "."){
+                            valueAux = value.slice(1);
+                        }
+                        else{
+                            valueAux = value.slice(1);
+                        }
+                    }
+
+                    for (var i = 0; i < valueAux.length; i++) {
+                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                            let addZero = "";
+                            if(valueAux[i] == ","){
+                                addZero = "0";
+                            }
+                            valueAux = addZero + valueAux.slice(i);
+                            break;
+                        }
+                    }
+
+                    return valueAux;
+                });
+
+                //getTotalForAllTable();
+            }
+        });
+
+        $(".bonus").on({
+            "focus": function (event) {
+                $(event.target).select();
+            },
+            "keyup": function (event) {
+                if(event.key == "Tab")
+                {
+                    $(event.target).val($(event.target).val());
+                }
+                else
+                {
+                    $(event.target).val(function (index, value) {
+                        return value.replace(/\D/g, "")
+                        .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                        .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                    });
+                }
+            },
+            "change": function (event) {
+                $(event.target).val(function (index, value) {
+                    let valueAux = value;
+                    if (!value.includes(",")) {
+                        valueAux = value.concat(",00");
+                    }
+                    else {
+                        valueAux = value;
+                    }
+
+                    if (value.charAt(0) == "0" && value.length == 1) {
+                        valueAux = value.concat(",00");
+                    }
+                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                        if(value.charAt(1) == "."){
+                            valueAux = value.slice(2);
+                        }
+                        else if(value.charAt(2) == "."){
+                            valueAux = value.slice(1);
+                        }
+                        else{
+                            valueAux = value.slice(1);
+                        }
+                    }
+
+                    for (var i = 0; i < valueAux.length; i++) {
+                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                            let addZero = "";
+                            if(valueAux[i] == ","){
+                                addZero = "0";
+                            }
+                            valueAux = addZero + valueAux.slice(i);
+                            break;
+                        }
+                    }
+
+                    if(parseFloat(valueAux.replace(',','.')) > 100 || valueAux.indexOf('.') >= 1)
+                    {
+                        alert("La bonificación no puede ser mayor que 100%.");
+                        return "100,00";
+                    }
+                    else
+                    {
+                        return valueAux;
+                    }
+                });
+
+                //getTotalForAllTable();
+            }
+        });
+
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            item.addEventListener('change', (e) => {
+                getTotalForAllTable();
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+
+        document.querySelectorAll('.bonus').forEach(item => {
+            item.addEventListener('change', (e) => {
+                getTotalForAllTable();
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+
+        @if(Model.ServicePODetails.Any(spod => spod.UnitPrice != 0 || spod.Bonus != 0))
+        {
+            @:getTotalForAllTable();  
+        }
+    
+    });
+
+    function getTotalForAllTable() {
+
+        let totalRow = 0;
+        let unitPrice = 0;
+        let quantity = 0;
+        let bonus = 0;
+        $('#servicePODetailsTable > tbody  > tr').each(function () {
+            if($(this).find("input.unitPrice").val() == "" || $(this).find("input.unitPrice").val() == "0,00" || $(this).find("input.unitPrice").val() == "0,00 USD"){
+                unitPrice = 0;
+            }
+            else{
+                unitPrice = $(this).find("input.unitPrice").val();
+            }
+            if($(this).find("input.quantity").val() == "" || $(this).find("input.quantity").val() == "0,00" || $(this).find("input.quantity").val() == "0,00"){
+                quantity = 0;
+            }
+            else{
+                quantity = $(this).find("input.quantity").val();
+            }
+            if($(this).find("input.bonus").val() == "" || $(this).find("input.bonus").val() == "0,00" || $(this).find("input.bonus").val() == "0,00%"){
+                bonus = 0;
+            }
+            else{
+                bonus = $(this).find("input.bonus").val();
+            }
+            
+            //totalRow += +parseFloat(String(unitPrice).replaceAll('.', '').replaceAll(',', '.').replaceAll('USD', '').trim()).toFixed(2) * +parseFloat(String(quantity)).toFixed(2) * (+parseFloat(String(bonus).replaceAll('.', '').replaceAll(',', '.').replaceAll('%', '').trim()).toFixed(2) / 100);
+            totalRow += (+parseFloat(String(unitPrice).replaceAll('.', '').replaceAll(',', '.').trim()).toFixed(2) * +parseFloat(String(quantity)).toFixed(2)) - ((+parseFloat(String(unitPrice).replaceAll('.', '').replaceAll(',', '.').trim()).toFixed(2) * +parseFloat(String(quantity)).toFixed(2)) * (+parseFloat(String(bonus).replaceAll('.', '').replaceAll(',', '.').trim()).toFixed(2) / 100));
+        });
+
+        let bonusHeader = 0;
+        let iva = 0;
+        let totalValue = parseFloat(totalRow).toFixed(2);
+
+        if (document.getElementById('Bonus').value == "") {
+            bonusHeader = 0;
+        }
+        else{
+            bonusHeader = parseFloat(String(document.getElementById('Bonus').value).replaceAll('.', '').replaceAll(',', '.').replaceAll('%', '').trim()).toFixed(2);
+        }
+
+        totalValue = totalValue - (totalValue * parseFloat(bonusHeader).toFixed(2) / 100);
+
+        // 21%
+        if($('#IVA').val() == 1){
+            iva = 21;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+        // 10,5%
+        else if($('#IVA').val() == 2){
+            iva = 10.5;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+        // 27%
+        else if($('#IVA').val() == 3){
+            iva = 27;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+        // 0%
+        else if($('#IVA').val() == 4){
+            iva = 0;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+
+        document.getElementById('Total').value = parseFloat(totalValue).toFixed(2).toString().replaceAll('.', ',') + " USD";
+    
+    }
+
+    jQueryModalPostModified = (form) => {
+
+        $("#Bonus").val($("#Bonus").val().replaceAll("%", ""));
+        $("#Total").val($("#Total").val().replaceAll("USD", ""));
+        
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            if (item != null) {
+                 $(item).val($(item).val().replace("USD",""));
+                 if($(item).val() == ""){
+                     $(item).val(0);
+                 }
+            }
+        });
+
+        document.querySelectorAll('.bonus').forEach(item => {
+            if (item != null) {
+                $(item).val($(item).val().replace("%", ""));
+                    if($(item).val() == ""){
+                     $(item).val(0);
+                 }
+            }
+        });
+
+        try {
+            $.ajax({
+                type: 'POST',
+                url: form.action,
+                data: new FormData(form),
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.isValid) {
+
+                        $('#form-modal #btn-save').attr('disabled', 'disabled');
+                        $('#form-modal #btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#form-modal #btn-save').text());
+                        //$('#form-modal').modal('hide');
+                        //refreshTable();
+
+                        jQueryModalGet('/purchases/servicepo/OnGetCreateOrEdit?id=' + res.spohId, "@localizer["Service purchase order"]");
+                        refreshTable();
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+</script>

@@ -1,0 +1,443 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Application.Enums
+@inject IAuthorizationService AuthorizationService
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@using ERP.Web.Areas.Production.Models
+@model WorkActivityViewModel
+<body>
+    <div>
+        <div class="row ml-4 mt-2">
+            <h5> @localizer["User"]: @Model.currentUser.FirstAndLastName</h5>
+            @if (User.IsInRole(Roles.SuperAdmin.ToString()))
+            {<div class="ml-2"> <span class="badge bg-success text-white">@localizer["Administrador"]</span></div>}
+        </div>
+        <div class="card">
+            <div id="viewAll" class="card-body table-responsive">
+                <div class="form-row d-flex justify-content-center">
+                    <div id="div-export-buttons">
+                        <div class="btn-group">
+                           
+                        </div>
+                    </div>
+                </div>
+                <table id="workActivityTable" class="table table-striped-blue table-hover w-100 nowrap" cellspacing="0">
+                    <thead class="bg-thead text-white">
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Actions"]</th>
+                            <th>@localizer["Nº WO"]</th>
+                            <th>@localizer["Nº Product"]</th>
+                            <th>@localizer["Product"]</th>
+                            <th>@localizer["Configuration"]</th>
+                            <th>@localizer["Work Station"]</th>
+                            <th>@localizer["State"]</th>
+                            <th>@localizer["Percentage of completion"]</th>
+                            <th>@localizer["Users"]</th>
+                            <th>@localizer["Created"]</th>
+                            <th>@localizer["Date Start"]</th>
+                            <th>@localizer["Date End"]</th>
+                            <th>@localizer["Total time"]</th>
+                            <th hidden>@localizer["Total activities"]</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                    <tfoot>
+                        <tr>
+                            <th hidden>@localizer["Id"]</th>
+                            <th>@localizer["Actions"]</th>
+                            <th>@localizer["Nº WO"]</th>
+                            <th>@localizer["Nº Product"]</th>
+                            <th>@localizer["Product"]</th>
+                            <th>@localizer["Configuration"]</th>
+                            <th>@localizer["Work Station"]</th>
+                            <th>@localizer["State"]</th>
+                            <th>@localizer["Percentage of completion"]</th>
+                            <th>@localizer["Users"]</th>
+                            <th>@localizer["Created"]</th>
+                            <th>@localizer["Date Start"]</th>
+                            <th>@localizer["Date End"]</th>
+                            <th>@localizer["Total time"]</th>
+                            <th hidden>@localizer["Total activities"]</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</body>
+@section Scripts{
+    <script src="~/js/site.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            $('#workActivityTable tfoot th').each(function (i) {
+                let title = $(this).text();
+                if (title != '@localizer["Actions"]' && title != '@localizer["Observations"]' && title != '@localizer["Percentage of completion"]' && title != '@localizer["Total time"]' && title != '@localizer["Total activities"]') {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let workActivitiesTable = $('#workActivityTable').DataTable({
+                "scrollY": '48vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "scroller": true,
+                "oLanguage": @localizer["LanguageDataTable"],
+                "sAjaxSource": "/production/workactivity/LoadAllGrouped",
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "sDom": 'Brtip',
+                // No funciona asi nomas, tengo que ordenar manual desde el metodo LoadAllGrouped en el controller.
+                //"order": [[2, "desc"], [4, "desc"], [6, "desc"]],
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "columns": [
+                    {
+                        "data": "workOrderId",
+                        "searchable": false,
+                        "visible": false
+
+                    },
+                    {
+                        "searchable": false,
+                        "data": "stationId",
+                        "render": function (data, type, row, meta) {
+                            let isAdmin = @User.IsInRole(Roles.SuperAdmin.ToString()).ToString().ToLower();
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+                            let isWorkOrderFinished = row.activitiesState == "Finalizado";
+
+                            let notFinished = false;
+                            for(let i = 0; i < row.activities.length; i++){
+                                if(row.activities[i].getState != "Finalizado"){
+                                    notFinished = true;
+                                }
+                            }
+
+                            if(notFinished)
+                            {
+                                isWorkOrderFinished = false;
+                            }
+                            else
+                            {
+                                isWorkOrderFinished = true;
+                            }
+
+                            // Icono ver
+                            const strStation = row.stationDescription;
+                            html += '<a class="btn action-btn" title="Ver puesto" onclick="navigateToWorkActivitiesByWorkOrderAndStation(' + "'" + row.workOrderIds + "'" + ', ' + row.stationId + ')"><img class="action-img-icon" src="../../../images/Ver.svg" width="25" height="25" /></a>';
+
+                            if (isAdmin) {
+
+                                if (!isWorkOrderFinished) {
+                                    // Icono Stop
+                                    html += '<a class="btn action-btn" onclick="stopWorkActivitiesByWorkOrderAndStation(' + row.workOrderHeaderNumber + ',' + row.stationId + ')"><img class="action-img-icon" src="../../../images/stop.svg" width="20" height="20" /></a>';
+                                } else {
+                                    // Icono Stop
+                                    html += '<a class="btn action-btn disabled" onclick="stopWorkActivitiesByWorkOrderAndStation(' + row.workOrderHeaderNumber + ',' + row.stationId + ')"><img class="action-img-icon" src="../../../images/stop.svg" width="20" height="20" /></a>';
+                                }
+
+                                @*// ToProduction. Por ahora se muestran todas las activas. Esto es por si en algun momento se quieren mostrar todas sin filtros
+                                if (!row.isActive) {
+                                    html += '<a class="btn action-btn " onclick="activateWA(' + row.workOrderHeaderId + ',' + row.stationId +',this); return false;" title="@localizer["To production"]"><i class="fas fa-flag-checkered"></i>';
+                                }*@
+
+                                // Icono OT
+                                html += '<a class="btn action-btn" title="@localizer["Work order"]"  onclick="navigateToWorkOrderHeader(' + row.workOrderId + ')"><img class="action-img-icon" src="../../../images/OT_letra_blanca.png" width="20" height="20" /></a>';
+
+                            }
+
+                            // Icono eliminar
+                            //html += '<a class="btn action-btn"  onclick="delete(' + row.id + ')" ><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>';
+
+                            html += '</div></div>';
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                    },
+                    {
+                        "data": "workOrderHeaderNumber",
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productNumber",
+                        "render": function (data, type, row, meta) {
+                            if (row.workOrderIds.length > 1) {
+                                for (var i = 0; i < row.productNumbers.length; i++) {
+                                    if (row.productNumbers[i].toString().slice(0, 2) == "03" || row.productNumbers[i].toString().slice(0, 2) == "13" || row.productNumbers[i].toString().slice(0, 2) == "04") {
+                                        return 'Varios';
+                                    }
+                                    else {
+                                        return data;
+                                    }
+                                }
+                            } else {
+                                return data;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "productDescription",
+                        "render": function (data, type, row, meta) {
+                            if (row.workOrderIds.length > 1) {
+
+                                if ((jQuery.grep(row.productNumbers, function (value, y) { return value.indexOf("03-") != -1 }).length > 0 && jQuery.grep(row.productNumbers, function (value, y) { return value.indexOf("04-") != -1 }).length > 0) || (jQuery.grep(row.productNumbers, function (value, y) { return value.indexOf("13-") != -1 }).length > 0 && jQuery.grep(row.productNumbers, function (value, y) { return value.indexOf("04-") != -1 }).length > 0)) {
+                                    return 'Repuestos y stock';
+                                } else {
+                                    for (var i = 0; i < row.productNumbers.length; i++) {
+
+                                        if (row.productNumbers[i].toString().slice(0, 2) == "03" || row.productNumbers[i].toString().slice(0, 2) == "13") {
+                                            return 'Repuestos';
+                                        }
+                                        else if (row.productNumbers[i].toString().slice(0, 2) == "04") {
+                                            return 'Stock';
+                                        }
+                                        else {
+                                            return data;
+                                        }
+
+                                    }
+                                }
+
+                            } else {
+                                return data;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "structureDescription",
+                        "render": function (data, type, row, meta) {
+                            if (row.workOrderIds.length > 1) {
+                                return '';
+                            } else {
+                                return data;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "stationDescription",
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "activitiesState",
+                        "render": function (data, type, row, meta) {
+
+                            let activitiesExcludeToShipments = row.activities.filter(obj => {
+                                return obj.toShipments == null;
+                            });
+
+                            let isFinished = activitiesExcludeToShipments.every(act => act.getState === "Finalizado");
+                            let inProcess = activitiesExcludeToShipments.some(act => act.startDate != null);
+
+                            if(isFinished)
+                            {
+                                return "Finalizado";
+                            }
+                            else if(inProcess)
+                            {
+                                return "En proceso";
+                            }
+                            else
+                            {
+                                return "Pendiente";
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "totalAdvance",
+                        "searchable": false,
+                        "render": function (value) {
+                            var background_color = value == '' ? '' : (value == 100 ? 'bg-success' : 'bg-warning')
+                            return `<div class="progress-bar-custom progress"> <div class="progress-bar ${background_color}" role="progressbar" style="width:${value}%" aria-valuenow="${value}" aria-valuemin="0" aria-valuemax="100">${value}%</div></div>`;
+                        },
+                        "autoWidth": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "groupUsers",
+                        "width": "5%",
+                        "searchable": false
+                    },
+                    {
+                        "data": "dateToProduction",
+                        "render": function (value) {
+                            if (value == null) {
+                                return "";
+                            }
+                            return value;
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    //{
+                    //    "data": "startDateGroup",
+                    //    "render": function (value) {
+                    //        if (value == null) {
+                    //            return "";
+                    //        }
+                    //        return value;
+                    //    },
+                    //    "autoWidth": true,
+                    //    "searchable": true
+                    //}, 
+                    {
+                        "data": "startDate",
+                        "render": function (data, type, row, meta) {
+                            if(row.startDate != null){
+                                return row.startDate;
+                            }
+                            else{
+                                return '';
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "endDate",
+                        "render": function (data, type, row, meta) {
+                            if(row.endDateGroup != null){
+                                return row.endDateGroup;
+                            }
+                            else if (row.endDate != null) {
+                                return row.endDate;
+                            }
+                            else{
+                                return '';
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "totalTimeGrouped",
+                        "autoWidth": true,
+                        "searchable": false
+                    },
+                    {
+                        "data": "quantity",
+                        "width": "5%",
+                        "searchable": false,
+                        "visible": false
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                },
+                drawCallback: function () {
+                    //$('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+                },
+                "buttons": [
+                    {
+                        className: 'rounded-lg',
+                        extend: 'excelHtml5',
+                        text: '<img src="../../../images/Excel.svg" width="30" height="30" />',
+                        titleAttr: 'Exportar archivo Excel',
+                        title: "Ordenes de trabajo: ",
+                        exportOptions: {
+                            columns: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+                        }
+                    }
+                ],
+            });
+
+            workActivitiesTable.buttons().container().appendTo('#div-export-buttons .btn-group');
+
+            //$('#reload').on('click', function () {
+            //    $('#workActivityTable').DataTable().ajax.reload();
+            //});
+
+        });
+
+        // Limpiamos todos los intervalos y asignamos uno nuevo para refrescar cada 5 segundos la tabla
+        //const highestId = window.setTimeout(() => {
+        //    for (let i = highestId; i >= 0; i--) {
+        //        window.clearInterval(i);
+        //    }
+        //}, 0);
+        //setInterval(function () { $('#workActivityTable').DataTable().ajax.reload(); }, 5000);
+
+
+        function navigateToWorkActivitiesByWorkOrderAndStation(workOrderId, stationId) {
+            url = "/production/workactivity?workOrderIds=" + workOrderId + "" + "&stationId=" + stationId + "";
+            window.location.href = url;
+        }
+
+        function navigateToWorkOrderHeader(workOrderId) {
+            url = "/production/workorderheader/OnGetWorkOrderHeader?idWorkOrder=" + workOrderId;
+            jQueryModalGet(url, '@localizer["View work order"]');
+        }
+
+        function stopWorkActivitiesByWorkOrderAndStation(workOrderHeaderNumber, stationId) {
+
+            if (confirm('Se dará por finalizada la orden de trabajo. Desea continuar?')) {
+
+                //setPageScrollPos($('.dataTables_scrollBody').scrollTop());
+
+                let url = '/production/workactivity/stopActivities?workOrderHeaderId=' + workOrderHeaderNumber + '&stationId=' + stationId + '&fromShipments=' + false;
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: {
+                        workOrderHeaderNumber,
+                        stationId
+                    },
+                    success: function (response) {
+                        if (response.isValid) {
+                            //$('#workActivityTable').DataTable().ajax.reload();
+                            refreshDatatableKeepingScrollPosition($('#workActivityTable').DataTable());
+                        }
+                    }
+
+                });
+            }
+        }
+
+        function activateWA(workOrderHeaderId, stationId, object) {
+            if (confirm('Se enviará a producir para el puesto seleccionado. Desea continuar?')) {
+                let url = '/production/WorkOrderHeader/setActivitiesActiveByStation/'
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: {
+                        workOrderHeaderId,
+                        stationId
+                    },
+                    success: function (response) {
+                        if (response.isValid) {
+                            $(object).addClass('disabled')
+                        }
+                    }
+
+                });
+            }
+        }
+
+    </script>
+
+}

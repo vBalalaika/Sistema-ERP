@@ -1,0 +1,235 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Purchases.Models.PurchaseOrder
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model ServicePOHeaderViewModel
+@{
+    Layout = null;
+}
+
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+    <link rel="stylesheet" type="text/css" href="~/css/CommercialDocuments/DeliveryNotes/PdfReport.css" />
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i">
+    <link rel="stylesheet" type="text/css" href="~/lib/datatables/css/datatables.min.css" />
+    <link rel="stylesheet" type="text/css" href="~/css/adminlte.css" />
+</head>
+<body>
+
+    <div class="container">
+
+        <div id="header_simplemak" class="row flexrow">
+            <div id="header_left" class="col">
+                <img id="logo" src="~/images/logo-simplemak-white.png" class="rounded" alt="logo">
+                <h4 id="title" class="text-white text-uppercase font-weight-normal">@localizer["Service purchase order"]</h4>
+            </div>
+            <div id="header_middle" class="col text-center">
+                <div id="header_middle_child" class="text-center w-100">
+                    <h1 class="text-white font-weight-bold">OC</h1>
+                </div>
+            </div>
+            <div id="header_right" class="col">
+                <h5 id="number" class="pt-2 pr-2 text-white font-weight-light">Nº: @Model.Id.ToString("D9")</h5>
+                <h6 id="dateTitle" class="font-weight-bold pt-2 pr-2">Fecha emisión:</h6>
+                <h6 id="date" class="font-weight-light pr-2">@Model.Date.ToString("dd/MM/yyyy")</h6>
+            </div>
+        </div>
+
+        <div id="body_two" class="pt-2 pb-2 row flexrow">
+
+            <div id="body_one_left" class="col mb-2">
+
+                <h6 id="bussinessName" class="text-uppercase font-weight-bold d-inline">RAZÓN SOCIAL: </h6>
+                <h6 id="simplemak" class="font-weight-light d-inline">Simplemak S.A.</h6>
+                <br />
+
+                <h6 id="adressTitle" class="text-uppercase font-weight-bold d-inline">DOMICILIO: </h6>
+                <h6 id="adress" class="font-weight-light d-inline">51 Nº1120 Colón, Buenos Aires, Argentina: CP: 2720</h6>
+                <br />
+
+                <h6 id="phoneTitle" class="text-uppercase font-weight-bold d-inline">TELÉFONO: </h6>
+                <h6 id="phone" class="text-capitalize font-weight-light d-inline">54 - 2473 - 431065</h6>
+                <br />
+
+                <h6 id="mailTitle" class="text-uppercase font-weight-bold d-inline">E-MAIL: </h6>
+                <h6 id="mail" class="font-weight-light d-inline">info@simplemak.com.ar</h6>
+                <br />
+
+                <h6 id="web" class="font-weight-bold d-inline">www.simplemak.net</h6>
+                <br />
+
+            </div>
+
+            <div id="body_two_left" class="col mt-4 mb-2">
+                <h6 class="text-uppercase font-weight-bold d-inline">CUIT: </h6>
+                <h6 class="text-capitalize font-weight-light d-inline">30-70971555-7</h6>
+                <br />
+
+                <h6 class="font-weight-bold d-inline">Ingresos Brutos </h6>
+                <h6 class="text-capitalize font-weight-light d-inline">30-70971555-7</h6>
+                <br />
+
+                <h6 class="font-weight-bold d-inline">Fecha inicio de actividades: </h6>
+                <h6 class="text-capitalize font-weight-light d-inline">01/07/2006</h6>
+                <br />
+
+                <h6 class="font-weight-light d-inline">I.V.A. Responsable inscripto</h6>
+                <br />
+            </div>
+
+        </div>
+
+        <div id="body_three" class="pt-2 pb-2 row flexrow">
+
+            <div id="body_three_child" class="col w-100 mb-2">
+
+                <h6 id="providerTitle" class="font-weight-bold d-inline">Señor/es: </h6>
+                <h6 id="provider" class="font-weight-light d-inline">@Model.Provider.getBussinessNameOrName.ToString()</h6>
+
+                <h6 id="cuitTitle" class="font-weight-bold d-inline ml-5">
+                    @if (Model.Provider.DocumentType != null)
+                    {
+                        @Model.Provider.DocumentType.Description.ToString()
+                    }
+                </h6>
+                <h6 id="cuit" class="font-weight-light d-inline">
+                    @if (Model.Provider.DocumentType != null)
+                    {
+                        @Model.Provider.DocumentNumber.ToString()
+                    }
+                </h6>
+
+                <h6 id="ivaTitle" class="font-weight-bold d-inline ml-5">Condición IVA: </h6>
+                <h6 id="iva" class="font-weight-light d-inline">
+                    @if (Model.Provider.IVACondition != null)
+                    {
+                        @Model.Provider.IVACondition.Description.ToString()
+                    }
+                </h6>
+                <br />
+
+                <h6 class="font-weight-bold d-inline">Puesto de trabajo: </h6>
+                <h6 class="font-weight-light d-inline">
+                    @if (Model.Station != null)
+                    {
+                        @Model.Station.AbreviationDescription.ToString()
+                    }
+                </h6>
+
+            </div>
+
+        </div>
+
+        <table id="details_table" class="table table-striped-blue-pdf nowrap w-100 custom-font-size-td custom-font-size-th mt-4">
+            <thead id="bg-thead-pdf" class="border-top w-100">
+            @*<thead class="w-100 bg-thead-pdf">*@
+                <tr>
+                    <th class="text-capitalize align-middle"></th>
+                    <th class="text-capitalize text-left">@localizer["Code"]</th>
+                    <th class="text-capitalize text-left">@localizer["Description"]</th>
+                    <th class="text-capitalize text-right">@localizer["Quantity"]</th>
+                    <th class="text-left">@localizer["Unit measure"]</th>
+                    <th class="text-left">@localizer["Unit price"]</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{
+                    int index = 0;
+                    string lastItemClassTr = "";
+                }
+                @foreach (var item in Model.ServicePODetails)
+                {
+                    if ((index + 1) == Model.ServicePODetails.Count())
+                    {
+                        lastItemClassTr = "lastItemClassTr";
+                    }
+                    <tr class="@lastItemClassTr">
+                        <td class="text-center">
+                            @{
+                                index += 1;
+                            }
+                            @index
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Product.Code)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Product.Description)
+                        </td>
+                        <td class="text-right">
+                            @Html.DisplayFor(modelItem => item.Quantity)
+                        </td>
+                        <td class="text-left">
+                            @Html.DisplayFor(modelItem => item.UnitMeasure.Description)
+                        </td>
+                        <td class="text-left">
+                            @{
+                                decimal UnitPrice = Math.Round(item.UnitPrice, 2);
+                                string UnitPriceString = UnitPrice.ToString() + "USD";
+                            }
+                            @Html.DisplayFor(modelItem => UnitPriceString)
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+
+        <div class="footer">
+
+            <div id="footerOne" class="pb-3 row flexrow">
+                <div id="footerOneLeft" class="col w-75">
+                </div>
+                <div id="footerOneRight" class="col w-25">
+
+                    <h6 class="text-capitalize font-weight-bold d-inline">@localizer["Bonus"]: </h6>
+                    <h6 class="font-weight-light d-inline">@Math.Round(Model.Bonus,2).ToString()%</h6>
+                    <br />
+
+                    <h6 class="text-capitalize font-weight-bold d-inline">@localizer["IVA"]: </h6>
+                    @{
+                        var IVA = "";
+                        if (Model.IVA == 1)
+                        {
+                            IVA = "21%";
+                        }
+                        else if (Model.IVA == 2)
+                        {
+                            IVA = "10,5%";
+                        }
+                        else if (Model.IVA == 3)
+                        {
+                            IVA = "27%";
+                        }
+                        else if (Model.IVA == 4)
+                        {
+                            IVA = "0%";
+                        }
+                    }
+                    <h6 class="font-weight-light d-inline">@IVA</h6>
+                    <br />
+
+                    <h6 class="text-capitalize font-weight-bold d-inline">@localizer["Total"]: </h6>
+                    <h6 class="font-weight-light d-inline">@Math.Round(Model.Total,2).ToString()USD</h6>
+                    <br />
+
+                </div>
+            </div>
+
+            <div id="observationsDiv" class="pb-5 border">
+                <h6 class="text-capitalize font-weight-bold d-inline">@localizer["Comments"]: </h6>
+                @if (Model.Comments != null)
+                {
+                    if (Model.Comments.ToString() != "")
+                    {
+                        <h6 class="font-weight-light d-inline">@Model.Comments</h6>
+                    }
+                }
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -1,0 +1,135 @@
+﻿@using ERP.Web.Areas.ProductMod.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<StationViewModel>
+<div id="div-export-buttons">
+    <div class="btn-group">
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Stations.Create)).Result.Succeeded)
+        {
+            <a id="btn-create" onclick="jQueryModalGet('/productmod/station/OnGetCreateOrEdit','@localizer["Create Station"]')" class="btn btn-secondary text-white">
+                <i class="fa fa-plus-square"></i> 
+            </a>
+        }
+    </div>
+</div>
+<table id="stationTable" class="table table-striped-blue table-hover w-100 nowrap" cellspacing="0">
+    <thead class="bg-thead text-white">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Functional area"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Planilla OT"]</th>
+            <th hidden></th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var station in Model)
+        {
+            <tr>
+                <td hidden>
+                    @station.Id
+                </td>
+                <td class="text-left">
+                    <div class="btn-group">
+                        <div class="d-flex animated--grow-in">
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Stations.Edit)).Result.Succeeded)
+                            {
+                                <a class="btn action-btn" title="@localizer["Edit"]" onclick="jQueryModalGet('/productmod/station/OnGetCreateOrEdit?id=@station.Id','@localizer["Edit Station"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Edit"]" onclick="jQueryModalGet('/productmod/station/OnGetCreateOrEdit?id=@station.Id','@localizer["Edit Station"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.Stations.Delete)).Result.Succeeded)
+                            {
+                                <form id="form_delete_@station.Id" asp-area="Productmod" asp-controller="Station" method="post" asp-action="OnPostDelete" asp-route-id="@station.Id" onsubmit="return jQueryModalDelete(this, '@localizer["Are you sure to delete this record?"]')">
+                                    <a class="btn action-btn" title="@localizer["Delete"]" href="javascript:$('#form_delete_@station.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </form>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Delete"]" href="javascript:$('#form_delete_@station.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                            }
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    @station.FunctionalArea.Description
+                </td>
+                <td>
+                    @station.Abbreviation
+                </td>
+                <td>
+                    @station.Description
+                </td>
+                <td>
+                    @station.WorkOrderDisplayType
+                </td>
+                <td hidden>
+                    @station.FunctionalArea.Order
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Functional area"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Planilla OT"]</th>
+            <th hidden></th>
+        </tr>
+    </tfoot>
+</table>
+<script>
+    $(document).ready(function () {
+        //Busqueda en footers de tablas
+        $('#stationTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+        let stationTable = $("#stationTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "columnDefs": [{ "targets": [0], "visible": false, "searchable": false }],
+            "dom": 'Bfrtip',
+            //"order": [[2, "asc"], [3, "asc"]],
+            "order": [[6, "asc"], [3, "asc"]],
+            "buttons": [
+                {
+                    "extend": "excelHtml5",
+                    "text": '<img class="tables-img-icon" src="../../../images/Excel.svg" width="25" height="25" />',
+                    "titleAttr": "Exportar archivo Excel",
+                    "title": "Datos puestos de trabajo",
+                    "exportOptions": {
+                        "columns": [2, 3, 4, 5]
+                    }
+                }],
+            scrollY: '60vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            }
+        });
+
+        stationTable.buttons().container()
+            .appendTo("#div-export-buttons .btn-group");
+
+        $(stationTable.table().container()).on('keyup', 'tfoot input', function () {
+            stationTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+    });
+</script>

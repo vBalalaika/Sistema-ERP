@@ -1,0 +1,150 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.ProductMod.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+
+@model StationViewModel
+<form id="create-form" method="post" asp-controller="Station" asp-action="OnPostCreateOrEdit" asp-route-id="@Model.Id" onsubmit="return jQueryModalPost(this);" enctype="multipart/form-data">
+    <div class="row">
+        <div class="col-md-12">
+            <div class="form-group row">
+                <div class="col-md-9">
+                    <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">@localizer["Code"]</label>
+                <div class="col-md-9">
+                    <input type="text" asp-for="Abbreviation" name="Abbreviation" class="form-control">
+                    <span asp-validation-for="Abbreviation" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">@localizer["Description"]</label>
+                <div class="col-md-9">
+                    <input type="text" asp-for="Description" name="Description" class="form-control">
+                    <span asp-validation-for="Description" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label"> @localizer["Functional area"]</label>
+                <div class="col-md-9">
+                    <div class="input-group">
+                        @Html.DropDownListFor(m => m.FunctionalAreaId, Model.FunctionalAreas, "----------", new { @class = "form-control" })
+                    </div>
+                    <span class="text-danger" asp-validation-for="FunctionalAreaId"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label"> @localizer["Station´s users"]</label>
+                <div class="col-md-9">
+                    <div class="input-group row-col-md-12">
+                        <div class="input-group">
+                            @*@Html.DropDownList("AccessoryProduct", Model.AccessoryProductsList, "----------", new { @class = "form-control" })*@
+                            <select class="form-control select2bs4" multiple="multiple" id="UsersIds" name="UsersIds" asp-for="UsersIds" asp-items="@Model.UsersSelectList">
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label"> @localizer["Default user"]</label>
+                <div class="col-md-9">
+                    <div class="input-group">
+                        @Html.DropDownListFor(m => m.DefaultUser, Model.UsersSelectList, "----------", new { @class = "form-control" })
+                    </div>
+                    <span class="text-danger" asp-validation-for="DefaultUser"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label"> @localizer["Work order display"]</label>
+                <div class="col-md-9">
+                    <div class="input-group">
+                        <select name="WorkOrderDisplayType" class="form-control select2bs4" id="WorkOrderDisplayType" asp-for="WorkOrderDisplayType">
+                            <option value="">@localizer["Select an option"]</option>
+                            <option value="Serrucho">@localizer["OT Serrucho"]</option>
+                            <option value="Laser">@localizer["OT Laser"]</option>
+                            <option value="Torno">@localizer["OT Torno"]</option>
+                            <option value="Soldadura">@localizer["OT Soldadura"]</option>
+                            <option value="Montaje">@localizer["OT Montaje"]</option>
+                            <option value="Envios">@localizer["OT Envios"]</option>
+                            <option value="Abastecimientos">@localizer["OT Abastecimientos"]</option>
+                            <option value="Entregas">@localizer["OT Entregas"]</option>
+                        </select>
+                    </div>
+                    <span class="text-danger" asp-validation-for="WorkOrderDisplayType"></span>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-md-3 col-form-label">@localizer["State"]</label>
+                <div class="col-md-9">
+
+                    @if (Model.Id == 0 || Model.IsActive)
+                    {
+                        <input type="checkbox" name="IsActive" value="true" checked />
+                    }
+                    else
+                    {
+                        <input type="checkbox" name="IsActive" value="true" />
+                    }
+                    <label for="IsActive" class="col-form-label">@localizer["Active"]</label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row form-group d-flex flex-row-reverse mb-0 mt-2 align-self-end">
+        <button id="btn-save" type="submit" class="btn btn-default close-button" data-dismiss="modal">@localizer["Cancel"]</button>
+        <button type="submit" class="btn btn-primary text-white mr-1">@localizer["Save"]</button>
+
+    </div>
+</form>
+<script type="text/javascript" language=javascript>
+    $.validator.unobtrusive.parse(document);
+
+    $("#FunctionalAreaId").select2({
+        placeholder: "Seleccionar área funcional",
+        language: {
+            noResults: function (params) {
+                return 'No se encontraron resultados';
+            }
+        },
+        theme: "bootstrap4",
+        escapeMarkup: function (m) {
+            return m;
+        },
+        sorter: data => data.sort((a, b) => a.text.localeCompare(b.text))
+    });
+    $("#DefaultUser").select2({
+        placeholder: "Seleccionar usuario por defecto",
+        language: {
+            noResults: function (params) {
+                return 'No se encontraron resultados';
+            }
+        },
+        theme: "bootstrap4",
+        escapeMarkup: function (m) {
+            return m;
+        },
+        sorter: data => data.sort((a, b) => a.text.localeCompare(b.text))
+    });
+    $("#UsersIds").select2({
+        placeholder: "Seleccionar usuario por defecto",
+        language: {
+            noResults: function (params) {
+                return 'No se encontraron resultados';
+            }
+        },
+        theme: "bootstrap4",
+        escapeMarkup: function (m) {
+            return m;
+        },
+        sorter: data => data.sort((a, b) => a.text.localeCompare(b.text))
+    });
+    $("#WorkOrderDisplayType").select2({
+        placeholder: "Seleccionar una planilla de trabajo",
+        theme: "bootstrap4",
+        escapeMarkup: function (m) {
+            return m;
+        }
+    });
+</script>

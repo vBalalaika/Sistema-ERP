@@ -1,0 +1,590 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Prices history"];
+}
+@using ERP.Web.Areas.Purchases.Models.QuoteRequest
+@model QuoteRequestResponseHeaderViewModel
+
+<head>
+    <link rel="stylesheet" href="~/css/Purchases/QuoteRequest/QuoteRequestStyle.css" />
+</head>
+<body>
+    <div class="row ml-2 mt-3">
+        <h5 class="font-weight-light">@ViewBag.productCodeAndDescription.ToString()</h5>
+    </div>   
+    <div class="card">
+        <div id="viewAll" class="card-body table-responsive">
+            <div id="div-export-buttons" class="btn-toolbar justify-content-center" role="toolbar">
+                <div class="input-group pr-3 mt-1">
+                    <input id="daterange_input" type="text" name="daterange_input" class="form-control pr-4" placeholder="@localizer["Filter by date"]" />
+                </div>
+
+                <div class="btn-group mr-2 align-items-center" role="group">
+                    <a id="btn-export-excel" class="btn bg-secondary pl-1 pr-1" title="@localizer["Export to Excel"]">
+                        <img class="tables-img-icon" src="~/images/Excel.svg" width="30" height="30" />
+                    </a>
+                </div>
+            </div>
+            <table id="priceHistoryQuoteRequestResponseTable" class="table table-striped-blue table-hover nowrap" width="100%" cellspacing="0">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Date"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th>@localizer["Price"]</th>
+                        <th>@localizer["Quotation unit"]</th>
+                        <th>@localizer["Price"]</th>
+                        <th>@localizer["Provider unit measure"]</th>
+                        <th>@localizer["Price"]</th>
+                        <th>@localizer["Production unit"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Date"]</th>
+                        <th>@localizer["Provider"]</th>
+                        <th>@localizer["Price"]</th>
+                        <th>@localizer["Quotation unit"]</th>
+                        <th>@localizer["Price"]</th>
+                        <th>@localizer["Provider unit measure"]</th>
+                        <th>@localizer["Price"]</th>
+                        <th>@localizer["Production unit"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+
+
+@section Scripts
+    {
+    <script src="~/js/site.js"></script>
+    <script>
+
+        $(document).ready(function () {
+
+            $.fn.dataTable.moment('DD/MM/YYYY HH:mm:ss');
+
+            let start = moment().subtract(5, 'months');
+            let end = moment();
+            let dateFromFilterValue = start.format('DD/MM/YYYY');
+            let dateToFilterValue = end.format('DD/MM/YYYY');
+
+            $('input[name="daterange_input"]').daterangepicker({
+                "locale": {
+                    "format": "DD/MM/YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Aceptar",
+                    "cancelLabel": "Cancelar",
+                    "fromLabel": "Desde",
+                    "toLabel": "Hasta",
+                    "daysOfWeek": [
+                        "Do",
+                        "Lu",
+                        "Ma",
+                        "Mi",
+                        "Ju",
+                        "Vi",
+                        "Sa"
+                    ],
+                    "monthNames": [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre"
+                    ],
+                    "firstDay": 1
+                },
+                "autoApply": true,
+                "showDropdowns": true,
+                "opens": "right",
+                "buttonClasses": "btn btn-sm",
+                "applyClass": "btn-primary",
+                "startDate": start,
+                "endDate": end,
+                "minYear": 1995
+            }, cb);
+
+            function cb(start, end) {
+                $('#daterange_input span').html(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+                dateFromFilterValue = start.format('DD/MM/YYYY');
+                dateToFilterValue = end.format('DD/MM/YYYY');
+                refreshTable();
+            }
+
+            $('#daterange_input').on('apply.daterangepicker', function (ev, picker) {
+                dateFromFilterValue = picker.startDate.format('DD/MM/YYYY');
+                dateToFilterValue = picker.endDate.format('DD/MM/YYYY');
+                refreshTable();
+            });
+
+            $('#priceHistoryQuoteRequestResponseTable tfoot th').each(function (i) {
+                var title = $(this).text();
+                if (title != "@localizer["Actions"]" && title != "") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let priceHistoryQuoteRequestResponseTable = $("#priceHistoryQuoteRequestResponseTable").DataTable({
+                "order": [[1, "desc"]],
+                "oLanguage": @localizer["LanguageDataTable"],
+                scrollY: '60vh',
+                scrollX: true,
+                scrollCollapse: true,
+                scroller: true,
+                scroller: {
+                    loadingIndicator: true
+                },
+                "sAjaxSource": "/purchases/quoterequest/_LoadAllPriceHistoryQuoteRequestResponsesByProductId",
+                "sServerMethod": "POST",
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "dateFromFilter", "value": dateFromFilterValue },
+                        { "name": "dateToFilter", "value": dateToFilterValue },
+                        { "name": "productId", "value": @ViewBag.productId }
+                    );
+                },
+                "bServerSide": true,
+                "bProcessing": true,
+                "bSearchable": true,
+                "language": {
+                    "processing":
+                        '<div class="text-center"> <div id="spinnerDataTable" class="spinner-border text-primary" role="status"> <span class="sr-only"></span></div></div>'
+                },
+                "columns": [
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false,
+                        "orderable": false
+                    },
+                    {
+                        "data": "quoteRequestResponseHeader.date",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return moment(value).format('DD/MM/YYYY');
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-center"
+                    },
+                    {
+                        "data": "quoteRequestResponseHeader.provider",
+                        "render": function (provider) {
+                            if (provider === null) {
+                                return "";
+                            } else {
+                                return provider.getBussinessNameOrName;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "unitPrice",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-right",
+                        "render": $.fn.dataTable.render.number('.', ',', 2, '', ' USD por')
+                    },
+                    {
+                        "data": "priceUnitMeasure",
+                        "render": function (priceUnitMeasure) {
+                            if (priceUnitMeasure === null) {
+                                return "";
+                            } else {
+                                return priceUnitMeasure.abbreviation;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "product.relProviderProducts",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-right",
+                        "render": function (rpp) {
+                            let providerPrice = getProviderPriceValue(rpp);
+                            return $.fn.dataTable.render.number('.', ',', 2, '', ' USD por').display(providerPrice);
+                        }
+                    },
+                    {
+                        "data": "providerUnitMeasure",
+                        "render": function (providerUnitMeasure) {
+                            if (providerUnitMeasure === null) {
+                                return "";
+                            } else {
+                                return providerUnitMeasure.abbreviation;
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    },
+                    {
+                        "data": "product.relProviderProducts",
+                        "autoWidth": true,
+                        "searchable": true,
+                        "className": "text-right",
+                        "render": function (rpp) {
+                            let productionPrice = getProductionPriceValue(rpp);
+                            return $.fn.dataTable.render.number('.', ',', 2, '', ' USD por').display(productionPrice);
+                        }
+                    },
+                    {
+                        "data": "missingProduct.product.unitMeasure",
+                        "render": function (productionUnitMeasure) {
+                            if (productionUnitMeasure === null) {
+                                return "";
+                            } else {
+                                // Muestro la unidad padre "Metros"
+                                if(productionUnitMeasure.unitType == 2){
+                                    return "m";
+                                }
+                                // Muestro la unidad padre "Kilogramos"
+                                else if (productionUnitMeasure.unitType == 3) {
+                                    return "kg";
+                                }
+                                // Muestro la unidad padre "Litros"
+                                else if (productionUnitMeasure.unitType == 4) {
+                                    return "l";
+                                }
+                                else{
+                                    return productionUnitMeasure.abbreviation;
+                                }
+                            }
+                        },
+                        "autoWidth": true,
+                        "searchable": true
+                    }
+                ],
+                initComplete: function () {
+                    this.api().columns().every(function () {
+                        var that = this;
+                        $('input', this.footer()).on('keyup change clear', function () {
+                            if (that.search() !== this.value) {
+                                that
+                                    .search(this.value)
+                                    .draw();
+                            }
+                        });
+                    });
+                }
+            });
+
+            $('#btn-export-excel').on('click', function () {
+                alert("Aún no se implementó.");
+            });
+
+        });
+
+        function refreshTable() {
+            $('#priceHistoryQuoteRequestResponseTable').DataTable().clear();
+            $('#priceHistoryQuoteRequestResponseTable').DataTable().ajax.reload();
+        }
+
+        function getProviderPriceValue(rpp){
+            let providerPrice = 0;
+            try {
+                // Si la unidad del proveedor es igual a la unidad de cotizacion, muestro el precio en dolares sin convertir nada.
+                if(rpp[0].unitMeasureId == rpp[0].priceUnitMeasureId){
+                    providerPrice = rpp[0].dollarPrice;
+                }
+                else{
+
+                    // Unidad del proveedor = "Barras"
+                    if (rpp[0].unitMeasureId == 22) {
+
+                        // Unidad de cotización = "Metros"
+                        if (rpp[0].priceUnitMeasureId == 2) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].lenght;
+                        }
+                        // Unidad de cotizacion = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].weight;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Hojas"
+                    else if (rpp[0].unitMeasureId == 31) {
+
+                        // Unidad de cotizacion = "Metros cuadrados"
+                        if (rpp[0].priceUnitMeasureId == 16) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].lenght * rpp[0].width;
+                        }
+                        // Unidad de cotizacion = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].weight;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Bidones"
+                    else if (rpp[0].unitMeasureId == 36) {
+
+                        // Unidad de cotización = "Litros"
+                        if (rpp[0].priceUnitMeasureId == 18) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Centimetros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 39) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Metros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 17) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Mililitros"
+                        else if (rpp[0].priceUnitMeasureId == 26) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].weight;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Cajas"
+                    else if (rpp[0].unitMeasureId == 33) {
+
+                        // Unidad de cotización = "Metros"
+                        if (rpp[0].priceUnitMeasureId == 2) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].lenght;
+                        }
+                        // Unidad de cotización = "Unidades"
+                        else if (rpp[0].priceUnitMeasureId == 19) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].weight;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Latas"
+                    else if (rpp[0].unitMeasureId == 37) {
+
+                        // Unidad de cotización = "Litros"
+                        if (rpp[0].priceUnitMeasureId == 18) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Centimetros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 39) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Metros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 17) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Mililitros"
+                        else if (rpp[0].priceUnitMeasureId == 26) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].weight;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Rollos"
+                    else if (rpp[0].unitMeasureId == 23) {
+
+                        // Unidad de cotización = "Metros"
+                        if (rpp[0].priceUnitMeasureId == 2) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].lenght;
+                        }
+                        // Unidad de cotización = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].weight;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Tubos"
+                    else if (rpp[0].unitMeasureId == 38) {
+
+                        // Unidad de cotización = "Kilogramos"
+                        if (rpp[0].priceUnitMeasureId == 1) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].weight;
+                        }
+                        // Unidad de cotización = "Centimetros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 39) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Metros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 17) {
+                            providerPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+
+                    }
+
+                }
+
+                return providerPrice;
+            }
+            catch {
+                return providerPrice;
+            }
+        }
+
+        function getProductionPriceValue(rpp) {
+            let productionPrice = 0;
+            try {
+                // Si la unidad del proveedor es igual a la unidad de cotizacion, muestro el precio en dolares sin convertir nada.
+                if (rpp[0].unitMeasureId == rpp[0].priceUnitMeasureId) {
+                    productionPrice = rpp[0].dollarPrice;
+                }
+                else {
+
+                    // Unidad del proveedor = "Barras"
+                    if (rpp[0].unitMeasureId == 22) {
+
+                        // Unidad de cotización = "Metros"
+                        if (rpp[0].priceUnitMeasureId == 2) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].lenght;
+                        }
+                        // Unidad de cotizacion = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].weight / rpp[0].lenght;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Hojas"
+                    else if (rpp[0].unitMeasureId == 31) {
+
+                        // Unidad de cotizacion = "Metros cuadrados"
+                        if (rpp[0].priceUnitMeasureId == 16) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].lenght * rpp[0].width;
+                        }
+                        // Unidad de cotizacion = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].weight / rpp[0].lenght * rpp[0].width;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Bidones"
+                    else if (rpp[0].unitMeasureId == 36) {
+
+                        // Unidad de cotización = "Litros"
+                        if (rpp[0].priceUnitMeasureId == 18) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Centimetros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 39) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Metros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 17) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Mililitros"
+                        else if (rpp[0].priceUnitMeasureId == 26) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].weight;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Cajas"
+                    else if (rpp[0].unitMeasureId == 33) {
+
+                        // Unidad de cotización = "Metros"
+                        if (rpp[0].priceUnitMeasureId == 2) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].lenght / rpp[0].lenght;
+                        }
+                        // Unidad de cotización = "Unidades"
+                        else if (rpp[0].priceUnitMeasureId == 19) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].weight;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Latas"
+                    else if (rpp[0].unitMeasureId == 37) {
+
+                        // Unidad de cotización = "Litros"
+                        if (rpp[0].priceUnitMeasureId == 18) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Centimetros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 39) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Metros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 17) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Mililitros"
+                        else if (rpp[0].priceUnitMeasureId == 26) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].weight;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Rollos"
+                    else if (rpp[0].unitMeasureId == 23) {
+
+                        // Unidad de cotización = "Metros"
+                        if (rpp[0].priceUnitMeasureId == 2) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].lenght;
+                        }
+                        // Unidad de cotización = "Kilogramos"
+                        else if (rpp[0].priceUnitMeasureId == 1) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].weight / rpp[0].lenght;
+                        }
+
+                    }
+                    // Unidad del proveedor = "Tubos"
+                    else if (rpp[0].unitMeasureId == 38) {
+
+                        // Unidad de cotización = "Kilogramos"
+                        if (rpp[0].priceUnitMeasureId == 1) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].weight;
+                        }
+                        // Unidad de cotización = "Centimetros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 39) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+                        // Unidad de cotización = "Metros cubicos"
+                        else if (rpp[0].priceUnitMeasureId == 17) {
+                            productionPrice = rpp[0].dollarPrice * rpp[0].presentationQuantity;
+                        }
+
+                    }
+
+                }
+
+                return productionPrice;
+            }
+            catch {
+                return productionPrice;
+            }
+        }
+
+    </script>
+}

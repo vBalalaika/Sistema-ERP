@@ -1,0 +1,97 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Sales.Models
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<DeliveryDateHistoryViewModel>
+
+<div class="card pl-5 pr-5">
+    <div id="viewAll" class="card-body table-responsive p-0">
+        <table class="table table-striped-blue w-100 nowrap" id="logTable">
+            <thead class="bg-thead">
+                <tr>
+                    <th class="text-center">
+                        @localizer["Product number"]
+                    </th>
+                    <th class="text-center">
+                        @localizer["Change date"]
+                    </th>
+                    <th class="text-center">
+                        @localizer["Old delivery date"]
+                    </th>
+                    <th class="text-center">
+                        @localizer["New delivery date"]
+                    </th>
+                    <th class="text-center">
+                        @localizer["User"]
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var deliveryDateHistoryVM in Model.OrderByDescending(ddh => ddh.ChangeDate))
+                {
+                    <tr>
+                        <td class="text-center p-2">
+                            @deliveryDateHistoryVM.OrderDetail.ProductNumber
+                        </td>
+                        <td class="text-center p-2">
+                            @deliveryDateHistoryVM.ChangeDate
+                        </td>
+                        <td class="text-center p-2">
+                            <div class="bg-warning-color-black rounded">
+                                @deliveryDateHistoryVM.OldDeliveryDate.ToShortDateString()
+                            </div>
+                        </td>
+                        <td class="text-center p-2">
+                            <div class="bg-success-color-black rounded">
+                                @deliveryDateHistoryVM.NewDeliveryDate.ToShortDateString()
+                            </div>
+                        </td>
+                        <td class="text-center p-2">
+                            @deliveryDateHistoryVM.CreatedBy
+                        </td>
+                    </tr>
+                }
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th class="text-center">
+                        @localizer["Product number"]
+                    </th>
+                    <th class="text-center">
+                        @localizer["Change date"]
+                    </th>
+                    <th class="text-center">
+                        @localizer["Old delivery date"]
+                    </th>
+                    <th class="text-center">
+                        @localizer["New delivery date"]
+                    </th>
+                    <th class="text-center">
+                        @localizer["User"]
+                    </th>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<script>
+    $(document).ready(function () {
+        
+        $('#logTable tfoot th').each(function (i) {
+            $(this).html('<input type="text" class="search-control" placeholder="' + $(this).text() + '" data-index="' + i + '" />');
+        });
+
+        let logTable = $("#logTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "paging":false,
+            "ordering": false
+        });
+
+        $(logTable.table().container()).on('keyup', 'tfoot input', function () {
+            logTable
+            .column($(this).data('index'))
+            .search(this.value)
+            .draw();
+        });
+    });        
+</script>

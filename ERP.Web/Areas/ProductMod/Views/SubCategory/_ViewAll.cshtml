@@ -1,0 +1,142 @@
+﻿@using ERP.Web.Areas.ProductMod.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<SubCategoryViewModel>
+<div id="div-export-buttons">
+    <div class="btn-group">
+        @if ((AuthorizationService.AuthorizeAsync(User, Permissions.SubCategories.Create)).Result.Succeeded)
+        {
+            <a id="btn-create" onclick="jQueryModalGet('/productmod/subcategory/OnGetCreateOrEdit','@localizer["Create Sub Category"]')" class="btn btn-secondary text-white">
+                <i class="fa fa-plus-square"></i> 
+            </a>
+        }
+    </div> 
+</div>
+<table id="subCategoryTable" class="table table-striped-blue w-100 nowrap" cellspacing="0">
+    <thead class="bg-thead text-white">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Category"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Prefix"]</th>
+            <th>@localizer["State"]</th>
+
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var subcategory in Model)
+        {
+            <tr>
+                <td hidden>
+                    @subcategory.Id
+                </td>
+                <td class="text-left">
+                    <div class="btn-group">
+                        <div class="d-flex animated--grow-in">
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.SubCategories.Edit)).Result.Succeeded)
+                            {
+                                <a class="btn action-btn" title="@localizer["Edit"]" onclick="jQueryModalGet('/productmod/subcategory/OnGetCreateOrEdit?id=@subcategory.Id','@localizer["Edit Sub Category"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Edit"]" onclick="jQueryModalGet('/productmod/subcategory/OnGetCreateOrEdit?id=@subcategory.Id','@localizer["Edit Sub Category"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                            }
+                            @if ((AuthorizationService.AuthorizeAsync(User, Permissions.SubCategories.Delete)).Result.Succeeded)
+                            {
+                                <form id="form_delete_@subcategory.Id" asp-area="ProductMod" asp-controller="SubCategory" method="post" asp-action="OnPostDelete" asp-route-id="@subcategory.Id" onsubmit="return jQueryModalDelete(this, '@localizer["Are you sure to delete this record?"]')">
+                                    <a class="btn action-btn" title="@localizer["Delete"]" href="javascript:$('#form_delete_@subcategory.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                                </form>
+                            }
+                            else
+                            {
+                                <a class="btn action-btn disabled" title="@localizer["Delete"]" href="javascript:$('#form_delete_@subcategory.Id').submit();"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></a>
+                            }
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    @subcategory.Category.Description
+                </td>
+                <td>
+                    @subcategory.Description
+                </td>
+                <td>
+                    @subcategory.Prefix
+                </td>
+                <td>
+                    @if (subcategory.IsActive)
+                    {
+                        <span class="badge bg-success text-white">@localizer["Active"]</span>
+                    }
+                    else
+                    {
+                        <span class="badge bg-danger text-white">@localizer["Desactivated"]</span>
+                    }
+                </td>
+
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Category"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Prefix"]</th>
+            <th>@localizer["State"]</th>
+        </tr>
+    </tfoot>
+</table>
+<script>
+    $(document).ready(function () {
+   //Busqueda en footers de tablas
+        $('#subCategoryTable tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            } else {
+                $(this).html('');
+            }
+        });
+        let subCategoryTable = $("#subCategoryTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "columnDefs": [{ "targets": [0], "visible": false, "searchable": false }],
+            "order": [
+                [2, "asc"],
+                [3, "asc"]
+            ],
+            "dom": 'Bfrtip',
+            "buttons": [
+                {
+                    "extend": "excelHtml5",
+                    "className": "rounded",
+                    "text": '<img class="tables-img-icon" src="../../../images/Excel.svg" width="25" height="25" />',
+                    "titleAttr": "Exportar archivo Excel",
+                    "title": "Datos subcategorías",
+                    "exportOptions": {
+                        "columns": [2, 3, 4, 5]
+                    }
+                }],
+            scrollY: '60vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            }
+        });
+
+        subCategoryTable.buttons().container()
+            .appendTo("#div-export-buttons .btn-group");
+
+        $(subCategoryTable.table().container()).on('keyup', 'tfoot input', function () {
+            subCategoryTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+    });
+</script>

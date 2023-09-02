@@ -1,0 +1,2813 @@
+﻿@using Microsoft.AspNetCore.Mvc.Localization
+@using ERP.Web.Areas.Purchases.Models.PurchaseOrder
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@{
+    ViewData["Title"] = localizer["Purchase order"];
+}
+@model PurchaseOrderHeaderViewModel
+@{
+    int index = 1;
+}
+
+<form id="create-form" method="post" asp-controller="PurchaseOrder" asp-action="OnPostCreate" asp-route-id="@Model.Id" asp-route-qrhId="@Model.QuoteRequestResponseHeaderId" enctype="multipart/form-data">
+
+    <div class="form-row">
+
+        <input type="hidden" asp-for="ConcurrencyToken" name="ConcurrencyToken" class="form-control">
+        <input type="hidden" asp-for="QuoteRequestResponseHeaderId" name="QuoteRequestResponseHeaderId" class="form-control">
+        <input type="hidden" asp-for="isGenerateMissingProducts" name="isGenerateMissingProducts" class="form-control">
+
+        <div class="col-md-2 mb-3">
+            <label asp-for="Date" class="control-label">@localizer["Date"]</label>
+            <input asp-for="Date" name="Date" type="date" class="form-control" id="Date">
+            <span asp-validation-for="Date" class="text-danger"></span>
+        </div>
+
+        @if(Model.Id != 0 || Model.QuoteRequestResponseHeaderId.HasValue)
+        {
+            <div class="col-md-8 mb-3">
+                <label asp-for="ProviderId" class="control-label">@localizer["Provider"]</label>
+                <select name="ProviderId" class="form-control select2bs4" id="Providers" asp-for="ProviderId" disabled>
+                    @if(Model.Provider != null)
+                    {
+                        <option value="@Model.ProviderId">@Model.Provider.getBussinessNameOrName</option>  
+                    }
+                </select>  
+                <input hidden asp-for="ProviderId" name="ProviderId" type="text" class="form-control" id="ProviderId" readonly>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label asp-for="Number" class="control-label">@localizer["Number"]</label>
+                <input asp-for="Number" name="Number" type="number" class="form-control text-center" id="Number" readonly tabindex="-1" value="@Model.Number">
+            </div>
+        }
+        else
+        {
+            <div class="col-md-7 mb-3">
+                <label asp-for="ProviderId" class="control-label">@localizer["Provider"]</label>
+                <select name="ProviderId" class="form-control select2bs4" id="Providers" asp-for="ProviderId">
+                    <option value="-1">@localizer["Select provider"]</option>
+                </select>
+            </div>
+            <div class="col-md-1 mb-3">
+                <label class="control-label">@localizer["New"]</label>
+                <button id="btn-create-provider" class="btn btn-secondary w-100" type="button"><i class="far fa-address-card"></i></button>
+            </div>
+            <div class="col-md-2 mb-3">
+                <label asp-for="Number" class="control-label">@localizer["Number"]</label>
+                <input asp-for="Number" name="Number" type="number" class="form-control text-center" id="Number" readonly tabindex="-1" value="@Model.Number">
+            </div>
+        }
+
+        @if (!Model.QuoteRequestResponseHeaderId.HasValue)
+        {
+            <div id="divSelect2MissingProducts" class="col-md-5 mb-3">
+                <label class="control-label">@localizer["Missing products"]</label>
+                <select class="form-control select2bs4" id="MissingProducts">
+                    <option value="">@localizer["Select missing product"]</option>
+                </select>
+            </div>
+            <div id="divSelect2ProductsByProvider" class="col-md-5 mb-3">
+                <label class="control-label">@localizer["Products by provider"]</label>
+                <select class="form-control select2bs4" id="ProductsByProvider">
+                    <option value="">@localizer["Select product by provider"]</option>
+                </select>
+            </div>
+            <div id="btnAddDiv" class="col-md-2 mb-3">
+                <label class="control-label">@localizer["Add"]</label>
+                <button id="btn-add-detail" type="button" class="form-control btn btn-primary"><i class="fa fa-plus-circle" aria-hidden="true"></i></button>
+            </div>
+        }
+
+        <div id="table-div" class="col-md-12">
+            <table id="purchaseOrderDetailsTable" class="table table-responsive table-striped-blue">
+                <thead class="bg-thead">
+                    <tr>
+                        <th class="thMaxWidthModified">@localizer["Code"]</th>
+                        <th class="descriptionTh w-25">@localizer["Description"]</th>
+                        <th class="thMaxWidthModified text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Provider unit measure"]</th>
+                        <th class="thMaxWidthModified text-right">@localizer["Quantity"]</th>
+                        <th class="text-left">@localizer["Quotation unit"]</th>
+                        <th class="thMaxWidthModified">@localizer["Unit price"]</th>
+                        <th>@localizer["Money"]</th>
+                        <th class="thMaxWidthModified">@localizer["Bonus"] %</th>
+                        <th class="thMaxWidthModified">@localizer["Total"]</th>
+                        @if(Model.Id == 0 && !Model.QuoteRequestResponseHeaderId.HasValue)
+                        {
+                            <th>@localizer["Delete"]</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var purchaseOrderDetailVM in Model.PurchaseOrderDetails)
+                    {
+                        string disabledItemWhenIsReturned = purchaseOrderDetailVM.PurchaseStateId == 8 ? "disabled" : "";
+                        if(Model.Id == 0 && !Model.QuoteRequestResponseHeaderId.HasValue)
+                        {
+                            <tr>
+                                <td class="d-none">
+                                    <input type="hidden" name="PurchaseOrderDetails.Index" value="@index" />
+                                    @if (purchaseOrderDetailVM.MissingProductId.HasValue)
+                                    {
+                                        <input type="hidden" class="missingProductId form-control" name="PurchaseOrderDetails[@index].MissingProductId" readonly value="@purchaseOrderDetailVM.MissingProductId.Value" />
+                                    }
+                                    <input type="hidden" class="productId form-control" name="PurchaseOrderDetails[@index].ProductId" readonly />
+                                    <input type="hidden" class="providerUnitMeasureId form-control" name="PurchaseOrderDetails[@index].ProviderUnitMeasureId" />  
+                                    <input type="hidden" class="priceUnitMeasureId form-control" name="PurchaseOrderDetails[@index].PriceUnitMeasureId" />   
+                                </td>
+
+                                @if(purchaseOrderDetailVM.MissingProductId.HasValue)
+                                {
+                                    <td class="tdMaxWidthModified">
+                                        <input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails[@index].ProductCode" tabindex="-1" readonly value="@purchaseOrderDetailVM.MissingProduct.Product.Code" />  
+                                    </td>
+
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails[@index].ProductDescription" tabindex="-1" readonly value="@purchaseOrderDetailVM.MissingProduct.Product.Description" />
+                                    </td>                                    
+                                }
+                                else
+                                {
+                                    <td class="tdMaxWidthModified">
+                                        <input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails[@index].ProductCode" tabindex="-1" readonly value="@purchaseOrderDetailVM.Product.Code" />  
+                                    </td>
+
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails[@index].ProductDescription" tabindex="-1" readonly value="@purchaseOrderDetailVM.Product.Description" />
+                                    </td>
+                                }
+
+                                <td class="tdMaxWidthModified">
+                                    <input type="text" class="providerQuantity form-control text-right" @disabledItemWhenIsReturned name="PurchaseOrderDetails[@index].ProviderQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="providerUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />
+                                </td>
+
+                                <td class="tdMaxWidthModified">
+                                    <input type="text" class="priceQuantity form-control text-right" @disabledItemWhenIsReturned name="PurchaseOrderDetails[@index].PriceQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="priceUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />
+                                </td>
+
+                                <td class="tdMaxWidthModified">
+                                    <input type="text" class="unitPrice form-control text-right" @disabledItemWhenIsReturned name="PurchaseOrderDetails[@index].UnitPrice" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />
+                                </td>   
+                                
+                                <td>
+                                    <select class="moneyTypeSelect2 form-control select2bs4 w-100" @disabledItemWhenIsReturned name="PurchaseOrderDetails[@index].MoneyType" tabindex="0" asp-for="@purchaseOrderDetailVM.MoneyType" id="moneyType_@index">
+                                        <option value="1">@localizer["ARS"]</option>
+                                        <option value="2">@localizer["USD"]</option>
+                                    </select>
+                                </td>
+
+                                <td class="tdMaxWidthModified">
+                                    <input type="text" class="bonus form-control text-right" @disabledItemWhenIsReturned name="PurchaseOrderDetails[@index].Bonus" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td class="tdMaxWidthModified">
+                                    <input type="text" class="total custom-form-control form-control text-right" name="PurchaseOrderDetails[@index].Total" tabindex="-1" placeholder="0,00" readonly />
+                                </td>
+
+                                 <td>
+                                     <button type="button" class="btn btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button>
+                                 </td>
+
+                            </tr>
+                        }
+                        else
+                        {
+                            <tr>
+                                <td class="d-none">
+                                    <input type="hidden" name="PurchaseOrderDetails.Index" value="@index" />
+                                    @if (purchaseOrderDetailVM.MissingProductId.HasValue)
+                                    {
+                                        <input type="hidden" class="missingProductId form-control" name="PurchaseOrderDetails[@index].MissingProductId" readonly value="@purchaseOrderDetailVM.MissingProductId.Value" />
+                                    }
+                                    else if (purchaseOrderDetailVM.ProductId.HasValue)
+                                    {
+                                        <input type="hidden" class="productId form-control" name="PurchaseOrderDetails[@index].ProductId" readonly value="@purchaseOrderDetailVM.ProductId.Value" />
+                                    }
+                                    <input type="hidden" class="providerUnitMeasureId form-control" name="PurchaseOrderDetails[@index].ProviderUnitMeasureId" readonly value="@purchaseOrderDetailVM.ProviderUnitMeasureId" />  
+                                    <input type="hidden" class="priceUnitMeasureId form-control" name="PurchaseOrderDetails[@index].PriceUnitMeasureId" readonly value="@purchaseOrderDetailVM.PriceUnitMeasureId" />   
+                                    <input type="hidden" class="form-control" name="PurchaseOrderDetails[@index].Id" value="@purchaseOrderDetailVM.Id" />   
+                                    <input type="hidden" class="form-control" name="PurchaseOrderDetails[@index].ConcurrencyToken" value="@purchaseOrderDetailVM.ConcurrencyToken" />   
+                                    <input type="hidden" class="form-control" name="PurchaseOrderDetails[@index].IncomeDetailId" value="@purchaseOrderDetailVM.IncomeDetailId" />   
+                                </td>
+
+                                @if(purchaseOrderDetailVM.MissingProductId.HasValue)
+                                {
+                                    <td class="tdMaxWidthModified">
+                                        <input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails[@index].ProductCode" tabindex="-1" readonly value="@purchaseOrderDetailVM.MissingProduct.Product.Code" />  
+                                    </td>
+
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails[@index].ProductDescription" tabindex="-1" readonly value="@purchaseOrderDetailVM.MissingProduct.Product.Description" />
+                                    </td>                                    
+                                }
+                                else if(purchaseOrderDetailVM.ProductId.HasValue)
+                                {
+                                    <td class="tdMaxWidthModified">
+                                        <input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails[@index].ProductCode" tabindex="-1" readonly value="@purchaseOrderDetailVM.Product.Code" />  
+                                    </td>
+
+                                    <td>
+                                        <input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails[@index].ProductDescription" tabindex="-1" readonly value="@purchaseOrderDetailVM.Product.Description" />
+                                    </td>                                    
+                                }
+
+                                <td class="tdMaxWidthModified">
+                                    <input type="text" class="providerQuantity form-control text-right" @disabledItemWhenIsReturned name="PurchaseOrderDetails[@index].ProviderQuantity" tabindex="0" placeholder="0,00" value="@String.Format("{0:N2}", Math.Round(purchaseOrderDetailVM.ProviderQuantity, 2))" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="providerUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly value="@purchaseOrderDetailVM.ProviderUnitMeasure.Description" />
+                                </td>
+
+                                <td class="tdMaxWidthModified">
+                                    <input type="text" class="priceQuantity form-control text-right" @disabledItemWhenIsReturned name="PurchaseOrderDetails[@index].PriceQuantity" tabindex="0" placeholder="0,00" value="@String.Format("{0:N2}", Math.Round(purchaseOrderDetailVM.PriceQuantity, 2))" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td>
+                                    <input type="text" class="priceUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly value="@purchaseOrderDetailVM.PriceUnitMeasure.Description" />
+                                </td>
+
+                                <td class="tdMaxWidthModified">
+                                    <input type="text" class="unitPrice form-control text-right" @disabledItemWhenIsReturned name="PurchaseOrderDetails[@index].UnitPrice" tabindex="0" placeholder="0,00" value="@String.Format("{0:N2}", Math.Round(purchaseOrderDetailVM.UnitPrice, 2))" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td>
+                                    <select class="moneyTypeSelect2 form-control select2bs4 w-100" @disabledItemWhenIsReturned name="PurchaseOrderDetails[@index].MoneyType" tabindex="0" asp-for="@purchaseOrderDetailVM.MoneyType" id="moneyType_@index">
+                                        <option value="1">@localizer["ARS"]</option>
+                                        <option value="2">@localizer["USD"]</option>
+                                    </select>
+                                </td>
+
+                                <td class="tdMaxWidthModified">
+                                    <input type="text" class="bonus form-control text-right" @disabledItemWhenIsReturned name="PurchaseOrderDetails[@index].Bonus" tabindex="0" placeholder="0,00" value="@String.Format("{0:N2}", Math.Round(purchaseOrderDetailVM.Bonus, 2))" onkeypress="return validateIsNumber(event);" />
+                                </td>
+
+                                <td class="tdMaxWidthModified">
+                                    <input type="text" class="total custom-form-control form-control text-right" name="PurchaseOrderDetails[@index].Total" tabindex="-1" placeholder="0,00" value="@String.Format("{0:N2}", Math.Round(purchaseOrderDetailVM.Total, 2))" readonly />
+                                </td>
+
+                            </tr>
+                        }
+
+                        index++;
+                    }
+                </tbody>    
+            </table> 
+
+            @if(Model.Id == 0 && !Model.QuoteRequestResponseHeaderId.HasValue)
+            {
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Bonus" class="col-md-10 col-form-label font-weight-normal">@localizer["Bonus"] (%)</label>
+                    <div class="col-md-2">
+                        <input asp-for="Bonus" name="Bonus" type="text" class="form-control text-right" id="Bonus" onkeypress="return validateIsNumber(event);" value="0,00">
+                    </div>
+                </div>
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                    <div class="col-md-2">
+                        <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                            <option value="1" selected>21%</option>
+                            <option value="2">10,5%</option>
+                            <option value="3">27%</option>
+                            <option value="4">0%</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Total" class="col-md-10 col-form-label font-weight-normal">@localizer["Total"]</label>
+                    <div class="col-md-2">
+                        <input asp-for="Total" name="Total" type="text" class="form-control text-right" id="Total" onkeypress="return validateIsNumber(event);" value="0,00" readonly> 
+                    </div>
+                </div>
+            }
+            else if (Model.QuoteRequestResponseHeaderId.HasValue)
+            {
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Bonus" class="col-md-10 col-form-label font-weight-normal">@localizer["Bonus"] (%)</label>
+                    <div class="col-md-2">
+                        <input asp-for="Bonus" name="Bonus" type="text" class="form-control text-right" id="Bonus" onkeypress="return validateIsNumber(event);" value="@Math.Round(Model.Bonus, 2)">
+                    </div>
+                </div>
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                    <div class="col-md-2">
+                        <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                            <option value="1" selected>21%</option>
+                            <option value="2">10,5%</option>
+                            <option value="3">27%</option>
+                            <option value="4">0%</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Total" class="col-md-10 col-form-label font-weight-normal">@localizer["Total"]</label>
+                    <div class="col-md-2">
+                        <input asp-for="Total" name="Total" type="text" class="form-control text-right" id="Total" onkeypress="return validateIsNumber(event);" value="0,00" readonly> 
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Bonus" class="col-md-10 col-form-label font-weight-normal">@localizer["Bonus"] (%)</label>
+                    <div class="col-md-2">
+                        <input asp-for="Bonus" name="Bonus" type="text" class="form-control text-right" id="Bonus" onkeypress="return validateIsNumber(event);" value="@Math.Round(Model.Bonus, 2)">
+                    </div>
+                </div>
+                switch (Model.IVA)
+                {
+                    case 1:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1" selected>21%</option>
+                                <option value="2">10,5%</option>
+                                <option value="3">27%</option>
+                                <option value="4">0%</option>
+                            </select>
+                        </div>
+                    </div>   
+                    break;
+                    case 2:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1">21%</option>
+                                <option value="2" selected>10,5%</option>
+                                <option value="3">27%</option>
+                                <option value="4">0%</option>
+                            </select>
+                        </div>
+                    </div>  
+                    break;
+                    case 3:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1">21%</option>
+                                <option value="2">10,5%</option>
+                                <option value="3" selected>27%</option>
+                                <option value="4">0%</option>
+                            </select>
+                        </div>
+                    </div>  
+                    break;
+                    case 4:
+                    <div class="form-group row justify-content-between text-right">
+                        <label asp-for="IVA" class="col-md-10 col-form-label font-weight-normal">@localizer["IVA"]</label>
+                        <div class="col-md-2">
+                            <select asp-for="IVA" class="form-control select2bs4 text-right" id="IVA">
+                                <option value="1">21%</option>
+                                <option value="2">10,5%</option>
+                                <option value="3">27%</option>
+                                <option value="4" selected>0%</option>
+                            </select>
+                        </div>
+                    </div>  
+                    break;
+                }
+                <div class="form-group row justify-content-between text-right">
+                    <label asp-for="Total" class="col-md-10 col-form-label font-weight-normal">@localizer["Total"]</label>
+                    <div class="col-md-2">
+                        <input asp-for="Total" name="Total" type="text" class="form-control text-right" id="Total" onkeypress="return validateIsNumber(event);" value="@Math.Round(Model.Total, 2)" readonly> 
+                    </div>
+                </div>
+            }
+           
+        </div>
+
+        @if(Model.Id != 0)
+        {
+            <div class="col-md-11 mb-3">
+                <label asp-for="Comments" class="control-label">@localizer["Comments"]</label>
+                <textarea asp-for="Comments" name="Comments" class="form-control" id="Comments" rows="5"></textarea>
+            </div>  
+            <div class="col-md-1 mb-3">
+                <label class="control-label">@localizer["PDF Export"]</label>
+                <button id="btn-export-to-pdf" type="button" class="form-control btn btn-secondary h-50"><img src="~/images/PDF.svg" width="100%" height="100%" /></button>
+            </div>
+        }
+        else
+        {
+            <div class="col-md-12 mb-3">
+                <label asp-for="Comments" class="control-label">@localizer["Comments"]</label>
+                <textarea asp-for="Comments" name="Comments" class="form-control" id="Comments" rows="5"></textarea>
+            </div>  
+        }
+
+    </div>
+
+    <div id="buttons-div" class="form-group justify-content-between">
+        <button id="btn-save" type="submit" class="btn btn-primary">@localizer["Save"]</button>
+        <button type="submit" class="btn btn-default close-button" data-dismiss="modal"> @localizer["Cancel"]</button>
+    </div>
+
+</form>
+
+<script src="~/js/site.js"></script>
+<script type="text/javascript">
+    $.validator.unobtrusive.parse(document);
+    $(document).ready(function () {
+
+        let index = @index;
+        let select2Providers = $('#Providers');
+        let select2MissingProducts = $('#MissingProducts');
+        let select2ProductsByProvider = $('#ProductsByProvider');
+        let quantity = "Quantity";
+        let decimalInputsIds = [quantity];
+
+        validateDecimalsNumbersOnInput(decimalInputsIds);
+
+        $('.moneyTypeSelect2').each(function (index, element) {
+            if (!$(this).hasClass("select2-hidden-accessible")) {
+                $(this).select2({
+                    language: "es",
+                    theme: "bootstrap4",
+                    placeholder: "@localizer["Select money type"]"
+                });
+
+                $(this).next().removeAttr('style');
+            }
+        });
+
+        $("#Bonus").on({
+            "focus": function (event) {
+                $(event.target).select();
+            },
+            "keyup": function (event) {
+                $(event.target).val(function (index, value) {
+                    return value.replace(/\D/g, "")
+                        .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                        .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                });
+            },
+            "change": function (event) {
+                $(event.target).val(function (index, value) {
+                    let valueAux = value;
+                    if (!value.includes(",")) {
+                        valueAux = value.concat(",00");
+                    }
+                    else {
+                        valueAux = value;
+                    }
+
+                    if (value.charAt(0) == "0" && value.length == 1) {
+                        valueAux = value.concat(",00");
+                    }
+                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                        if(value.charAt(1) == "."){
+                            valueAux = value.slice(2);
+                        }
+                        else if(value.charAt(2) == "."){
+                            valueAux = value.slice(1);
+                        }
+                        else{
+                            valueAux = value.slice(1);
+                        }
+                    }
+
+                    for (var i = 0; i < valueAux.length; i++) {
+                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                            let addZero = "";
+                            if(valueAux[i] == ","){
+                                addZero = "0";
+                            }
+                            valueAux = addZero + valueAux.slice(i);
+                            break;
+                        }
+                    }
+
+                    if(parseFloat(valueAux.replace(',','.')) > 100 || valueAux.indexOf('.') >= 1)
+                    {
+                        alert("La bonificación no puede ser mayor que 100%.");
+                        return "100,00";
+                    }
+                    else
+                    {
+                        return valueAux;
+                    }
+
+                });
+
+                getTotalForAllTable();
+            }
+        });
+
+        $('#Quantity').val('0,00');
+        $('#btnAddDiv').hide();
+
+        $('#IVA').select2({
+            theme: "bootstrap4",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        $('#IVA').change(function(){
+            getTotalForAllTable();
+        })
+
+        if("@Model.QuoteRequestResponseHeaderId.HasValue" == "True"){
+            // Filtro los proveedores que proveen los productos que se encuentran en la grilla de detalles.
+            let missingProductIds = [];
+            $('#purchaseOrderDetailsTable tr td.d-none').each(function() {
+                missingProductIds.push(parseInt($(this).find(".missingProductId").val()));
+            });
+
+            select2Providers.select2({
+                language: "es",
+                theme: "bootstrap4",
+                placeholder: "@localizer["Select provider"]",
+                ajax: {
+                    url: '/Purchases/PurchaseOrder/_LoadProvidersByMissingProductIdsSelect2',
+                    data: function (params) {
+                        return {
+                            search: params.term,
+                            missingProductIds: JSON.stringify(missingProductIds)
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.providers
+                        };
+                    }
+                }
+            });
+
+            $('#table-div').show('slow');
+        }
+        else if("@Model.isGenerateMissingProducts" == "True"){
+
+            // Filtro los proveedores que proveen los productos que se encuentran en la grilla de detalles.
+            let missingProductIds = [];
+            $('#purchaseOrderDetailsTable tr td.d-none').each(function() {
+                missingProductIds.push(parseInt($(this).find(".missingProductId").val()));
+            });
+
+            select2Providers.select2({
+                language: "es",
+                theme: "bootstrap4",
+                placeholder: "@localizer["Select provider"]",
+                ajax: {
+                    url: '/Purchases/PurchaseOrder/_LoadProvidersByMissingProductIdsSelect2',
+                    data: function (params) {
+                        return {
+                            search: params.term,
+                            missingProductIds: JSON.stringify(missingProductIds)
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.providers
+                        };
+                    }
+                }
+            });
+
+            $('#table-div').hide();
+        }
+        else if (@Model.Id != 0) {
+            $('#divSelect2MissingProducts').hide();
+            $('#divSelect2ProductsByProvider').hide();
+            $('#table-div').show();
+        }
+        else
+        {
+            select2Providers.select2({
+                language: "es",
+                theme: "bootstrap4",
+                placeholder: "@localizer["Select provider"]",
+                ajax: {
+                    url: '/Purchases/PurchaseOrder/_LoadProvidersByMissingProductsSelect2',
+                    data: function (params) {
+                        return {
+                            search: params.term
+                        };
+                    },
+                    processResults: function (data) {
+                        return {
+                            results: data.providers
+                        };
+                    }
+                }
+            });
+
+            $('#table-div').hide();
+        }
+
+        select2MissingProducts.select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select missing product"]",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        select2ProductsByProvider.select2({
+            theme: "bootstrap4",
+            placeholder: "@localizer["Select product by provider"]",
+            escapeMarkup: function (m) {
+                return m;
+            }
+        });
+
+        select2MissingProducts.change(function () {
+            if (select2MissingProducts.val() != "") {
+                $.ajax({
+                    url: '/purchases/quoterequest/GetMissingProductByProductId',
+                    method: 'get',
+                    data: { id: select2MissingProducts.val() },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.isValid) {
+
+                            if(response.missingProductVM.quantityToOrderUnitMeasure != null)
+                            {
+                                $('#Quantity').val(format_number_to_decimal((response.missingProductVM.quantityToOrder), 2, ',', '.'));
+                                $('#UnitMeasure').val(response.missingProductVM.quantityToOrderUnitMeasure.description);
+                            }
+
+                            $('#btnAddDiv').show('slow');
+
+                        }
+                    }
+                });
+            }
+        });
+
+        select2ProductsByProvider.change(function () {
+            if (select2ProductsByProvider.val() != "") {
+                $.ajax({
+                    url: '/purchases/quoterequest/GetProductById',
+                    method: 'get',
+                    data: { id: select2ProductsByProvider.val() },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.isValid) {
+
+                            if(response.product.quantityToOrderUnitMeasure != null)
+                            {
+                                $('#Quantity').val(format_number_to_decimal((response.product.quantityToOrder), 2, ',', '.'));
+                                $('#UnitMeasure').val(response.product.quantityToOrderUnitMeasure.description);
+                            }
+
+                            $('#btnAddDiv').show('slow');
+
+                        }
+                    }
+                });
+            }
+        });
+
+        select2Providers.change(function () {
+
+            $("#purchaseOrderDetailsTable tbody tr").remove();
+
+            $('#table-div').hide('slow');
+
+            let providerId = $(this).val();
+
+            $.ajax({
+                url: '/purchases/purchaseOrder/GetProductsByProviderId',
+                method: 'get',
+                data: { id: $(this).val() },
+                dataType: 'json',
+                success: function (response) {
+                    if (response.isValid) {
+
+                        // Tengo que completar las unidades del proveedor y las unidades de precio para cuando se genera una OC desde faltantes
+                        if("@Model.isGenerateMissingProducts" == "True")
+                        {
+                            $('#table-div').show('slow');
+
+                            let missingProductIds = new Array();
+                            @if (Model.missingProductsIds != null)
+                            {
+                                foreach (var mpId in Model.missingProductsIds)
+                                {
+                                    @:missingProductIds.push(@mpId);
+                                }
+                            }
+
+                            // Agrego los productos faltantes que se seleccionaron en un principio, si es que alguno fue borrado de la grilla, cuando se selecciono el proveedor y este no lo provee.
+                            $.ajax({
+                                url: '/Purchases/PurchaseOrder/getMissingProductsById',
+                                data: {
+                                    missingProductIds: missingProductIds
+                                },
+                                type: 'get',
+                                dataType: 'json',
+                                contextType: "application/json",
+                                traditional: true,
+                                success: function (response) {
+                                    if(response.isValid){
+
+                                        let missingProductIdsExistsInTable = new Array();
+                                        $('#purchaseOrderDetailsTable tr td.d-none').each(function() {
+                                            missingProductIdsExistsInTable.push(parseInt($(this).find(".missingProductId").val()));
+                                        });
+
+                                        for(let i = 0; i < response.missingProducts.length; i++){
+                                            if(missingProductIdsExistsInTable.indexOf(response.missingProducts[i].id) == -1){
+                                                let tr = '<tr>';
+                                                tr += '<td class="d-none">';
+                                                tr += '<input type="hidden" name="PurchaseOrderDetails.Index" value="'+ index +'"/>';
+                                                tr += '<input type="hidden" class="missingProductId form-control" name="PurchaseOrderDetails['+ index +'].MissingProductId" readonly value="'+ response.missingProducts[i].id +'" />';
+                                                tr += '<input type="hidden" class="providerUnitMeasureId form-control" name="PurchaseOrderDetails['+ index +'].ProviderUnitMeasureId" />';
+                                                tr += '<input type="hidden" class="priceUnitMeasureId form-control" name="PurchaseOrderDetails['+ index +'].PriceUnitMeasureId" />';
+                                                tr += '</td>';
+
+                                                tr += '<td class="tdMaxWidthModified">';
+                                                tr += '<input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails['+ index +'].ProductCode" tabindex="-1" readonly value="'+ response.missingProducts[i].product.code +'" />';
+                                                tr += '</td>';
+
+                                                tr += '<td>';
+                                                tr += '<input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails['+ index +'].ProductDescription" tabindex="-1" readonly value="'+ response.missingProducts[i].product.description +'" />';
+                                                tr += '</td>';
+
+                                                tr += '<td class="tdMaxWidthModified">';
+                                                tr += '<input type="text" class="providerQuantity form-control text-right" name="PurchaseOrderDetails['+ index +'].ProviderQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                                tr += '</td>';
+
+                                                tr += '<td>';
+                                                tr += '<input type="text" class="providerUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />';
+                                                tr += '</td>';
+
+                                                tr += '<td class="tdMaxWidthModified">';
+                                                tr += '<input type="text" class="priceQuantity form-control text-right" name="PurchaseOrderDetails['+ index +'].PriceQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                                tr += '</td>';
+
+                                                tr += '<td>';
+                                                tr += '<input type="text" class="priceUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />';
+                                                tr += '</td>';
+
+                                                tr += '<td class="tdMaxWidthModified">';
+                                                tr += '<input type="text" class="unitPrice form-control text-right" name="PurchaseOrderDetails['+ index +'].UnitPrice" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                                tr += '</td>';
+
+                                                tr += '<td>';
+                                                tr += '<select class="moneyTypeSelect2 form-control select2bs4 w-100" name="PurchaseOrderDetails['+ index +'].MoneyType" tabindex="0"><option value="1">@localizer["ARS"]</option><option value="2">@localizer["USD"]</option></select>';
+                                                tr += '</td>';
+
+                                                tr += '<td class="tdMaxWidthModified">';
+                                                tr += '<input type="text" class="bonus form-control text-right" name="PurchaseOrderDetails['+ index +'].Bonus" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                                tr += '</td>';
+
+                                                tr += '<td class="tdMaxWidthModified">';
+                                                tr += '<input type="text" class="total custom-form-control form-control text-right" name="PurchaseOrderDetails['+ index +'].Total" tabindex="-1" placeholder="0,00" readonly />';
+                                                tr += '</td>';
+
+                                                tr += '<td>';
+                                                tr += '<button type="button" class="btn btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button>';
+                                                tr += '</td>';
+
+                                                tr += '</tr>';
+
+                                                $("#purchaseOrderDetailsTable tbody").append(tr);
+
+                                                index += 1;
+
+                                                document.querySelectorAll('.providerQuantity').forEach(item => {
+                                                    if (item != null) {
+                                                        $(item).on({
+                                                            "focus": function (event) {
+                                                                $(event.target).select();
+                                                            },
+                                                            "keyup": function (event) {
+                                                                $(event.target).val(function (index, value) {
+                                                                    return value.replace(/\D/g, "")
+                                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                                });
+                                                            },
+                                                            "change": function (event) {
+                                                                $(event.target).val(function (index, value) {
+
+                                                                    // Tengo que utilizar el valor que se escribio en el input y cambiar la cantidad en unidades de cotizacion.
+
+                                                                    let missingProductId = 0;
+                                                                    let alternativeProductId = 0;
+                                                                    if($(event.target).parent().parent().find('td.d-none').children().hasClass('missingProductId'))
+                                                                    {
+                                                                        missingProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        alternativeProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                                    }
+
+                                                                    $.ajax({
+                                                                        url: '/Purchases/QuoteRequest/convertQuotationQuantityFromProviderQuantity',
+                                                                        data: {
+                                                                            providerQuantityValue: parseFloat($(event.target)[0].value.replaceAll('.', '').replaceAll(',', '.')).toFixed(2),
+                                                                            providerId: select2Providers.val(),
+                                                                            missingProductId: missingProductId,
+                                                                            alternativeProductId: alternativeProductId
+                                                                        },
+                                                                        type: 'get',
+                                                                        dataType: 'json',
+                                                                        contextType: "application/json",
+                                                                        success: function (response) {
+                                                                            if(response.isValid)
+                                                                            {
+                                                                                // Seteo la cantidad en unidades de cotizacion obtenida.
+                                                                                $(event.target).parent().next().next().children()[0].value = format_number_to_decimal((response.quotationQuantity), 2, ',', '.');
+                                                                            }
+                                                                        }
+                                                                    });
+
+                                                                    let valueAux = value;
+                                                                    if (!value.includes(",")) {
+                                                                        valueAux = value.concat(",00");
+                                                                    }
+                                                                    else {
+                                                                        valueAux = value;
+                                                                    }
+
+                                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                                        valueAux = value.concat(",00");
+                                                                    }
+                                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                                        if(value.charAt(1) == "."){
+                                                                            valueAux = value.slice(2);
+                                                                        }
+                                                                        else if(value.charAt(2) == "."){
+                                                                            valueAux = value.slice(1);
+                                                                        }
+                                                                        else{
+                                                                            valueAux = value.slice(1);
+                                                                        }
+                                                                    }
+
+                                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                                            let addZero = "";
+                                                                            if(valueAux[i] == ","){
+                                                                                addZero = "0";
+                                                                            }
+                                                                            valueAux = addZero + valueAux.slice(i);
+                                                                            break;
+                                                                        }
+                                                                    }
+                                                                    return valueAux;
+                                                                });
+                                                            }
+                                                        });
+                                                    }
+                                                });
+
+                                                document.querySelectorAll('.priceQuantity').forEach(item => {
+                                                    if (item != null) {
+                                                        $(item).on({
+                                                            "focus": function (event) {
+                                                                $(event.target).select();
+                                                            },
+                                                            "keyup": function (event) {
+                                                                $(event.target).val(function (index, value) {
+                                                                    return value.replace(/\D/g, "")
+                                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                                });
+                                                            },
+                                                            "change": function (event) {
+                                                                $(event.target).val(function (index, value) {
+
+                                                                    // Tengo que utilizar el valor que se escribio en el input y cambiar la cantidad en unidades de proveedor.
+
+                                                                    let missingProductId = 0;
+                                                                    let alternativeProductId = 0;
+                                                                    if($(event.target).parent().parent().find('td.d-none').children().hasClass('missingProductId'))
+                                                                    {
+                                                                        missingProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        alternativeProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                                    }
+
+                                                                    $.ajax({
+                                                                        url: '/Purchases/QuoteRequest/convertProviderQuantityFromQuotationQuantity',
+                                                                        data: {
+                                                                            quotationQuantityValue: parseFloat($(event.target)[0].value.replaceAll('.', '').replaceAll(',', '.')).toFixed(2),
+                                                                            providerId: select2Providers.val(),
+                                                                            missingProductId: missingProductId,
+                                                                            alternativeProductId: alternativeProductId
+                                                                        },
+                                                                        type: 'get',
+                                                                        dataType: 'json',
+                                                                        contextType: "application/json",
+                                                                        success: function (response) {
+                                                                            if(response.isValid)
+                                                                            {
+                                                                                // Seteo la cantidad en unidades de proveedor obtenida.
+                                                                                $(event.target).parent().prev().prev().children()[0].value = format_number_to_decimal((response.providerQuantity), 2, ',', '.');
+                                                                            }
+                                                                        }
+                                                                    });
+
+                                                                    let valueAux = value;
+                                                                    if (!value.includes(",")) {
+                                                                        valueAux = value.concat(",00");
+                                                                    }
+                                                                    else {
+                                                                        valueAux = value;
+                                                                    }
+
+                                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                                        valueAux = value.concat(",00");
+                                                                    }
+                                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                                        if(value.charAt(1) == "."){
+                                                                            valueAux = value.slice(2);
+                                                                        }
+                                                                        else if(value.charAt(2) == "."){
+                                                                            valueAux = value.slice(1);
+                                                                        }
+                                                                        else{
+                                                                            valueAux = value.slice(1);
+                                                                        }
+                                                                    }
+
+                                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                                            let addZero = "";
+                                                                            if(valueAux[i] == ","){
+                                                                                addZero = "0";
+                                                                            }
+                                                                            valueAux = addZero + valueAux.slice(i);
+                                                                            break;
+                                                                        }
+                                                                    }
+                                                                    return valueAux;
+                                                                });
+                                                            }
+                                                        });
+                                                    }
+                                                });
+
+                                                document.querySelectorAll('.unitPrice').forEach(item => {
+                                                    if (item != null) {
+                                                        $(item).on({
+                                                            "focus": function (event) {
+                                                                $(event.target).select();
+                                                            },
+                                                            "keyup": function (event) {
+                                                                $(event.target).val(function (index, value) {
+                                                                    return value.replace(/\D/g, "")
+                                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                                });
+                                                            },
+                                                            "change": function (event) {
+                                                                $(event.target).val(function (index, value) {
+                                                                    let valueAux = value;
+                                                                    if (!value.includes(",")) {
+                                                                        valueAux = value.concat(",00");
+                                                                    }
+                                                                    else {
+                                                                        valueAux = value;
+                                                                    }
+
+                                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                                        valueAux = value.concat(",00");
+                                                                    }
+                                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                                        if(value.charAt(1) == "."){
+                                                                            valueAux = value.slice(2);
+                                                                        }
+                                                                        else if(value.charAt(2) == "."){
+                                                                            valueAux = value.slice(1);
+                                                                        }
+                                                                        else{
+                                                                            valueAux = value.slice(1);
+                                                                        }
+                                                                    }
+
+                                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                                            let addZero = "";
+                                                                            if(valueAux[i] == ","){
+                                                                                addZero = "0";
+                                                                            }
+                                                                            valueAux = addZero + valueAux.slice(i);
+                                                                            break;
+                                                                        }
+                                                                    }
+                                                                    return valueAux;
+                                                                });
+                                                            }
+                                                        });
+                                                    }
+                                                });
+
+                                                document.querySelectorAll('.bonus').forEach(item => {
+                                                    if (item != null) {
+                                                        $(item).on({
+                                                            "focus": function (event) {
+                                                                $(event.target).select();
+                                                            },
+                                                            "keyup": function (event) {
+                                                                $(event.target).val(function (index, value) {
+                                                                    return value.replace(/\D/g, "")
+                                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                                });
+                                                            },
+                                                            "change": function (event) {
+                                                                $(event.target).val(function (index, value) {
+                                                                    let valueAux = value;
+                                                                    if (!value.includes(",")) {
+                                                                        valueAux = value.concat(",00");
+                                                                    }
+                                                                    else {
+                                                                        valueAux = value;
+                                                                    }
+
+                                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                                        valueAux = value.concat(",00");
+                                                                    }
+                                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                                        if(value.charAt(1) == "."){
+                                                                            valueAux = value.slice(2);
+                                                                        }
+                                                                        else if(value.charAt(2) == "."){
+                                                                            valueAux = value.slice(1);
+                                                                        }
+                                                                        else{
+                                                                            valueAux = value.slice(1);
+                                                                        }
+                                                                    }
+
+                                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                                            let addZero = "";
+                                                                            if(valueAux[i] == ","){
+                                                                                addZero = "0";
+                                                                            }
+                                                                            valueAux = addZero + valueAux.slice(i);
+                                                                            break;
+                                                                        }
+                                                                    }
+
+                                                                    if(parseFloat(valueAux.replace(',','.')) > 100 || valueAux.indexOf('.') >= 1)
+                                                                    {
+                                                                        alert("La bonificación no puede ser mayor que 100%.");
+                                                                        return "100,00";
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        return valueAux;
+                                                                    }
+
+                                                                });
+                                                            }
+                                                        });
+                                                    }
+                                                });
+
+                                                document.querySelectorAll('.providerQuantity').forEach(item => {
+                                                    item.addEventListener('change', (e) => {
+                                                        getTotalForEachRow();
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                    });
+                                                });
+
+                                                document.querySelectorAll('.priceQuantity').forEach(item => {
+                                                    item.addEventListener('change', (e) => {
+                                                        getTotalForEachRow();
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                    });
+                                                });
+
+                                                document.querySelectorAll('.unitPrice').forEach(item => {
+                                                    item.addEventListener('change', (e) => {
+                                                        getTotalForEachRow();
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                    });
+                                                });
+
+                                                document.querySelectorAll('.bonus').forEach(item => {
+                                                    item.addEventListener('change', (e) => {
+                                                        getTotalForEachRow();
+                                                        e.stopPropagation();
+                                                        e.preventDefault();
+                                                    });
+                                                });
+
+                                                document.querySelectorAll('.total').forEach(item => {
+                                                    if (item != null) {
+                                                        getTotalForAllTable();
+                                                    }
+                                                });
+
+                                                $('.moneyTypeSelect2').each(function (index, element) {
+                                                    if (!$(this).hasClass("select2-hidden-accessible")) {
+                                                        $(this).select2({
+                                                            language: "es",
+                                                            theme: "bootstrap4",
+                                                            placeholder: "@localizer["Select money type"]"
+                                                        });
+
+                                                        $(this).next().removeAttr('style');
+                                                    }
+                                                });
+
+                                            }
+                                        }
+                                    }
+                                },
+                                complete: function(){
+                                    $("#purchaseOrderDetailsTable").find("td.d-none").each(function () {
+                                        let tdElement = $(this);
+                                        let missingProductId = $(this).find(".missingProductId").val();
+
+                                        // Se obtiene la cantidad y unidad del proveedor, ademas, de la cantidad y unidad de cotizacion.
+                                        $.ajax({
+                                            url: '/Purchases/QuoteRequest/getUnitsAndQuantity',
+                                            data: {
+                                                providerId: providerId,
+                                                missingProductId: missingProductId,
+                                                productId: 0
+                                            },
+                                            type: 'get',
+                                            dataType: 'json',
+                                            contextType: "application/json",
+                                            success: function (response) {
+                                                if(response.isValid)
+                                                {
+                                                    if(response.productIdNotProvided == 0)
+                                                    {
+                                                        tdElement.next().next().next().children().val(format_number_to_decimal((response.providerQuantity), 2, ',', '.'));
+                                                        tdElement.find(".providerUnitMeasureId").val(parseInt(response.providerUnitMeasureId));
+                                                        tdElement.next().next().next().next().children().val(response.providerUnitMeasureDescription);
+
+                                                        tdElement.next().next().next().next().next().children().val(format_number_to_decimal((response.quotationQuantity), 2, ',', '.'));
+                                                        tdElement.find(".priceUnitMeasureId").val(parseInt(response.quotationUnitMeasureId));
+                                                        tdElement.next().next().next().next().next().next().children().val(response.quotationUnitMeasureDescription);
+                                                    }
+                                                    else
+                                                    {
+                                                        // El proveedor seleccionado no provee alguno de los productos de la grilla.
+                                                        tdElement.closest("tr").remove();
+                                                    }
+                                                }
+                                            },
+                                            complete: function(){
+
+                                                // Cargo el select2 de productos por proveedor
+                                                $.ajax({
+                                                    url: '/purchases/quoterequest/_LoadProductsByProviderIdSelect2',
+                                                    method: 'get',
+                                                    data: { providerId: providerId },
+                                                    dataType: 'json',
+                                                    success: function (response) {
+                                                        select2ProductsByProvider.empty();
+                                                        select2ProductsByProvider.append($("<option />").val("").text("@localizer["Select product by provider"]"));
+                                                        $.each(response.products, function () {
+                                                            select2ProductsByProvider.append($("<option />").val(this.id).text(this.text));
+                                                        });
+
+                                                        // To avoid duplicated values
+                                                        var map = {};
+                                                        $("#ProductsByProvider > option").each(function () {
+                                                            if (map[this.value]) {
+                                                                $(this).remove();
+                                                            }
+                                                            else
+                                                            {
+                                                                map[this.value] = this.text;
+                                                            }
+                                                        });
+                                                    }
+                                                });
+
+                                                select2MissingProducts.empty();
+                                                select2MissingProducts.append($("<option />").val("").text("@localizer["Select missing product"]"));
+                                                $.each(response.data, function () {
+                                                    select2MissingProducts.append($("<option />").val(this.value).text(this.text));
+                                                });
+
+                                                // To avoid duplicated values
+                                                var map = {};
+                                                $("#MissingProducts > option").each(function () {
+                                                    if (map[this.value]) {
+                                                        $(this).remove();
+                                                    }
+                                                    else
+                                                    {
+                                                        map[this.value] = this.text;
+                                                    }
+                                                });
+
+                                                $('#Quantity').val('0,00');
+
+                                                $('#btnAddDiv').hide('slow');
+
+                                                $('#table-div').show('slow');
+                                            }
+                                        });
+                                    });
+                                }
+                            });
+                        }
+                        else
+                        {
+                            // Cargo el select2 de productos por proveedor
+                            $.ajax({
+                                url: '/purchases/quoterequest/_LoadProductsByProviderIdSelect2',
+                                method: 'get',
+                                data: { providerId: providerId },
+                                dataType: 'json',
+                                success: function (response) {
+
+                                    select2ProductsByProvider.empty();
+                                    select2ProductsByProvider.append($("<option />").val("").text("@localizer["Select product by provider"]"));
+                                    $.each(response.products, function () {
+                                        select2ProductsByProvider.append($("<option />").val(this.id).text(this.text));
+                                    });
+
+                                    // To avoid duplicated values
+                                    var map = {};
+                                    $("#ProductsByProvider > option").each(function () {
+                                        if (map[this.value]) {
+                                            $(this).remove();
+                                        }
+                                        else
+                                        {
+                                            map[this.value] = this.text;
+                                        }
+                                    });
+                                }
+                            });
+
+                            select2MissingProducts.empty();
+                            select2MissingProducts.append($("<option />").val("").text("@localizer["Select missing product"]"));
+                            $.each(response.data, function () {
+                                select2MissingProducts.append($("<option />").val(this.value).text(this.text));
+                            });
+
+                            // To avoid duplicated values
+                            var map = {};
+                            $("#MissingProducts > option").each(function () {
+                                if (map[this.value]) {
+                                    $(this).remove();
+                                }
+                                else
+                                {
+                                    map[this.value] = this.text;
+                                }
+                            });
+
+                            $('#Quantity').val('0,00');
+
+                            $('#btnAddDiv').hide('slow');
+                        }
+                    }
+                    else
+                    {
+                        $.ajax({
+                            url: '/purchases/purchaseorder/ShowAlerts',
+                            method: 'get',
+                            data: { inputDetail: "emptyRPP" },
+                            dataType: 'json',
+                            success: function (response) {
+                            }
+                        });
+                    }
+                }
+            });
+        });
+
+        $("#btn-add-detail").on('click', function () {
+            if (select2MissingProducts.val() == "" && select2ProductsByProvider.val() == "") {
+                $.ajax({
+                    url: '/purchases/purchaseorder/ShowAlerts',
+                    method: 'get',
+                    data: { inputDetail: "product_notselected" },
+                    dataType: 'json',
+                    success: function (response) {
+                        select2MissingProducts.val('').trigger('change');
+                        select2ProductsByProvider.val('').trigger('change');
+                    }
+                });
+            }
+            else if(select2MissingProducts.val() != "" && select2ProductsByProvider.val() != "")
+            {
+                $.ajax({
+                    url: '/purchases/purchaseorder/ShowAlerts',
+                    method: 'get',
+                    data: { inputDetail: "twice_product_selected" },
+                    dataType: 'json',
+                    success: function (response) {
+                        select2MissingProducts.val('').trigger('change');
+                        select2ProductsByProvider.val('').trigger('change');
+                    }
+                });
+            }
+            else if(select2MissingProducts.val() != "")
+            {
+                $.ajax({
+                    url: '/purchases/purchaseorder/GetProductById',
+                    method: 'get',
+                    data: { id: select2MissingProducts.val() },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.isValid) {
+                            // Valido que no se haya agregado ese producto en la grilla
+                            let exists = false;
+                            $("#purchaseOrderDetailsTable").find("td.d-none").each(function () {
+                                if ($(this).find(".missingProductId").val() == response.missingProduct.id || $($(this).parent().children()[1]).children().val() == response.missingProduct.product.code) {
+                                    exists = true;
+                                }
+                            });
+                            if (exists) {
+                                $.ajax({
+                                    url: '/purchases/purchaseorder/ShowAlerts',
+                                    method: 'get',
+                                    data: { inputDetail: "product_repeat" },
+                                    dataType: 'json',
+                                    success: function (response) {
+                                        select2MissingProducts.val('').trigger('change');
+                                    }
+                                });
+                            }
+                            else {
+
+                                let tr = '<tr>';
+                                tr += '<td class="d-none">';
+                                tr += '<input type="hidden" name="PurchaseOrderDetails.Index" value="'+ index +'"/>';
+                                tr += '<input type="hidden" class="missingProductId form-control" name="PurchaseOrderDetails['+ index +'].MissingProductId" readonly value="'+ response.missingProduct.id +'" />';
+                                tr += '<input type="hidden" class="providerUnitMeasureId form-control" name="PurchaseOrderDetails['+ index +'].ProviderUnitMeasureId" />';
+                                tr += '<input type="hidden" class="priceUnitMeasureId form-control" name="PurchaseOrderDetails['+ index +'].PriceUnitMeasureId" />';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails['+ index +'].ProductCode" tabindex="-1" readonly value="'+ response.missingProduct.product.code +'" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails['+ index +'].ProductDescription" tabindex="-1" readonly value="'+  response.missingProduct.product.description +'" />';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="providerQuantity form-control text-right" name="PurchaseOrderDetails['+ index +'].ProviderQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="providerUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="priceQuantity form-control text-right" name="PurchaseOrderDetails['+ index +'].PriceQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="priceUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="unitPrice form-control text-right" name="PurchaseOrderDetails['+ index +'].UnitPrice" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<select class="moneyTypeSelect2 form-control select2bs4 w-100" name="PurchaseOrderDetails[' + index + '].MoneyType" tabindex="0"><option value="1">@localizer["ARS"]</option><option value="2">@localizer["USD"]</option></select>';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="bonus form-control text-right" name="PurchaseOrderDetails['+ index +'].Bonus" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="total custom-form-control form-control text-right" name="PurchaseOrderDetails['+ index +'].Total" tabindex="-1" placeholder="0,00" readonly />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<button type="button" class="btn btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button>';
+                                tr += '</td>';
+
+                                tr += '</tr>';
+
+                                $("#purchaseOrderDetailsTable tbody").append(tr);
+
+                                index += 1;
+
+                                document.querySelectorAll('.providerQuantity').forEach(item => {
+                                    if (item != null) {
+                                        $(item).on({
+                                            "focus": function (event) {
+                                                $(event.target).select();
+                                            },
+                                            "keyup": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    return value.replace(/\D/g, "")
+                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                });
+                                            },
+                                            "change": function (event) {
+                                                $(event.target).val(function (index, value) {
+
+                                                    // Tengo que utilizar el valor que se escribio en el input y cambiar la cantidad en unidades de cotizacion.
+
+                                                    let missingProductId = 0;
+                                                    let alternativeProductId = 0;
+                                                    if($(event.target).parent().parent().find('td.d-none').children().hasClass('missingProductId'))
+                                                    {
+                                                        missingProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                    }
+                                                    else
+                                                    {
+                                                        alternativeProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                    }
+
+                                                    $.ajax({
+                                                        url: '/Purchases/QuoteRequest/convertQuotationQuantityFromProviderQuantity',
+                                                        data: {
+                                                            providerQuantityValue: parseFloat($(event.target)[0].value.replaceAll('.', '').replaceAll(',', '.')).toFixed(2),
+                                                            providerId: select2Providers.val(),
+                                                            missingProductId: missingProductId,
+                                                            alternativeProductId: alternativeProductId
+                                                        },
+                                                        type: 'get',
+                                                        dataType: 'json',
+                                                        contextType: "application/json",
+                                                        success: function (response) {
+                                                            if(response.isValid)
+                                                            {
+                                                                // Seteo la cantidad en unidades de cotizacion obtenida.
+                                                                $(event.target).parent().next().next().children()[0].value = format_number_to_decimal((response.quotationQuantity), 2, ',', '.');
+                                                            }
+                                                        }
+                                                    });
+
+                                                    let valueAux = value;
+                                                    if (!value.includes(",")) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else {
+                                                        valueAux = value;
+                                                    }
+
+                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                        if(value.charAt(1) == "."){
+                                                            valueAux = value.slice(2);
+                                                        }
+                                                        else if(value.charAt(2) == "."){
+                                                            valueAux = value.slice(1);
+                                                        }
+                                                        else{
+                                                            valueAux = value.slice(1);
+                                                        }
+
+                                                    }
+
+                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                            let addZero = "";
+                                                            if(valueAux[i] == ","){
+                                                                addZero = "0";
+                                                            }
+                                                            valueAux = addZero + valueAux.slice(i);
+                                                            break;
+                                                        }
+                                                    }
+                                                    return valueAux;
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+
+                                document.querySelectorAll('.priceQuantity').forEach(item => {
+                                    if (item != null) {
+                                        $(item).on({
+                                            "focus": function (event) {
+                                                $(event.target).select();
+                                            },
+                                            "keyup": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    return value.replace(/\D/g, "")
+                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                });
+                                            },
+                                            "change": function (event) {
+                                                $(event.target).val(function (index, value) {
+
+                                                    // Tengo que utilizar el valor que se escribio en el input y cambiar la cantidad en unidades de proveedor.
+
+                                                    let missingProductId = 0;
+                                                    let alternativeProductId = 0;
+                                                    if($(event.target).parent().parent().find('td.d-none').children().hasClass('missingProductId'))
+                                                    {
+                                                        missingProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                    }
+                                                    else
+                                                    {
+                                                        alternativeProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                    }
+
+                                                    $.ajax({
+                                                        url: '/Purchases/QuoteRequest/convertProviderQuantityFromQuotationQuantity',
+                                                        data: {
+                                                            quotationQuantityValue: parseFloat($(event.target)[0].value.replaceAll('.', '').replaceAll(',', '.')).toFixed(2),
+                                                            providerId: select2Providers.val(),
+                                                            missingProductId: missingProductId,
+                                                            alternativeProductId: alternativeProductId
+                                                        },
+                                                        type: 'get',
+                                                        dataType: 'json',
+                                                        contextType: "application/json",
+                                                        success: function (response) {
+                                                            if(response.isValid)
+                                                            {
+                                                                // Seteo la cantidad en unidades de proveedor obtenida.
+                                                                $(event.target).parent().prev().prev().children()[0].value = format_number_to_decimal((response.providerQuantity), 2, ',', '.');
+                                                            }
+                                                        }
+                                                    });
+
+                                                    let valueAux = value;
+                                                    if (!value.includes(",")) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else {
+                                                        valueAux = value;
+                                                    }
+
+                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                        if(value.charAt(1) == "."){
+                                                            valueAux = value.slice(2);
+                                                        }
+                                                        else if(value.charAt(2) == "."){
+                                                            valueAux = value.slice(1);
+                                                        }
+                                                        else{
+                                                            valueAux = value.slice(1);
+                                                        }
+
+                                                    }
+
+                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                            let addZero = "";
+                                                            if(valueAux[i] == ","){
+                                                                addZero = "0";
+                                                            }
+                                                            valueAux = addZero + valueAux.slice(i);
+                                                            break;
+                                                        }
+                                                    }
+                                                    return valueAux;
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+
+                                document.querySelectorAll('.unitPrice').forEach(item => {
+                                    if (item != null) {
+                                        $(item).on({
+                                            "focus": function (event) {
+                                                $(event.target).select();
+                                            },
+                                            "keyup": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    return value.replace(/\D/g, "")
+                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                });
+                                            },
+                                            "change": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    let valueAux = value;
+                                                    if (!value.includes(",")) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else {
+                                                        valueAux = value;
+                                                    }
+
+                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                        if(value.charAt(1) == "."){
+                                                            valueAux = value.slice(2);
+                                                        }
+                                                        else if(value.charAt(2) == "."){
+                                                            valueAux = value.slice(1);
+                                                        }
+                                                        else{
+                                                            valueAux = value.slice(1);
+                                                        }
+
+                                                    }
+
+                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                            let addZero = "";
+                                                            if(valueAux[i] == ","){
+                                                                addZero = "0";
+                                                            }
+                                                            valueAux = addZero + valueAux.slice(i);
+                                                            break;
+                                                        }
+                                                    }
+                                                    return valueAux;
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+
+                                document.querySelectorAll('.bonus').forEach(item => {
+                                    if (item != null) {
+                                        $(item).on({
+                                            "focus": function (event) {
+                                                $(event.target).select();
+                                            },
+                                            "keyup": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    return value.replace(/\D/g, "")
+                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                });
+                                            },
+                                            "change": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    let valueAux = value;
+                                                    if (!value.includes(",")) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else {
+                                                        valueAux = value;
+                                                    }
+
+                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                        if(value.charAt(1) == "."){
+                                                            valueAux = value.slice(2);
+                                                        }
+                                                        else if(value.charAt(2) == "."){
+                                                            valueAux = value.slice(1);
+                                                        }
+                                                        else{
+                                                            valueAux = value.slice(1);
+                                                        }
+
+                                                    }
+
+                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                            let addZero = "";
+                                                            if(valueAux[i] == ","){
+                                                                addZero = "0";
+                                                            }
+                                                            valueAux = addZero + valueAux.slice(i);
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    if(parseFloat(valueAux.replace(',','.')) > 100 || valueAux.indexOf('.') >= 1)
+                                                    {
+                                                        alert("La bonificación no puede ser mayor que 100%.");
+                                                        return "100,00";
+                                                    }
+                                                    else
+                                                    {
+                                                        return valueAux;
+                                                    }
+
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+
+                                document.querySelectorAll('.providerQuantity').forEach(item => {
+                                    item.addEventListener('change', (e) => {
+                                        getTotalForEachRow();
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                    });
+                                });
+
+                                document.querySelectorAll('.priceQuantity').forEach(item => {
+                                    item.addEventListener('change', (e) => {
+                                        getTotalForEachRow();
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                    });
+                                });
+
+                                document.querySelectorAll('.unitPrice').forEach(item => {
+                                    item.addEventListener('change', (e) => {
+                                        getTotalForEachRow();
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                    });
+                                });
+
+                                document.querySelectorAll('.bonus').forEach(item => {
+                                    item.addEventListener('change', (e) => {
+                                        getTotalForEachRow();
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                    });
+                                });
+
+                                document.querySelectorAll('.total').forEach(item => {
+                                    if (item != null) {
+                                        getTotalForAllTable();
+                                    }
+                                });
+
+                                $('.moneyTypeSelect2').each(function (index, element) {
+                                    if (!$(this).hasClass("select2-hidden-accessible")) {
+                                        $(this).select2({
+                                            language: "es",
+                                            theme: "bootstrap4",
+                                            placeholder: "@localizer["Select money type"]"
+                                        });
+
+                                        $(this).next().removeAttr('style');
+                                    }
+                                });
+
+                            }
+                        }
+                    },
+                    complete: function(){
+                        $("#purchaseOrderDetailsTable").find("td.d-none").each(function () {
+                            let tdElement = $(this);
+                            let missingProductId = $(this).find(".missingProductId").val();
+
+                            if(missingProductId != undefined){
+                                // Se obtiene la cantidad y unidad del proveedor, ademas, de la cantidad y unidad de cotizacion.
+                                $.ajax({
+                                    url: '/Purchases/QuoteRequest/getUnitsAndQuantity',
+                                    data: {
+                                        providerId: select2Providers.val(),
+                                        missingProductId: missingProductId,
+                                        productId: 0
+                                    },
+                                    type: 'get',
+                                    dataType: 'json',
+                                    contextType: "application/json",
+                                    success: function (response) {
+                                        if(response.isValid)
+                                        {
+                                            if(response.productIdNotProvided == 0)
+                                            {
+                                                tdElement.next().next().next().children().val(format_number_to_decimal((response.providerQuantity), 2, ',', '.'));
+                                                tdElement.find(".providerUnitMeasureId").val(parseInt(response.providerUnitMeasureId));
+                                                tdElement.next().next().next().next().children().val(response.providerUnitMeasureDescription);
+
+                                                tdElement.next().next().next().next().next().children().val(format_number_to_decimal((response.quotationQuantity), 2, ',', '.'));
+                                                tdElement.find(".priceUnitMeasureId").val(parseInt(response.quotationUnitMeasureId));
+                                                tdElement.next().next().next().next().next().next().children().val(response.quotationUnitMeasureDescription);
+                                            }
+                                            else
+                                            {
+                                                // El proveedor seleccionado no provee alguno de los productos de la grilla.
+                                                tdElement.closest("tr").remove();
+                                            }
+                                        }
+                                    },
+                                    complete: function(){
+                                        $("#table-div").show("slow");
+
+                                        select2MissingProducts.val('').trigger('change');
+                                        $('#Quantity').val('0,00');
+                                        $('#btnAddDiv').hide('slow');
+                                    }
+                                });
+                            }
+
+                        });
+                    }
+                });
+            }
+            else if(select2ProductsByProvider.val() != "")
+            {
+                $.ajax({
+                    url: '/purchases/purchaseorder/GetProductByselect2ProductsByProviderId',
+                    method: 'get',
+                    data: { id: select2ProductsByProvider.val() },
+                    dataType: 'json',
+                    success: function (response) {
+                        if (response.isValid) {
+
+                            // Valido que no se haya agregado ese producto en la grilla
+                            let exists = false;
+                            $("#purchaseOrderDetailsTable").find("td.d-none").each(function () {
+                                if ($(this).find(".productId").val() == response.productVM.id || $($(this).parent().children()[1]).children().val() == response.productVM.code) {
+                                    exists = true;
+                                }
+                            });
+                            if (exists)
+                            {
+                                $.ajax({
+                                    url: '/purchases/purchaseorder/ShowAlerts',
+                                    method: 'get',
+                                    data: { inputDetail: "product_repeat" },
+                                    dataType: 'json',
+                                    success: function (response) {
+                                        select2ProductsByProvider.val('').trigger('change');
+                                    }
+                                });
+                            }
+                            else
+                            {
+                                let tr = '<tr>';
+                                tr += '<td class="d-none">';
+                                tr += '<input type="hidden" name="PurchaseOrderDetails.Index" value="'+ index +'"/>';
+                                tr += '<input type="hidden" class="productId form-control" name="PurchaseOrderDetails['+ index +'].ProductId" readonly value="'+ response.productVM.id +'" />';
+                                tr += '<input type="hidden" class="providerUnitMeasureId form-control" name="PurchaseOrderDetails['+ index +'].ProviderUnitMeasureId" />';
+                                tr += '<input type="hidden" class="priceUnitMeasureId form-control" name="PurchaseOrderDetails['+ index +'].PriceUnitMeasureId" />';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails['+ index +'].ProductCode" tabindex="-1" readonly value="'+ response.productVM.code +'" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="custom-form-control form-control" name="PurchaseOrderDetails['+ index +'].ProductDescription" tabindex="-1" readonly value="'+  response.productVM.description +'" />';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="providerQuantity form-control text-right" name="PurchaseOrderDetails['+ index +'].ProviderQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="providerUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="priceQuantity form-control text-right" name="PurchaseOrderDetails['+ index +'].PriceQuantity" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<input type="text" class="priceUnitMeasureDescription custom-form-control form-control text-left" tabindex="-1" readonly />';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="unitPrice form-control text-right" name="PurchaseOrderDetails['+ index +'].UnitPrice" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<select class="moneyTypeSelect2 form-control select2bs4 w-100" name="PurchaseOrderDetails[' + index + '].MoneyType" tabindex="0"><option value="1">@localizer["ARS"]</option><option value="2">@localizer["USD"]</option></select>';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="bonus form-control text-right" name="PurchaseOrderDetails['+ index +'].Bonus" tabindex="0" placeholder="0,00" onkeypress="return validateIsNumber(event);" />';
+                                tr += '</td>';
+
+                                tr += '<td class="tdMaxWidthModified">';
+                                tr += '<input type="text" class="total custom-form-control form-control text-right" name="PurchaseOrderDetails['+ index +'].Total" tabindex="-1" placeholder="0,00" readonly />';
+                                tr += '</td>';
+
+                                tr += '<td>';
+                                tr += '<button type="button" class="btn btn-remove d-block m-auto"><img class="action-img-icon" src="../../../images/Eliminar.svg" width="20" height="20" /></button>';
+                                tr += '</td>';
+
+                                tr += '</tr>';
+
+                                $("#purchaseOrderDetailsTable tbody").append(tr);
+
+                                index += 1;
+
+                                document.querySelectorAll('.providerQuantity').forEach(item => {
+                                    if (item != null) {
+                                        $(item).on({
+                                            "focus": function (event) {
+                                                $(event.target).select();
+                                            },
+                                            "keyup": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    return value.replace(/\D/g, "")
+                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                });
+                                            },
+                                            "change": function (event) {
+                                                $(event.target).val(function (index, value) {
+
+                                                    // Tengo que utilizar el valor que se escribio en el input y cambiar la cantidad en unidades de cotizacion.
+
+                                                    let missingProductId = 0;
+                                                    let alternativeProductId = 0;
+                                                    if($(event.target).parent().parent().find('td.d-none').children().hasClass('missingProductId'))
+                                                    {
+                                                        missingProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                    }
+                                                    else
+                                                    {
+                                                        alternativeProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                    }
+
+                                                    $.ajax({
+                                                        url: '/Purchases/QuoteRequest/convertQuotationQuantityFromProviderQuantity',
+                                                        data: {
+                                                            providerQuantityValue: parseFloat($(event.target)[0].value.replaceAll('.', '').replaceAll(',', '.')).toFixed(2),
+                                                            providerId: select2Providers.val(),
+                                                            missingProductId: missingProductId,
+                                                            alternativeProductId: alternativeProductId
+                                                        },
+                                                        type: 'get',
+                                                        dataType: 'json',
+                                                        contextType: "application/json",
+                                                        success: function (response) {
+                                                            if(response.isValid)
+                                                            {
+                                                                // Seteo la cantidad en unidades de cotizacion obtenida.
+                                                                $(event.target).parent().next().next().children()[0].value = format_number_to_decimal((response.quotationQuantity), 2, ',', '.');
+                                                            }
+                                                        }
+                                                    });
+
+                                                    let valueAux = value;
+                                                    if (!value.includes(",")) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else {
+                                                        valueAux = value;
+                                                    }
+
+                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                        if(value.charAt(1) == "."){
+                                                            valueAux = value.slice(2);
+                                                        }
+                                                        else if(value.charAt(2) == "."){
+                                                            valueAux = value.slice(1);
+                                                        }
+                                                        else{
+                                                            valueAux = value.slice(1);
+                                                        }
+
+                                                    }
+
+                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                            let addZero = "";
+                                                            if(valueAux[i] == ","){
+                                                                addZero = "0";
+                                                            }
+                                                            valueAux = addZero + valueAux.slice(i);
+                                                            break;
+                                                        }
+                                                    }
+                                                    return valueAux;
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+
+                                document.querySelectorAll('.priceQuantity').forEach(item => {
+                                    if (item != null) {
+                                        $(item).on({
+                                            "focus": function (event) {
+                                                $(event.target).select();
+                                            },
+                                            "keyup": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    return value.replace(/\D/g, "")
+                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                });
+                                            },
+                                            "change": function (event) {
+                                                $(event.target).val(function (index, value) {
+
+                                                    // Tengo que utilizar el valor que se escribio en el input y cambiar la cantidad en unidades de proveedor.
+
+                                                    let missingProductId = 0;
+                                                    let alternativeProductId = 0;
+                                                    if($(event.target).parent().parent().find('td.d-none').children().hasClass('missingProductId'))
+                                                    {
+                                                        missingProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                    }
+                                                    else
+                                                    {
+                                                        alternativeProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                                                    }
+
+                                                    $.ajax({
+                                                        url: '/Purchases/QuoteRequest/convertProviderQuantityFromQuotationQuantity',
+                                                        data: {
+                                                            quotationQuantityValue: parseFloat($(event.target)[0].value.replaceAll('.', '').replaceAll(',', '.')).toFixed(2),
+                                                            providerId: select2Providers.val(),
+                                                            missingProductId: missingProductId,
+                                                            alternativeProductId: alternativeProductId
+                                                        },
+                                                        type: 'get',
+                                                        dataType: 'json',
+                                                        contextType: "application/json",
+                                                        success: function (response) {
+                                                            if(response.isValid)
+                                                            {
+                                                                // Seteo la cantidad en unidades de proveedor obtenida.
+                                                                $(event.target).parent().prev().prev().children()[0].value = format_number_to_decimal((response.providerQuantity), 2, ',', '.');
+                                                            }
+                                                        }
+                                                    });
+
+                                                    let valueAux = value;
+                                                    if (!value.includes(",")) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else {
+                                                        valueAux = value;
+                                                    }
+
+                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                        if(value.charAt(1) == "."){
+                                                            valueAux = value.slice(2);
+                                                        }
+                                                        else if(value.charAt(2) == "."){
+                                                            valueAux = value.slice(1);
+                                                        }
+                                                        else{
+                                                            valueAux = value.slice(1);
+                                                        }
+
+                                                    }
+
+                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                            let addZero = "";
+                                                            if(valueAux[i] == ","){
+                                                                addZero = "0";
+                                                            }
+                                                            valueAux = addZero + valueAux.slice(i);
+                                                            break;
+                                                        }
+                                                    }
+                                                    return valueAux;
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+
+                                document.querySelectorAll('.unitPrice').forEach(item => {
+                                    if (item != null) {
+                                        $(item).on({
+                                            "focus": function (event) {
+                                                $(event.target).select();
+                                            },
+                                            "keyup": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    return value.replace(/\D/g, "")
+                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                });
+                                            },
+                                            "change": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    let valueAux = value;
+                                                    if (!value.includes(",")) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else {
+                                                        valueAux = value;
+                                                    }
+
+                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                        if(value.charAt(1) == "."){
+                                                            valueAux = value.slice(2);
+                                                        }
+                                                        else if(value.charAt(2) == "."){
+                                                            valueAux = value.slice(1);
+                                                        }
+                                                        else{
+                                                            valueAux = value.slice(1);
+                                                        }
+
+                                                    }
+
+                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                            let addZero = "";
+                                                            if(valueAux[i] == ","){
+                                                                addZero = "0";
+                                                            }
+                                                            valueAux = addZero + valueAux.slice(i);
+                                                            break;
+                                                        }
+                                                    }
+                                                    return valueAux;
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+
+                                document.querySelectorAll('.bonus').forEach(item => {
+                                    if (item != null) {
+                                        $(item).on({
+                                            "focus": function (event) {
+                                                $(event.target).select();
+                                            },
+                                            "keyup": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    return value.replace(/\D/g, "")
+                                                    .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                                                    .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                                                });
+                                            },
+                                            "change": function (event) {
+                                                $(event.target).val(function (index, value) {
+                                                    let valueAux = value;
+                                                    if (!value.includes(",")) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else {
+                                                        valueAux = value;
+                                                    }
+
+                                                    if (value.charAt(0) == "0" && value.length == 1) {
+                                                        valueAux = value.concat(",00");
+                                                    }
+                                                    else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                                        if(value.charAt(1) == "."){
+                                                            valueAux = value.slice(2);
+                                                        }
+                                                        else if(value.charAt(2) == "."){
+                                                            valueAux = value.slice(1);
+                                                        }
+                                                        else{
+                                                            valueAux = value.slice(1);
+                                                        }
+
+                                                    }
+
+                                                    for (var i = 0; i < valueAux.length; i++) {
+                                                        if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                                            let addZero = "";
+                                                            if(valueAux[i] == ","){
+                                                                addZero = "0";
+                                                            }
+                                                            valueAux = addZero + valueAux.slice(i);
+                                                            break;
+                                                        }
+                                                    }
+
+                                                    if(parseFloat(valueAux.replace(',','.')) > 100 || valueAux.indexOf('.') >= 1)
+                                                    {
+                                                        alert("La bonificación no puede ser mayor que 100%.");
+                                                        return "100,00";
+                                                    }
+                                                    else
+                                                    {
+                                                        return valueAux;
+                                                    }
+
+                                                });
+                                            }
+                                        });
+                                    }
+                                });
+
+                                document.querySelectorAll('.providerQuantity').forEach(item => {
+                                    item.addEventListener('change', (e) => {
+                                        getTotalForEachRow();
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                    });
+                                });
+
+                                document.querySelectorAll('.priceQuantity').forEach(item => {
+                                    item.addEventListener('change', (e) => {
+                                        getTotalForEachRow();
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                    });
+                                });
+
+                                document.querySelectorAll('.unitPrice').forEach(item => {
+                                    item.addEventListener('change', (e) => {
+                                        getTotalForEachRow();
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                    });
+                                });
+
+                                document.querySelectorAll('.bonus').forEach(item => {
+                                    item.addEventListener('change', (e) => {
+                                        getTotalForEachRow();
+                                        e.stopPropagation();
+                                        e.preventDefault();
+                                    });
+                                });
+
+                                document.querySelectorAll('.total').forEach(item => {
+                                    if (item != null) {
+                                        getTotalForAllTable();
+                                    }
+                                });
+
+                                $('.moneyTypeSelect2').each(function (index, element) {
+                                    if (!$(this).hasClass("select2-hidden-accessible")) {
+                                        $(this).select2({
+                                            language: "es",
+                                            theme: "bootstrap4",
+                                            placeholder: "@localizer["Select money type"]"
+                                        });
+
+                                        $(this).next().removeAttr('style');
+                                    }
+                                });
+
+                            }
+                        }
+                    },
+                    complete: function(){
+                        $("#purchaseOrderDetailsTable").find("td.d-none").each(function () {
+                            let tdElement = $(this);
+                            let productId = $(this).find(".productId").val();
+
+                            if(productId != undefined){
+                                 // Se obtiene la cantidad y unidad del proveedor, ademas, de la cantidad y unidad de cotizacion.
+                                $.ajax({
+                                    url: '/Purchases/QuoteRequest/getUnitsAndQuantity',
+                                    data: {
+                                        providerId: select2Providers.val(),
+                                        missingProductId: 0,
+                                        productId: productId
+                                    },
+                                    type: 'get',
+                                    dataType: 'json',
+                                    contextType: "application/json",
+                                    success: function (response) {
+                                        if(response.isValid)
+                                        {
+                                            if(response.productIdNotProvided == 0)
+                                            {
+                                                tdElement.next().next().next().children().val(format_number_to_decimal((response.providerQuantity), 2, ',', '.'));
+                                                tdElement.find(".providerUnitMeasureId").val(parseInt(response.providerUnitMeasureId));
+                                                tdElement.next().next().next().next().children().val(response.providerUnitMeasureDescription);
+
+                                                tdElement.next().next().next().next().next().children().val(format_number_to_decimal((response.quotationQuantity), 2, ',', '.'));
+                                                tdElement.find(".priceUnitMeasureId").val(parseInt(response.quotationUnitMeasureId));
+                                                tdElement.next().next().next().next().next().next().children().val(response.quotationUnitMeasureDescription);
+                                            }
+                                            else
+                                            {
+                                                // El proveedor seleccionado no provee alguno de los productos de la grilla.
+                                                tdElement.closest("tr").remove();
+                                            }
+                                        }
+                                    },
+                                    complete: function(){
+                                        $("#table-div").show("slow");
+
+                                        select2ProductsByProvider.val('').trigger('change');
+                                        $('#Quantity').val('0,00');
+                                        $('#btnAddDiv').hide('slow');
+                                    }
+                                });
+                            }
+
+                        });
+                    }
+                });
+            }
+        });
+
+        document.querySelectorAll('.providerQuantity').forEach(item => {
+            if (item != null) {
+                $(item).on({
+                    "focus": function (event) {
+                        $(event.target).select();
+                    },
+                    "keyup": function (event) {
+                        $(event.target).val(function (index, value) {
+                            return value.replace(/\D/g, "")
+                            .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                            .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                        });
+                    },
+                    "change": function (event) {
+                        $(event.target).val(function (index, value) {
+
+                            // Tengo que utilizar el valor que se escribio en el input y cambiar la cantidad en unidades de cotizacion.
+
+                            let missingProductId = 0;
+                            let alternativeProductId = 0;
+                            if($(event.target).parent().parent().find('td.d-none').children().hasClass('missingProductId'))
+                            {
+                                missingProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                            }
+                            else
+                            {
+                                alternativeProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                            }
+
+                            $.ajax({
+                                url: '/Purchases/QuoteRequest/convertQuotationQuantityFromProviderQuantity',
+                                data: {
+                                    providerQuantityValue: parseFloat($(event.target)[0].value.replaceAll('.', '').replaceAll(',', '.')).toFixed(2),
+                                    providerId: select2Providers.val(),
+                                    missingProductId: missingProductId,
+                                    alternativeProductId: alternativeProductId
+                                },
+                                type: 'get',
+                                dataType: 'json',
+                                contextType: "application/json",
+                                success: function (response) {
+                                    if(response.isValid)
+                                    {
+                                        // Seteo la cantidad en unidades de cotizacion obtenida.
+                                        $(event.target).parent().next().next().children()[0].value = format_number_to_decimal((response.quotationQuantity), 2, ',', '.');
+                                    }
+                                }
+                            });
+
+                            let valueAux = value;
+                            if (!value.includes(",")) {
+                                valueAux = value.concat(",00");
+                            }
+                            else {
+                                valueAux = value;
+                            }
+
+                            if (value.charAt(0) == "0" && value.length == 1) {
+                                valueAux = value.concat(",00");
+                            }
+                            else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                if(value.charAt(1) == "."){
+                                    valueAux = value.slice(2);
+                                }
+                                else if(value.charAt(2) == "."){
+                                    valueAux = value.slice(1);
+                                }
+                                else{
+                                    valueAux = value.slice(1);
+                                }
+                            }
+
+                            for (var i = 0; i < valueAux.length; i++) {
+                                if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                    let addZero = "";
+                                    if(valueAux[i] == ","){
+                                        addZero = "0";
+                                    }
+                                    valueAux = addZero + valueAux.slice(i);
+                                    break;
+                                }
+                            }
+                            return valueAux;
+                        });
+                    }
+                });
+            }
+        });
+
+        document.querySelectorAll('.priceQuantity').forEach(item => {
+            if (item != null) {
+                $(item).on({
+                    "focus": function (event) {
+                        $(event.target).select();
+                    },
+                    "keyup": function (event) {
+                        $(event.target).val(function (index, value) {
+                            return value.replace(/\D/g, "")
+                            .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                            .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                        });
+                    },
+                    "change": function (event) {
+                        $(event.target).val(function (index, value) {
+
+                            // Tengo que utilizar el valor que se escribio en el input y cambiar la cantidad en unidades de proveedor.
+
+                            let missingProductId = 0;
+                            let alternativeProductId = 0;
+                            if($(event.target).parent().parent().find('td.d-none').children().hasClass('missingProductId'))
+                            {
+                                missingProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                            }
+                            else
+                            {
+                                alternativeProductId = $(event.target).parent().parent().find('td.d-none').children()[1].value;
+                            }
+
+                            $.ajax({
+                                url: '/Purchases/QuoteRequest/convertProviderQuantityFromQuotationQuantity',
+                                data: {
+                                    quotationQuantityValue: parseFloat($(event.target)[0].value.replaceAll('.', '').replaceAll(',', '.')).toFixed(2),
+                                    providerId: select2Providers.val(),
+                                    missingProductId: missingProductId,
+                                    alternativeProductId: alternativeProductId
+                                },
+                                type: 'get',
+                                dataType: 'json',
+                                contextType: "application/json",
+                                success: function (response) {
+                                    if(response.isValid)
+                                    {
+                                        // Seteo la cantidad en unidades de proveedor obtenida.
+                                        $(event.target).parent().prev().prev().children()[0].value = format_number_to_decimal((response.providerQuantity), 2, ',', '.');
+                                    }
+                                }
+                            });
+
+                            let valueAux = value;
+                            if (!value.includes(",")) {
+                                valueAux = value.concat(",00");
+                            }
+                            else {
+                                valueAux = value;
+                            }
+
+                            if (value.charAt(0) == "0" && value.length == 1) {
+                                valueAux = value.concat(",00");
+                            }
+                            else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                if(value.charAt(1) == "."){
+                                    valueAux = value.slice(2);
+                                }
+                                else if(value.charAt(2) == "."){
+                                    valueAux = value.slice(1);
+                                }
+                                else{
+                                    valueAux = value.slice(1);
+                                }
+                            }
+
+                            for (var i = 0; i < valueAux.length; i++) {
+                                if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                    let addZero = "";
+                                    if(valueAux[i] == ","){
+                                        addZero = "0";
+                                    }
+                                    valueAux = addZero + valueAux.slice(i);
+                                    break;
+                                }
+                            }
+                            return valueAux;
+                        });
+                    }
+                });
+            }
+        });
+
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            if (item != null) {
+                $(item).on({
+                    "focus": function (event) {
+                        $(event.target).select();
+                    },
+                    "keyup": function (event) {
+                        $(event.target).val(function (index, value) {
+                            return value.replace(/\D/g, "")
+                            .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                            .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                        });
+                    },
+                    "change": function (event) {
+                        $(event.target).val(function (index, value) {
+                            let valueAux = value;
+                            if (!value.includes(",")) {
+                                valueAux = value.concat(",00");
+                            }
+                            else {
+                                valueAux = value;
+                            }
+
+                            if (value.charAt(0) == "0" && value.length == 1) {
+                                valueAux = value.concat(",00");
+                            }
+                            else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                if(value.charAt(1) == "."){
+                                    valueAux = value.slice(2);
+                                }
+                                else if(value.charAt(2) == "."){
+                                    valueAux = value.slice(1);
+                                }
+                                else{
+                                    valueAux = value.slice(1);
+                                }
+                            }
+
+                            for (var i = 0; i < valueAux.length; i++) {
+                                if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                    let addZero = "";
+                                    if(valueAux[i] == ","){
+                                        addZero = "0";
+                                    }
+                                    valueAux = addZero + valueAux.slice(i);
+                                    break;
+                                }
+                            }
+                            return valueAux;
+                        });
+                    }
+                });
+            }
+        });
+
+        document.querySelectorAll('.bonus').forEach(item => {
+            if (item != null) {
+                $(item).on({
+                    "focus": function (event) {
+                        $(event.target).select();
+                    },
+                    "keyup": function (event) {
+                        $(event.target).val(function (index, value) {
+                            return value.replace(/\D/g, "")
+                            .replace(/([0-9])([0-9]{2})$/, '$1,$2')
+                            .replace(/\B(?=(\d{3})+(?!\d)\.?)/g, ".");
+                        });
+                    },
+                    "change": function (event) {
+                        $(event.target).val(function (index, value) {
+                            let valueAux = value;
+                            if (!value.includes(",")) {
+                                valueAux = value.concat(",00");
+                            }
+                            else {
+                                valueAux = value;
+                            }
+
+                            if (value.charAt(0) == "0" && value.length == 1) {
+                                valueAux = value.concat(",00");
+                            }
+                            else if(value.charAt(0) == "0" && value.charAt(1) != ","){
+                                if(value.charAt(1) == "."){
+                                    valueAux = value.slice(2);
+                                }
+                                else if(value.charAt(2) == "."){
+                                    valueAux = value.slice(1);
+                                }
+                                else{
+                                    valueAux = value.slice(1);
+                                }
+                            }
+
+                            for (var i = 0; i < valueAux.length; i++) {
+                                if (valueAux[i] != "0" && valueAux[i] != ".") {
+                                    let addZero = "";
+                                    if(valueAux[i] == ","){
+                                        addZero = "0";
+                                    }
+                                    valueAux = addZero + valueAux.slice(i);
+                                    break;
+                                }
+                            }
+
+                            if(parseFloat(valueAux.replace(',','.')) > 100 || valueAux.indexOf('.') >= 1)
+                            {
+                                alert("La bonificación no puede ser mayor que 100%.");
+                                return "100,00";
+                            }
+                            else
+                            {
+                                return valueAux;
+                            }
+
+                        });
+                    }
+                });
+            }
+        });
+
+        document.querySelectorAll('.providerQuantity').forEach(item => {
+            item.addEventListener('change', (e) => {
+                getTotalForEachRow();
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+
+        document.querySelectorAll('.priceQuantity').forEach(item => {
+            item.addEventListener('change', (e) => {
+                getTotalForEachRow();
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            item.addEventListener('change', (e) => {
+                getTotalForEachRow();
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+
+        document.querySelectorAll('.bonus').forEach(item => {
+            item.addEventListener('change', (e) => {
+                getTotalForEachRow();
+                e.stopPropagation();
+                e.preventDefault();
+            });
+        });
+
+        document.querySelectorAll('.total').forEach(item => {
+            if (item != null) {
+                getTotalForAllTable();
+            }
+        });
+
+        $(document).on("click", ".btn-remove", function () {
+            $(this).parent().parent().remove();
+            getTotalForAllTable();
+        });
+
+        $('#btn-create-provider').on('click', function () {
+            jQueryModalGet('/purchases/provider/OnGetCreateOrEdit?calledFromAnotherArea=true', '@localizer["New provider"]');
+        });
+
+        $('#btn-export-to-pdf').on('click', function(){
+            window.location.href = '/purchases/purchaseorder/exporttopdf?pohId=' + @Model.Id;
+        });
+
+        $("#create-form").submit(function (event) {
+            return jQueryModalPostModified(this);
+            event.preventDefault();
+        });
+
+    });
+
+    function getTotalForEachRow() {
+        $('#purchaseOrderDetailsTable > tbody  > tr').each(function () {
+
+            let priceQuantity = $(this).find("input.priceQuantity").val();
+            let unitPrice = $(this).find("input.unitPrice").val();
+            let bonus = $(this).find("input.bonus").val();
+
+            if(priceQuantity != "" && unitPrice != ""){
+
+                let totalValue = parseFloat(String(priceQuantity).replaceAll('.', '').replaceAll(',', '.')).toFixed(2) * parseFloat(String(unitPrice).replaceAll('.', '').replaceAll(',', '.').trim()).toFixed(2);
+
+                if(bonus == ""){
+                    bonus = 0;
+                }
+                totalValue = totalValue - (totalValue * parseFloat(String(bonus).replaceAll('.', '').replaceAll(',', '.').trim()).toFixed(2) / 100);
+
+                // For each row in table
+                $(this).find("input.total").val(format_number_to_decimal(totalValue, 2, ",", "."));
+
+                let totalInput = $(this).find("input.total").on('change', getTotalForAllTable());
+                totalInput.trigger('change');
+
+            }
+        });
+    }
+
+    function getTotalForAllTable() {
+
+        let totalRow = 0;
+        $('#purchaseOrderDetailsTable > tbody  > tr').each(function () {
+            if ($(this).find("input.total").val() != "") {
+                totalRow += +parseFloat(String($(this).find("input.total").val()).replaceAll('.', '').replaceAll(',', '.').trim()).toFixed(2);
+            }
+        });
+
+        let bonus = 0;
+        let iva = 0;
+        let totalValue = parseFloat(totalRow).toFixed(2);
+
+        if (document.getElementById('Bonus').value == "") {
+            bonus = 0;
+        }
+        else{
+            bonus = parseFloat(String(document.getElementById('Bonus').value).replaceAll('.', '').replaceAll(',', '.').trim()).toFixed(2);
+        }
+
+        totalValue = totalValue - (totalValue * parseFloat(bonus).toFixed(2) / 100);
+
+        // 21%
+        if($('#IVA').val() == 1){
+            iva = 21;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+        // 10,5%
+        else if($('#IVA').val() == 2){
+            iva = 10.5;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+        // 27%
+        else if($('#IVA').val() == 3){
+            iva = 27;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+        // 0%
+        else if($('#IVA').val() == 4){
+            iva = 0;
+            totalValue = totalValue + (totalValue * parseFloat(iva).toFixed(2) / 100);
+        }
+
+        document.getElementById('Total').value = format_number_to_decimal(totalValue, 2, ",", ".");
+
+    }
+
+    jQueryModalPostModified = (form) => {
+
+        // Fran: 30/5/2023: Se agrega para bloquear la pagina y no permitir darle dos veces la boton de guardado.
+        showSpinner();
+
+        $("#Bonus").val($("#Bonus").val());
+        $("#Total").val($("#Total").val());
+
+        document.querySelectorAll('.priceQuantity').forEach(item => {
+            if (item != null) {
+                 if($(item).val() == ""){
+                     $(item).val("0,00");
+                 }
+            }
+        });
+
+        document.querySelectorAll('.unitPrice').forEach(item => {
+            if (item != null) {
+                 if($(item).val() == ""){
+                     $(item).val("0,00");
+                 }
+            }
+        });
+
+        document.querySelectorAll('.bonus').forEach(item => {
+            if (item != null) {
+                if($(item).val() == ""){
+                    $(item).val("0,00");
+                }
+            }
+        });
+
+        document.querySelectorAll('.total').forEach(item => {
+            if (item != null) {
+                if($(item).val() == ""){
+                    $(item).val("0,00");
+                }
+            }
+        });
+
+        try {
+            $.ajax({
+                type: 'POST',
+                url: form.action,
+                data: new FormData(form),
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    if (res.isValid) {
+
+                        $('#form-modal #btn-save').attr('disabled', 'disabled');
+                        $('#form-modal #btn-save').html('<i class="fa fa-spinner fa-spin"></i> ' + $('#form-modal #btn-save').text());
+                        //$('#form-modal').modal('hide');
+                        //refreshTable();
+
+                        // Fran: 30/5/2023: Se agrega para bloquear la pagina y no permitir darle dos veces la boton de guardado.
+                        hideSpinner();
+
+                        jQueryModalGet('/purchases/purchaseorder/OnGetCreate?id=' + res.pohId, "@localizer["Purchase order"]");
+                        refreshTable();
+
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+            return false;
+        } catch (ex) {
+            console.log(ex)
+        }
+    }
+
+</script>

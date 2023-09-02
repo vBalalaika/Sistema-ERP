@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW 2018 (64 Bit Versión de evaluación) -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="33.3142mm" height="28.9703mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 770.34 669.89"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str1 {stroke:black;stroke-width:23.12;stroke-miterlimit:22.9256}
+    .str3 {stroke:black;stroke-width:11.56;stroke-miterlimit:22.9256}
+    .str0 {stroke:black;stroke-width:23.12;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .str4 {stroke:black;stroke-width:40.47;stroke-linecap:round;stroke-miterlimit:22.9256}
+    .str2 {stroke:black;stroke-width:23.12;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:22.9256}
+    .fil0 {fill:none}
+   ]]>
+  </style>
+ </defs>
+ <g id="Capa_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <g id="_2124406498368">
+   <polyline class="fil0 str0" points="301.53,324.57 408.57,373.26 408.26,658.33 135.49,534.24 135.79,249.18 231.2,292.58 "/>
+   <rect class="fil0 str0" transform="matrix(0.886046 -0.440784 -0 0.621872 408.261 372.031)" width="285.6" height="460.39"/>
+   <polyline class="fil0 str1" points="135.79,249.18 393.8,160.78 478.12,187.69 661.32,246.14 "/>
+   <polyline class="fil0 str2" points="482.8,189.18 231.2,292.58 231.2,397.27 "/>
+   <polyline class="fil0 str0" points="552.93,213.03 301.53,324.57 301.53,426.33 264.19,386.01 231.2,397.27 "/>
+   <rect class="fil0 str3" transform="matrix(0.845933 0.368739 -0 0.845933 296.83 522.837)" width="83.36" height="59.65"/>
+   <line class="fil0 str3" x1="305.42" y1="326.34" x2="231.2" y2= "292.58" />
+  </g>
+  <path class="fil0 str4" d="M23.45 207.26c93.08,-134 257.11,-199.3 401.86,-185.13 138.88,13.59 262.29,104.4 324.79,226.3m-729.88 -41.32l1.46 -125.86m0.77 128.25l119.07 -21.92"/>
+ </g>
+</svg>

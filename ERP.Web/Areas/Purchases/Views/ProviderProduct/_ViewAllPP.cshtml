@@ -1,0 +1,186 @@
+﻿@using ERP.Web.Areas.Purchases.Models.Providers
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<RelProviderProductViewModel>
+
+<div id="div-export-buttons">
+    <div class="btn-group"></div>
+</div>
+<table id="relProviderProductsTable" class="table table-striped-blue nowrap" width="100%">
+    <thead class="bg-thead">
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Heading"]</th>
+            <th>@localizer["Product code"]</th>
+            <th>@localizer["Product description"]</th>
+            <th>@localizer["Provider"]</th>
+            <th>@localizer["Price in"] U$s</th>
+            <th>@localizer["Quotation unit"]</th>
+            @*<th>@localizer["Presentation unit"]</th>*@
+            <th>@localizer["Brand"]</th>
+            <th>@localizer["Provider code"]</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var relProviderProduct in Model)
+        {
+            <tr>
+                <td>
+                    @relProviderProduct.Id
+                </td>
+                <td class="text-center">
+                    <div class="btn-group">
+                        <div class="d-flex  animated--grow-in">
+                            @*<a class="btn action-btn" title="@localizer["View detail"]" style="cursor:pointer" onclick="jQueryModalGet('/purchases/providerproduct/OnGetCreateOrEdit?id=@relProviderProduct.Id&viewDetails=true','@localizer["Details"]')"><img class="action-img-icon" src="../../../images/Ver.svg" width="20" height="20" /></a>*@
+                            <a class="btn action-btn" title="@localizer["View detail"]" style="cursor:pointer" onclick="jQueryModalGet('/purchases/providerproduct/OnGetCreateOrEdit?id=@relProviderProduct.Id&viewDetails=false&editFromAllProductsProviders=true','@localizer["Details"]')"><img class="action-img-icon" src="../../../images/Editar.svg" width="20" height="20" /></a>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    @{
+                        if (relProviderProduct.Product != null)
+                        {
+                            if (relProviderProduct.Product.SubCategory != null)
+                            {
+                                @relProviderProduct.Product.SubCategory.Description
+                            }
+                        }
+                    }
+                </td>
+                <td>
+                    @{
+                        if (relProviderProduct.Product != null)
+                        {
+                            @relProviderProduct.Product.Code
+                        }
+                    }
+                </td>
+                <td>
+                    @{
+                        if (relProviderProduct.Product != null)
+                        {
+                            @relProviderProduct.Product.Description
+                        }
+                    }
+                </td>
+                <td>
+                    @relProviderProduct.Provider.getBussinessNameOrName
+                </td>
+                <td class="text-center">
+                    @Math.Round(relProviderProduct.DollarPrice, 2)
+                </td>
+                <td class="text-center">
+                    @{
+                        if (relProviderProduct.PriceUnitMeasure != null)
+                        {
+                            @relProviderProduct.PriceUnitMeasure.Description
+                        }
+                    }
+                </td>
+                @*<td class="text-center">
+                    @{
+                        if (relProviderProduct.UnitMeasure != null)
+                        {
+                            @relProviderProduct.UnitMeasure.Description
+                        }
+                    }
+                </td>*@
+                <td>
+                    @relProviderProduct.Brand
+                </td>
+                <td>
+                    @relProviderProduct.ProviderCode
+                </td>
+            </tr>
+        }
+    </tbody>
+    <tfoot>
+        <tr>
+            <th hidden>@localizer["Id"]</th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Heading"]</th>
+            <th>@localizer["Product code"]</th>
+            <th>@localizer["Product description"]</th>
+            <th>@localizer["Provider"]</th>
+            <th>@localizer["Price in"] U$s</th>
+            <th>@localizer["Quotation unit"]</th>
+            @*<th>@localizer["Presentation unit"]</th>*@
+            <th>@localizer["Brand"]</th>
+            <th>@localizer["Provider code"]</th>
+        </tr>
+    </tfoot>
+</table>
+
+<script>
+    $(document).ready(function () {
+
+        $('#relProviderProductsTable tfoot th').each(function (i) {
+            $(this).html('<input type="text" class="search-control" placeholder="' + $(this).text() + '" data-index="' + i + '" />');
+        });
+
+        let relProviderProductsTable = $("#relProviderProductsTable").DataTable({
+            "oLanguage": @localizer["LanguageDataTable"],
+            "order": [
+                [2, "asc"],
+                [4, "asc"]
+            ],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "visible": false,
+                    "searchable": false
+                }
+            ],
+            scrollY: '60vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: 'Datos de productos por proveedor',
+                    className: 'rounded-left',
+                    exportOptions: {
+                        columns: [2, 3, 4, 5, 6, 7, 8, 9],
+                        format: {
+                            body: function (data, row, column, node) {
+                                return reformatExportData(data, row, column, node);
+                            }
+                        }
+                    },
+                    customize: function (xlsx) {
+                        addCustomNumberFormat(xlsx, '#,##0.0##');
+                        formatTargetColumn(xlsx, 'F'); // Excel column J
+                    }
+                }
+            ]
+        });
+
+        relProviderProductsTable.buttons().container()
+            .appendTo('#div-export-buttons .btn-group');
+
+        $(relProviderProductsTable.table().container()).on('keyup', 'tfoot input', function () {
+            relProviderProductsTable
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+    });
+
+    function reformatExportData(data, row, column, node) {
+        if (column === 4) {
+            // replace spaces with nothing; replace commas with points.
+            var newData = data.replace(',', '.').replaceAll(' ', '');
+            return newData;
+        }
+        else {
+            return data;
+        }
+    }
+</script>

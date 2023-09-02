@@ -1,0 +1,512 @@
+﻿@using ERP.Web.Areas.Production.Models
+@using ERP.Application.Enums
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Newtonsoft.Json
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model WorkActivitiesViewModel
+
+<div class="form-row d-flex justify-content-center">
+    <div id="div-export-buttons">
+        <div class="btn-group">
+            <a id="btn-back" class="btn btn-secondary text-white" title="@localizer["Back"]">
+                <img class="tables-img-icon" src="~/images/Back blanco.svg" width="30" height="30" />
+            </a>
+            <a id="btn-view-advance-detail" class="btn btn-secondary text-white" title="@localizer["Product progress detail"]">
+                <img class="tables-img-icon" src="~/images/Avance blanco.svg" width="30" height="30" />
+            </a>
+            @if (User.IsInRole(Roles.SuperAdmin.ToString()))
+            {
+                <a id="btn-get-OT" class="btn btn-secondary" title="@localizer["Work order"]">
+                    <img class="tables-img-icon" src="~/images/OT.svg" width="30" height="30" />
+                </a>
+            }
+            <button class="btn btn-secondary" id="expand">Expandir</button>
+            <button class="btn btn-secondary" id="collapse">Contraer</button>
+        </div>
+    </div>
+</div>
+@{
+    List<TreeTable> data = new List<TreeTable>();
+    foreach (var activitygroup in Model.ActivitiesGroups)
+    {
+        var quantityWorkOrderItem = 0;
+        var archives = "";
+        var start = "";
+        var end = "";
+        var time = "";
+        var disablePlay = "";
+        var disablePause = "";
+        var disableStop = "";
+        var roadMap = "";
+
+        if (activitygroup.Activities.Count > 1)
+        {
+            foreach (var activity in activitygroup.Activities)
+            {
+                quantityWorkOrderItem += activity.WorkOrderItem.Quantity; 
+                if (activity.WorkOrderItem.Product.Archives.Count > 0)
+                {
+                    var path = "jQueryModalGet(" + '\"' + "/productmod/product/GetFilesByProduct?id=" + @activity.WorkOrderItem.Product.Id + "\"" + ',' + "\"" + @activity.WorkOrderItem.Product.CodeAndDescription + "\"" + ')'; 
+                    archives = "<a title='Archivos' class='btn action-btn' onclick='"+ path +"'><img class='action-img-icon' src='../../../images/Archivos.svg' width='20' height='20'/></a>";
+                }
+                else
+                {
+                    archives = "<a title='@localizer['Files']' class='btn action-btn disabled'><img class='action-img-icon' src='../../../images/Archivos.svg' width='20' height='20'/></a>";
+                }
+                if(activity.StartDate != null)
+                {
+                    start = activity.StartDate.ToString();
+                }
+                if(activity.EndingDate != null)
+                {
+                    end = activity.EndingDate.ToString();
+                }
+
+                time = activitygroup.TotalTimeRelativeActivitiesMontajeAndSoldadura;
+
+                roadMap += "<div class='row pl-3'>";
+                foreach (var rps in activity.WorkOrderItem.Product.RelProductStations.OrderBy(ps => ps.Order))
+                {
+                    roadMap += "<div class='pl-1 pr-1'>" + rps.Station.Abbreviation + "</div>"; 
+                    if (!rps.Equals(activity.WorkOrderItem.Product.RelProductStations.Last()))
+                    {
+                        roadMap += "<div class='pl-1 pr-1'><i class='fa fa-arrow-right' aria-hidden='true'></i></div>";
+                    }
+                }
+                roadMap += "</div>";
+            }
+
+            if(start != "")
+            {
+                disablePlay = activitygroup.Activities.First().DisablePlay;
+                disablePause = activitygroup.Activities.First().DisablePause;
+                disableStop = activitygroup.Activities.First().DisableStop;
+            }
+            else
+            {
+                disablePlay = activitygroup.Activities.First().DisablePlayBtn;
+                disablePause = activitygroup.Activities.First().DisablePauseBtn;
+                disableStop = activitygroup.Activities.First().DisableStopBtn;
+            }
+
+            data.Add(new TreeTable
+            {
+                tt_key = activitygroup.AllActivities.First().Id,
+                tt_parent = 0,
+                ProductNumber = activitygroup.Activities.First().WorkOrderItem.Product.Code,
+                ProductDescription = activitygroup.Activities.First().WorkOrderItem.Product.Description,
+                Quantity = quantityWorkOrderItem,
+                RawMaterialDescription = activitygroup.Activities.First().WorkOrderItem.Product.ProductFeature.RawMaterialDescription,
+                Width = activitygroup.Activities.First().WorkOrderItem.Product.ProductFeature.ComponentWidhtPiece,
+                Length = activitygroup.Activities.First().WorkOrderItem.Product.ProductFeature.ComponentLongPiece,
+                Archives = archives,
+                NextStation = activitygroup.Activities.First().NextStation,
+                RoadMap = roadMap,
+                Start = start,
+                End = end,
+                Time = time,
+                ActionButtons = disablePlay + "," + disablePause + "," + disableStop,
+                relativeActivitiesIds = activitygroup.RelativeActivitiesIdsSoldaduraAndMontaje
+            });
+            @if (activitygroup.Activities.First().ChildsActivities.Any())
+            {
+                ShowChilds(activitygroup.Activities.First(), ref data, activitygroup.Activities.Count(), localizer);
+            }
+        }
+        else if (activitygroup.Activities.Count == 1)
+        {
+            var activity = activitygroup.Activities.First();
+            quantityWorkOrderItem = activity.WorkOrderItem.Quantity;
+            if (activitygroup.Activities.First().WorkOrderItem.Product.Archives.Count > 0)
+            {
+                var path = "jQueryModalGet(" + '\"' + "/productmod/product/GetFilesByProduct?id=" + @activity.WorkOrderItem.Product.Id + "\"" + ',' + "\"" + @activity.WorkOrderItem.Product.CodeAndDescription + "\"" + ')'; 
+                archives = "<a title='Archivos' class='btn action-btn' onclick='"+ path +"'><img class='action-img-icon' src='../../../images/Archivos.svg' width='20' height='20'/></a>";
+            }
+            else
+            {
+                archives = "<a title='Archivos' class='btn action-btn disabled'><img class='action-img-icon' src='../../../images/Archivos.svg' width='20' height='20'/></a>";
+            }
+            if(activity.StartDate != null)
+            {
+                start = activity.StartDate.ToString();
+            }
+            if(activity.EndingDate != null)
+            {
+                end = activity.EndingDate.ToString();
+            }
+
+            time = activitygroup.TotalTimeRelativeActivitiesMontajeAndSoldadura;
+
+            roadMap += "<div class='row pl-3'>";
+            foreach (var rps in activity.WorkOrderItem.Product.RelProductStations.OrderBy(ps => ps.Order))
+            {
+                roadMap += "<div class='pl-1 pr-1'>" + rps.Station.Abbreviation + "</div>"; 
+                if (!rps.Equals(activity.WorkOrderItem.Product.RelProductStations.Last()))
+                {
+                    roadMap += "<div class='pl-1 pr-1'><i class='fa fa-arrow-right' aria-hidden='true'></i></div>";
+                }
+            }
+            roadMap += "</div>";
+
+            if(start != "")
+            {
+                disablePlay = activity.DisablePlay;
+                disablePause = activity.DisablePause;
+                disableStop = activity.DisableStop;
+            }
+            else
+            {
+                disablePlay = activity.DisablePlayBtn;
+                disablePause = activity.DisablePauseBtn;
+                disableStop = activity.DisableStopBtn;
+            }
+
+            data.Add(new TreeTable
+            {
+                tt_key = activitygroup.AllActivities.First().Id,
+                tt_parent = 0,
+                ProductNumber = activitygroup.Activities.First().WorkOrderItem.Product.Code,
+                ProductDescription = activitygroup.Activities.First().WorkOrderItem.Product.Description,
+                Quantity = quantityWorkOrderItem,
+                RawMaterialDescription = activitygroup.Activities.First().WorkOrderItem.Product.ProductFeature.RawMaterialDescription,
+                Width = activitygroup.Activities.First().WorkOrderItem.Product.ProductFeature.ComponentWidhtPiece,
+                Length = activitygroup.Activities.First().WorkOrderItem.Product.ProductFeature.ComponentLongPiece,
+                Archives = archives,
+                NextStation = activity.NextStation,
+                RoadMap = roadMap,
+                Start = start,
+                End = end,
+                Time = time,
+                ActionButtons = disablePlay + "," + disablePause + "," + disableStop,
+                relativeActivitiesIds = activitygroup.RelativeActivitiesIdsSoldaduraAndMontaje
+            });
+            @if (activity.ChildsActivities.Any())
+            {
+                ShowChilds(activity, ref data, 1,localizer);
+            }
+
+        }
+    }
+}
+
+@functions{
+    public static void ShowChilds(WorkActivityViewModel activity, ref List<TreeTable> data2, int quantityActGroup,IHtmlLocalizer<ERP.Language.SharedResource> localizer)
+    {
+        foreach (var act in activity.ChildsActivities)
+        {
+            var archives = "";
+            if (act.WorkOrderItem.Product.Archives.Count > 0)
+            {
+                var path = "jQueryModalGet(" + '\"' + "/productmod/product/GetFilesByProduct?id=" + @act.WorkOrderItem.Product.Id + "\"" + ',' + "\"" + @act.WorkOrderItem.Product.CodeAndDescription + "\"" + ')'; 
+                archives = "<a title='Archivos' class='btn action-btn' onclick='"+ path +"'><img class='action-img-icon' src='../../../images/Archivos.svg' width='20' height='20'/></a>";
+            }
+            else
+            {
+                archives = "<a title='@localizer['Files']' class='btn action-btn disabled'><img class='action-img-icon' src='../../../images/Archivos.svg' width='20' height='20'/></a>";
+            }
+
+            var roadMap = "";
+            roadMap += "<div class='row pl-3'>";
+            foreach (var rps in act.WorkOrderItem.Product.RelProductStations.OrderBy(ps => ps.Order))
+            {
+                roadMap += "<div class='pl-1 pr-1'>" + rps.Station.Abbreviation + "</div>"; 
+                if (!rps.Equals(act.WorkOrderItem.Product.RelProductStations.Last()))
+                {
+                    roadMap += "<div class='pl-1 pr-1'><i class='fa fa-arrow-right' aria-hidden='true'></i></div>";
+                }
+            }
+            roadMap += "</div>";
+
+            data2.Add(new TreeTable
+            {
+                tt_key = act.Id,
+                tt_parent = activity.Id,
+                ProductNumber = act.WorkOrderItem.Product.Code,
+                ProductDescription = act.WorkOrderItem.Product.Description,
+                Quantity = act.WorkOrderItem.Quantity * quantityActGroup,
+                RawMaterialDescription = act.WorkOrderItem.Product.ProductFeature.RawMaterialDescription,
+                Width = act.WorkOrderItem.Product.ProductFeature.ComponentWidhtPiece,
+                Length = act.WorkOrderItem.Product.ProductFeature.ComponentLongPiece,
+                Archives = archives,
+                //NextStation = act.NextStation,
+                NextStation = "",
+                RoadMap = roadMap,
+                Start = "",
+                End = "",
+                Time = "",
+                ActionButtons = "",
+                relativeActivitiesIds = ""
+            });
+            if (act.ChildsActivities.Count > 0)
+            {
+                ShowChilds(act, ref data2, quantityActGroup, localizer);
+            }
+        }
+    }
+}
+
+<table id="activitiesTableSoldadura" class="table table-striped-blue table-hover w-100 nowrap " cellspacing="0">
+    <thead class="bg-thead">
+        <tr>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Raw material description"]</th>
+            <th>@localizer["Width"]</th>
+            <th>@localizer["Length"]</th>
+            <th>@localizer["Archives"]</th>
+            <th>@localizer["Next station"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["Start"]</th>
+            <th>@localizer["End"]</th>
+            <th>@localizer["Time"]</th>
+        </tr>
+    </thead>
+    <tbody>
+    </tbody>
+    <tfoot>
+        <tr>
+            <th></th>
+            <th>@localizer["Actions"]</th>
+            <th>@localizer["Code"]</th>
+            <th>@localizer["Description"]</th>
+            <th>@localizer["Quantity"]</th>
+            <th>@localizer["Raw material description"]</th>
+            <th>@localizer["Width"]</th>
+            <th>@localizer["Length"]</th>
+            <th>@localizer["Archives"]</th>
+            <th>@localizer["Next station"]</th>
+            <th>@localizer["Road map"]</th>
+            <th>@localizer["Start"]</th>
+            <th>@localizer["End"]</th>
+            <th>@localizer["Time"]</th>
+        </tr>
+    </tfoot>
+</table>
+<input type="hidden" id="start_datetime" value="@Model.StartDate" />
+<input type="hidden" id="activity_percentage" value="@Model.TotalAdvance" />
+<script>
+    $(document).ready(function () {
+        var total_advance = $("#activity_percentage").val();
+        var pbTotalAdvance = $("#pb_totalAdvance");
+        var start_date = $("#start_date");
+        var start_datetime = $("#start_datetime");
+        var end_date = $("#end_date");
+        var total_time = $("#total_time");
+
+        pbTotalAdvance
+            .width(`${total_advance}%`)
+            .html(`${total_advance}%`);
+        if (total_advance == 100) {
+            pbTotalAdvance.removeClass('bg-warning');
+            pbTotalAdvance.addClass('bg-success');
+ 
+            end_date.html("<b>@localizer["End"]: </b> @Model.EndDate");
+            total_time.html("<b>@localizer["Total time"]: </b>@Model.TotalTime");
+        } else {
+            if (!pbTotalAdvance.hasClass('bg-warning')) {
+                pbTotalAdvance.addClass('bg-warning');
+            }
+        }
+
+        if(start_datetime.attr('value') != undefined){
+            start_date.html("<b>@localizer["Start"]: </b>" + start_datetime.val());
+        }
+
+        $('#activitiesTableSoldadura tfoot th').each(function (i) {
+            var title = $(this).text();
+            if (title != "@localizer["Actions"]" && title != "" && title != "@localizer["Archives"]") {
+                $(this).html('<input type="text" class="search-control" placeholder="' + title + '" data-index="' + i + '" />');
+            }
+            else {
+                $(this).html('');
+            }
+        });
+
+        let activitiesTableSoldadura = $("#activitiesTableSoldadura").treeTable({
+            "data": @Json.Serialize(data),
+            "columns": [
+                {
+                    "data": "actionButtons",
+                    render: function (data, type, row, meta) {
+                        if (data != "") {
+                            var opciones = data.split(",");
+                            return '<div class="btn-group"><div class="d-flex animated--grow-in">@if ((AuthorizationService.AuthorizeAsync(User, Permissions.WorkActivities.Edit)).Result.Succeeded){<a class="btn ' + opciones[0] + ' action-btn" onclick="PostAction(\'' + row.relativeActivitiesIds + '\', \'' + 'play' + '\', this)" title="@localizer["Play"]"><img class="action-img-icon" src="../../../images/play.svg" width="20" height="20" /></a><a class="btn ' + opciones[1] + ' action-btn" onclick="PostAction(\'' + row.relativeActivitiesIds + '\', \'' + 'pause' + '\', this)" title="@localizer["Pause"]"><img class="action-img-icon" src="../../../images/pausa.svg" width="20" height="20" /></a><a class="btn ' + opciones[2] + ' action-btn" onclick="PostAction(\'' + row.relativeActivitiesIds + '\', \'' + 'stop' + '\', this)" title="@localizer["Stop"]"><img class="action-img-icon" src="../../../images/stop.svg" width="20" height="20" /></a>}</div></div>';
+                        } else {
+                            return ""
+                        }
+                    }
+                },
+                {
+                    "data": "productNumber",
+                    "className": "productNumber"
+                },
+                {
+                    "data": "productDescription"
+                },
+                {
+                    "data": "quantity",
+                    "className": "text-center"
+                },
+                {
+                    "data": "rawMaterialDescription"
+                },
+                {
+                    "data": "width",
+                    "className": "text-center"
+                },
+                {
+                    "data": "length",
+                    "className": "text-center"
+                },
+                {
+                    "data": "archives",
+                    "className": "text-center"
+                },
+                {
+                    "data": "nextStation"
+                },
+                {
+                    "data": "roadMap"
+                },
+                {
+                    "data": "start"
+                },
+                {
+                    "data": "end"
+                },
+                {
+                    "data": "time"
+                }
+            ],
+            "collapsed": true,
+            "sDom": 'Brtip',
+            "oLanguage": @localizer["LanguageDataTable"],
+            scrollY: '50vh',
+            scrollX: true,
+            scrollCollapse: true,
+            scroller: true,
+            scroller: {
+                loadingIndicator: true
+            },
+            "buttons": [
+                {
+                    extend: 'excelHtml5',
+                    text: '<img src="../../../images/Excel.svg" width="30" height="30" />',
+                    titleAttr: 'Exportar archivo Excel',
+                    title: "Trabajo de puesto: " + '@Model.Station.AbreviationDescription',
+                    exportOptions: {
+                        columns: [2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13]
+                    }
+                }
+            ],
+            initComplete: function () {
+                //$('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+            },
+            drawCallback: function () {
+                $('.dataTables_scrollBody').scrollTop(getPageScrollPos());
+            }
+        });
+
+        $('#activitiesTableSoldadura').data("treeTable").dt.buttons().container().appendTo('#div-export-buttons .btn-group');
+
+        $('.dataTables_scrollFoot .dataTables_scrollFootInner table').on('keyup', 'tfoot .search-control', function () {
+            $('#activitiesTableSoldadura').data("treeTable").dt 
+                .column($(this).data('index'))
+                .search(this.value)
+                .draw();
+        });
+
+        $('#btn-get-OT').on('click', function(){
+            url = "/production/workorderheader/OnGetWorkOrderHeader?idWorkOrder=" + @Model.urlIds;
+            jQueryModalGet(url, '@localizer["View work order"]');
+        });
+
+        $('#btn-back').on('click', function(){
+            // For refresh page when btn back is pressed.
+            location.replace(document.referrer);
+            //window.history.go(-1); 
+            //return false;
+        });
+
+        $('#btn-view-advance-detail').on('click', function(){
+            window.location.href = '/production/workorder/loadworkorder?workorderId=' + @Model.WorkOrders.First().Id;
+        });
+
+    });
+
+    PostAction = (ids, action, actionBtn) => {
+
+        //#region Tarjeta trello: "OT soldadura refresh": Refresco solo los botones sin refrescar la informacion de la grilla.
+        // De esta forma se van actualizando las clases "disabled" de cada boton segun la accion que se ejecute, para que si se desplega un item padre
+        // quede tal cual esta cuando se ejecuta una PostAction, el problema de esto es que para ver los inicios, fin y tiempos si se tiene que refrescar
+        // el elemento con la funcion loadData().
+        //if(action == "play")
+        //{
+        //    let playBtn = $(actionBtn);
+        //    let pauseBtn = $(actionBtn).next();
+        //    let stopBtn = $(actionBtn).next().next();
+
+        //    playBtn.addClass('disabled');
+        //    pauseBtn.removeClass('disabled');
+        //    stopBtn.removeClass('disabled');
+        //}
+        //else if(action == "pause")
+        //{
+        //    let playBtn = $(actionBtn).prev();
+        //    let pauseBtn = $(actionBtn);
+        //    let stopBtn = $(actionBtn).next();
+
+        //    playBtn.removeClass('disabled');
+        //    pauseBtn.addClass('disabled');
+        //}
+        //else
+        //{
+        //    let playBtn = $(actionBtn).prev().prev();
+        //    let pauseBtn = $(actionBtn).prev();
+        //    let stopBtn = $(actionBtn);
+
+            
+        //    playBtn.addClass('disabled');
+        //    pauseBtn.addClass('disabled');
+        //    stopBtn.addClass('disabled');
+        //}
+        //#endregion
+
+        try 
+        {
+            setPageScrollPos($('.dataTables_scrollBody').scrollTop());
+            $.ajax({
+                type: 'POST',
+                url: "/production/workactivity/newAction?activitiesIds=" + ids + "&actionName=" + action + "",
+                contentType: false,
+                processData: false,
+                success: function (res) {
+                    // Al recargar la grilla de esta manera se recarga como al inicio, si se desplego un item padre, se volvera a plegar cuando se refresque 
+                    // el elemento en la funcion loadData().
+                    if (res.isValid) {
+                        loadData();
+                    }
+                },
+                error: function (err) {
+                    console.log(err)
+                }
+            })
+
+            return false;
+        } 
+        catch (ex) {
+            console.log(ex)
+        }
+    }
+
+    $('#expand').on("click", function () {
+        $('#activitiesTableSoldadura').data("treeTable").expandAllRows().redraw();
+    });
+
+    $('#collapse').on("click", function () {
+        $('#activitiesTableSoldadura').data("treeTable").collapseAllRows().redraw();
+    });
+
+</script>

@@ -1,0 +1,288 @@
+﻿@using ERP.Web.Areas.Clients.Models
+@using Microsoft.AspNetCore.Mvc.Localization
+@inject IHtmlLocalizer<ERP.Language.SharedResource> localizer
+@model IEnumerable<ReminderViewModel>
+@{
+    ViewData["Title"] = localizer["List of reminders"];
+}
+
+<head>
+    <link href="~/css/Clients/reminders.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="card">
+
+        <div class="col-sm-12 col-md-12 col-xl-6 mb-3 pr-0 mr-3">
+            <label for="daterange">@localizer["Date"]</label>
+            <input id="daterange" type="text" name="daterange" class="form-control pr-4 border-0" />
+        </div>
+
+        <div id="viewAllReminders" class="card-body table-responsive">
+
+            <div id="div-export-buttons">
+                <div class="btn-group">
+
+                </div>
+            </div>
+
+            <table id="remindersTable" class="table table-striped-blue nowrap" width="100%">
+                <thead class="bg-thead">
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Client"]</th>
+                        <th>@localizer["Contact date"]</th>
+                        <th>@localizer["Reminder date"]</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <th hidden>@localizer["Id"]</th>
+                        <th>@localizer["Actions"]</th>
+                        <th>@localizer["Client"]</th>
+                        <th>@localizer["Contact date"]</th>
+                        <th>@localizer["Reminder date"]</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+</body>
+
+
+@section Scripts
+{
+    <script>
+
+        $(document).ready(function () {
+
+            $('#remindersTable tfoot th').each(function (i) {
+                if ($(this).text() != "@localizer["Actions"]") {
+                    $(this).html('<input type="text" class="search-control" placeholder="' + $(this).text() + '" data-index="' + i + '" />');
+                } else {
+                    $(this).html('');
+                }
+            });
+
+            let start = moment().subtract(6, 'months');
+            let end = moment();
+            let dateFromFilterValue = start.format('DD/MM/YYYY');
+            let dateToFilterValue = end.format('DD/MM/YYYY');
+
+
+            $('input[name="daterange"]').daterangepicker({
+                "locale": {
+                    "format": "DD/MM/YYYY",
+                    "separator": " - ",
+                    "applyLabel": "Aceptar",
+                    "cancelLabel": "Cancelar",
+                    "fromLabel": "Desde",
+                    "toLabel": "Hasta",
+                    "daysOfWeek": [
+                        "Do",
+                        "Lu",
+                        "Ma",
+                        "Mi",
+                        "Ju",
+                        "Vi",
+                        "Sa"
+                    ],
+                    "monthNames": [
+                        "Enero",
+                        "Febrero",
+                        "Marzo",
+                        "Abril",
+                        "Mayo",
+                        "Junio",
+                        "Julio",
+                        "Agosto",
+                        "Septiembre",
+                        "Octubre",
+                        "Noviembre",
+                        "Diciembre"
+                    ],
+                    "firstDay": 1
+                },
+                "autoApply": true,
+                "showDropdowns": true,
+                "opens": "right",
+                "buttonClasses": "btn btn-sm",
+                "applyClass": "btn-primary",
+                "startDate": start,
+                "endDate": end,
+                "minYear": 1995
+            }, cb);
+
+            function cb(start, end) {
+                $('#daterange span').html(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+                dateFromFilterValue = start.format('DD/MM/YYYY');
+                dateToFilterValue = end.format('DD/MM/YYYY');
+                refreshTable();
+            }
+
+            $('#daterange').on('apply.daterangepicker', function (ev, picker) {
+                dateFromFilterValue = picker.startDate.format('DD/MM/YYYY');
+                dateToFilterValue = picker.endDate.format('DD/MM/YYYY');
+                refreshTable();
+            });
+
+            let remindersTable = $("#remindersTable").DataTable({
+                "scrollY": '55vh',
+                "scrollX": true,
+                "scrollCollapse": true,
+                "scroller": true,
+                "oLanguage": @localizer["LanguageDataTable"],
+                "order": [[2, "asc"]],
+                "sAjaxSource": "/Clients/Client/LoadAllReminders",
+                "sServerMethod": "POST",
+                "bServerSide": true,
+                "bProcessing": true,
+                scroller: {
+                    loadingIndicator: true
+                },
+                "fnServerParams": function (aoData) {
+                    aoData.push(
+                        { "name": "dateFromFilterValue", "value": dateFromFilterValue },
+                        { "name": "dateToFilterValue", "value": dateToFilterValue },
+                    );
+                },
+                "buttons": [
+                    {
+                        extend: 'excelHtml5',
+                        attr: { id: 'btn-export-dataTable-excel' },
+                        text: '<img class="tables-img-icon" src="../../../images/Excel.svg" width="30" height="30" />',
+                        titleAttr: 'Exportar archivo Excel',
+                        title: 'Registro de recordatorios',
+                        exportOptions: {
+                            columns: [2, 3, 4]
+                        }
+                    }],
+                "columns":[
+                    {
+                        "data": "id",
+                        "searchable": false,
+                        "visible": false
+                    },
+                    {
+                        "searchable": false,
+                        "render": function (data, type, row, meta) {
+
+                            let html = '<div class="btn-group"><div class="d-flex animated--grow-in">';
+
+                            html += '<a class="btn action-btn" title="" onclick="viewReminder(' + row.id + ')"> <img class="action-img-icon" src="../../../images/Ver.svg" width="22" height="22" /> </a>';
+
+                            html += '</div></div>';
+
+                            return html;
+                        },
+                        "visible": true,
+                        "width": "5%",
+                    },
+                    {
+                        "data": "client",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "-";
+                            } else {
+                                return value.businessName;
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    }, 
+                    {
+                        "data": "contactDate",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return moment(value).format('DD/MM/YYYY');
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    },
+                    {
+                        "data": "reminderDate",
+                        "render": function (value) {
+                            if (value === null) {
+                                return "";
+                            } else {
+                                return moment(value).format('DD/MM/YYYY');
+                            }
+                        },
+                        "searchable": true,
+                        "visible": true
+                    }
+                ],
+                initComplete: function () {
+                this.api().columns().every(function () {
+                    var that = this;
+                    $('input', this.footer()).on('keyup change clear', function () {
+                        if (that.search() !== this.value) {
+                            that
+                                .search(this.value)
+                                .draw();
+                        }
+                    });
+                });
+                }
+            });
+            remindersTable.buttons().container()
+                .appendTo('#div-export-buttons .btn-group');
+
+            $(remindersTable.table().container()).on('keyup', 'tfoot input', function () {
+                remindersTable
+                    .column($(this).data('index'))
+                    .search(this.value)
+                    .draw();
+            });
+
+            colIndexOrder = remindersTable.order()[0][0];
+            colOrderDirection = remindersTable.order()[0][1];
+
+            $('div.dataTables_scrollHeadInner thead').on('click', 'th', function () {
+
+                if ($(this).hasClass("sorting") && !$(this).hasClass("sorting_asc") && !$(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+                else if ($(this).hasClass("sorting_asc")) {
+                    colOrderDirection = "desc";
+                }
+                else if ($(this).hasClass("sorting_desc")) {
+                    colOrderDirection = "asc";
+                }
+
+                switch (remindersTable.column(this).index()) {
+                    case 2:
+                        // Business name
+                        colIndexOrder = 2;
+                        break;
+                    case 3:
+                        // Contact date
+                        colIndexOrder = 3;
+                        break;
+                    case 4:
+                        // Reminder date
+                        colIndexOrder = 4;
+                        break;
+
+                }
+            });
+
+        });
+
+        function refreshTable() {
+                $('#remindersTable').DataTable().clear();
+                $('#remindersTable').DataTable().ajax.reload();
+            }
+
+        function viewReminder(id) {
+            jQueryModalGet('/Clients/Client/_ViewReminderComments?id=' + id, '@localizer["View reminder"]');
+        }
+
+    </script>
+}
